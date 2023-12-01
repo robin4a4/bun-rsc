@@ -2,10 +2,21 @@
   "name": "example",
   "module": "index.ts",
   "type": "module",
+  "scripts": {
+    "serve": "bun run ../bun-rsc/serve.tsx",
+    "build": "bun run ../bun-rsc/build.tsx"
+  },
   "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.14",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "bun-types": "latest"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "bun-rsc": "workspaces:*"
   }
 }
