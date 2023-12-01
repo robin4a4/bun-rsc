@@ -3,8 +3,8 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "serve": "bun run ../bun-rsc/serve.tsx",
-    "build": "bun run ../bun-rsc/build.tsx"
+    "serve": "bun run ../bun-rsc/src/serve.tsx",
+    "build": "bun run ../bun-rsc/src/build.tsx"
   },
   "devDependencies": {
     "@types/react": "^18.2.0",

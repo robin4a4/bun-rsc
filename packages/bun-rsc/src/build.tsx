@@ -98,24 +98,24 @@ export async function build() {
 		// ],
 	});
 	// console.log(clientComponentMap);
-	// const clientDist = resolveDist("client/");
-	// if (!fs.existsSync(clientDist)) {
-	// 	await fs.promises.mkdir(clientDist, { recursive: true });
-	// }
+	const clientDist = resolveDist("client/");
+	if (!fs.existsSync(clientDist)) {
+		await fs.promises.mkdir(clientDist, { recursive: true });
+	}
 
-	// if (clientEntryPoints.size > 0) {
-	// 	console.log("🏝 Building client components");
-	// }
+	if (clientEntryPoints.size > 0) {
+		console.log("🏝 Building client components");
+	}
 
-	// await Bun.build({
-	// 	format: "esm",
-	// 	entrypoints: [
-	// 		...clientEntryPoints,
-	// 		"./router.jsx",
-	// 	],
-	// 	outdir: fileURLToPath(clientDist),
-	// 	splitting: true,
-	// });
+	await Bun.build({
+		format: "esm",
+		entrypoints: [
+			...clientEntryPoints,
+			fileURLToPath(new URL("router.tsx", import.meta.url)),
+		],
+		outdir: clientDist,
+		splitting: true,
+	});
 
 	// // Write mapping from client-side component ID to chunk
 	// // This is read by the server when generating the RSC stream.

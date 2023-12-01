@@ -1,6 +1,5 @@
 {
   "name": "bun-rsc",
-  "module": "index.ts",
   "type": "module",
   "devDependencies": {
     "@types/react": "^18.2.31",
