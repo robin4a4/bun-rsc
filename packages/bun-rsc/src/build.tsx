@@ -73,11 +73,20 @@ export async function build() {
 
 						let refCode = ""
 						for (const exp of moduleExports) {
+							let id = null
 							if (exp === "default") {
-								refCode += `\nexport default { $$typeof: Symbol.for("react.client.reference"), $$async: false, $$id: "${outputKey}#default", name: "default" }`
+								id = `${outputKey}#default`
+								refCode += `\nexport default { $$typeof: Symbol.for("react.client.reference"), $$async: false, $$id: "${id}", name: "default" }`
 							} else {
-								refCode += `\nexport const ${exp} = { $$typeof: Symbol.for("react.client.reference"), $$async: false, $$id: "${outputKey}#${exp}", name: "${exp}" }`
+								id = `${outputKey}#${exp}`
+								refCode += `\nexport const ${exp} = { $$typeof: Symbol.for("react.client.reference"), $$async: false, $$id: "${id}", name: "${exp}" }`
 							}
+							clientComponentMap[id] = {
+								id,
+								chunks: [id],
+								name: "default", // TODO support named exports
+								async: true,
+							};
 						}
 
 						if (isDebug) console.log("generated code", refCode)
