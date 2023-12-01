@@ -6,10 +6,19 @@ import {
 	resolveSrc,
 	writeClientComponentMap,
 } from "./utils.js";
+import { resolve } from "node:dns";
+
+const isDebug = true
+const transpiler = new Bun.Transpiler({ loader: "tsx" })
 
 const USE_CLIENT_ANNOTATIONS = ['"use client"', "'use client'"];
-const JSX_EXTS = [".jsx", ".tsx"];
+const JSX_EXTS = [".tsx"];
 const relativeOrAbsolutePathRegex = /^\.{0,2}\//;
+const clientDist = resolveDist("client/");
+
+function isClientComponent(code: string) {
+	return code.startsWith('"use client"') || code.startsWith("'use client'")
+}
 
 /**
  * Build all server and client components with esbuild
@@ -33,72 +42,58 @@ export async function build() {
 	if (!fs.existsSync(serverDist)) {
 		await fs.promises.mkdir(serverDist, { recursive: true });
 	}
-
-	await Bun.build({
+	
+	const result = await Bun.build({
 		format: "esm",
 		entrypoints: [resolveSrc("views/index.tsx")],
 		outdir: serverDist,
         external: ["react", "react-dom", "react-server-dom-webpack"],
-		// plugins: [
-		// 	{
-		// 		name: "resolve-client-imports",
-		// 		setup(build) {
-		// 			// Intercept component imports to find client entry points
-		// 			build.onResolve(
-		// 				{ filter: relativeOrAbsolutePathRegex },
-		// 				async ({ path }) => {
-		// 					for (const jsxExt of JSX_EXTS) {
-		// 						// Note: assumes file extension is omitted
-		// 						// i.e. import paths are './Component', not './Component.jsx'
-		// 						const absoluteSrc = new URL(resolveSrc(path) + jsxExt);
+		plugins: [
+			{
+				name: "rsc-server",
+				setup(build) {
+					build.onLoad({ filter: /\.(ts|tsx)$/ }, async (args) => {
+						const code = await Bun.file(args.path).text()
+						if (!isClientComponent(code)) {
+							// if not a client component, just return the code and let it be bundled
+							return {
+								contents: code,
+								loader: "tsx",
+							}
+						}
 
-		// 						if (fs.existsSync(absoluteSrc)) {
-		// 							// Check for `"use client"` annotation. Short circuit if not found.
-		// 							const contents = await fs.promises.readFile(
-		// 								absoluteSrc,
-		// 								"utf-8",
-		// 							);
-		// 							if (
-		// 								!USE_CLIENT_ANNOTATIONS.some((annotation) =>
-		// 									contents.startsWith(annotation),
-		// 								)
-		// 							)
-		// 								return;
+						// if it is a client component, return a reference to the client bundle
+						const outputKey = clientDist
+						// const outputKey = args.path.slice(appRoot.length)
 
-		// 							clientEntryPoints.add(fileURLToPath(absoluteSrc));
-		// 							const absoluteDist = new URL(resolveClientDist(path) + ".js");
+						if (isDebug) console.log("outputKey", outputKey)
 
-		// 							// Path the browser will import this client-side component from.
-		// 							// This will be fulfilled by the server router.
-		// 							// @see './index.js'
-		// 							const id = `/dist/client/${path}.js`;
+						const moduleExports = transpiler.scan(code).exports
+						if (isDebug) console.log("exports", moduleExports)
 
-		// 							clientComponentMap[id] = {
-		// 								id,
-		// 								chunks: [],
-		// 								name: "default", // TODO support named exports
-		// 								async: true,
-		// 							};
-		// 							console.log(absoluteDist.href);
-		// 							console.log(getClientComponentModule(id, absoluteDist.href));
-		// 							return {
-		// 								// Encode the client component module in the import URL.
-		// 								// This is a... wacky solution to avoid import middleware.
-		// 								path: `data:text/javascript,${encodeURIComponent(
-		// 									getClientComponentModule(id, absoluteDist.href),
-		// 								)}`,
-		// 								external: true,
-		// 							};
-		// 						}
-		// 					}
-		// 				},
-		// 			);
-		// 		},
-		// 	},
-		// ],
+						let refCode = ""
+						for (const exp of moduleExports) {
+							if (exp === "default") {
+								refCode += `\nexport default { $$typeof: Symbol.for("react.client.reference"), $$async: false, $$id: "${outputKey}#default", name: "default" }`
+							} else {
+								refCode += `\nexport const ${exp} = { $$typeof: Symbol.for("react.client.reference"), $$async: false, $$id: "${outputKey}#${exp}", name: "${exp}" }`
+							}
+						}
+
+						if (isDebug) console.log("generated code", refCode)
+
+						return {
+							contents: refCode,
+							loader: "js",
+						}
+					})
+				},
+			},
+		],
 	});
+
+	console.log(result)
 	// console.log(clientComponentMap);
-	const clientDist = resolveDist("client/");
 	if (!fs.existsSync(clientDist)) {
 		await fs.promises.mkdir(clientDist, { recursive: true });
 	}
