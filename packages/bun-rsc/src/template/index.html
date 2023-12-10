@@ -12,6 +12,24 @@
 <body>
 	<!--TODO: server-side rendering-->
 	<div id="root">Fetching from server...</div>
+	<script>
+		global = window;
+
+		const __bun__module_map__ = new Map();
+
+		// we just use webpack's function names to avoid forking react
+		global.__webpack_chunk_load__ = async function(moduleId) {
+			const mod = await import(moduleId);
+			__bun__module_map__.set(moduleId, mod);
+			return mod;
+		};
+
+		global.__webpack_require__ = function(moduleId) {
+			// TODO: handle non-default exports
+			console.log("require", moduleId)
+			return __bun__module_map__.get(moduleId);
+		};
+</script>
 	<script type="module" src="/dist/client/router.js"></script>
 </body>
 
