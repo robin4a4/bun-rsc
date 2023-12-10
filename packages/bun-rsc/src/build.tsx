@@ -1,19 +1,14 @@
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import {
-	resolveClientDist,
 	resolveDist,
 	resolveSrc,
 	writeClientComponentMap,
 } from "./utils.js";
-import { resolve } from "node:dns";
 
 const isDebug = true
 const transpiler = new Bun.Transpiler({ loader: "tsx" })
 
-const USE_CLIENT_ANNOTATIONS = ['"use client"', "'use client'"];
-const JSX_EXTS = [".tsx"];
-const relativeOrAbsolutePathRegex = /^\.{0,2}\//;
 const clientDist = resolveDist("client/");
 
 function isClientComponent(code: string) {
@@ -52,8 +47,8 @@ export async function build() {
 			{
 				name: "rsc-server",
 				setup(build) {
-					build.onLoad({ filter: /\.(ts|tsx)$/ }, async (args) => {
-						const code = await Bun.file(args.path).text()
+					build.onLoad({ filter: /\.(ts|tsx)$/ }, async ({path}) => {
+						const code = await Bun.file(path).text()
 						if (!isClientComponent(code)) {
 							// if not a client component, just return the code and let it be bundled
 							return {
@@ -61,11 +56,12 @@ export async function build() {
 								loader: "tsx",
 							}
 						}
+						clientEntryPoints.add(path)
 
 						// if it is a client component, return a reference to the client bundle
-						const outputKey = clientDist
-						// const outputKey = args.path.slice(appRoot.length)
-
+						const root = resolveSrc("")
+						const outputKey = path.replace(root, "")
+						
 						if (isDebug) console.log("outputKey", outputKey)
 
 						const moduleExports = transpiler.scan(code).exports
@@ -81,11 +77,10 @@ export async function build() {
 								id = `${outputKey}#${exp}`
 								refCode += `\nexport const ${exp} = { $$typeof: Symbol.for("react.client.reference"), $$async: false, $$id: "${id}", name: "${exp}" }`
 							}
-							clientComponentMap[id] = {
-								id,
-								chunks: [id],
-								name: "default", // TODO support named exports
-								async: true,
+							clientComponentMap[`${outputKey}#${exp}`] = {
+								id: id.replace(".tsx", ".js").replace(".ts", ".js"),
+								chunks: [id.replace(".tsx", ".js").replace(".ts", ".js")],
+								name: exp, // TODO support named exports
 							};
 						}
 
@@ -123,7 +118,7 @@ export async function build() {
 
 	// // Write mapping from client-side component ID to chunk
 	// // This is read by the server when generating the RSC stream.
-	// await writeClientComponentMap(clientComponentMap);
+	await writeClientComponentMap(clientComponentMap);
 }
 
 build()
