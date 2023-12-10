@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import {
+	combineUrl,
 	resolveDist,
 	resolveSrc,
 	writeClientComponentMap,
@@ -59,8 +60,10 @@ export async function build() {
 						clientEntryPoints.add(path)
 
 						// if it is a client component, return a reference to the client bundle
-						const root = resolveSrc("")
-						const outputKey = path.replace(root, "")
+						const root = process.cwd()
+						const srcSplit = root.split("/")
+						const currentDirectoryName = combineUrl(srcSplit[srcSplit.length - 1], path.replace(root, ""))
+						const outputKey = combineUrl("dist/client", currentDirectoryName)
 						
 						if (isDebug) console.log("outputKey", outputKey)
 
@@ -77,9 +80,9 @@ export async function build() {
 								id = `${outputKey}#${exp}`
 								refCode += `\nexport const ${exp} = { $$typeof: Symbol.for("react.client.reference"), $$async: false, $$id: "${id}", name: "${exp}" }`
 							}
-							clientComponentMap[`${outputKey}#${exp}`] = {
-								id: id.replace(".tsx", ".js").replace(".ts", ".js"),
-								chunks: [id.replace(".tsx", ".js").replace(".ts", ".js")],
+							clientComponentMap[id] = {
+								id: outputKey.replace(".tsx", ".js").replace(".ts", ".js"),
+								chunks: [outputKey.replace(".tsx", ".js").replace(".ts", ".js")],
 								name: exp, // TODO support named exports
 							};
 						}
@@ -106,7 +109,7 @@ export async function build() {
 		console.log("🏝 Building client components");
 	}
 
-	await Bun.build({
+	const clientResult = await Bun.build({
 		format: "esm",
 		entrypoints: [
 			...clientEntryPoints,
@@ -115,7 +118,7 @@ export async function build() {
 		outdir: clientDist,
 		splitting: true,
 	});
-
+	console.log(clientResult)
 	// // Write mapping from client-side component ID to chunk
 	// // This is read by the server when generating the RSC stream.
 	await writeClientComponentMap(clientComponentMap);

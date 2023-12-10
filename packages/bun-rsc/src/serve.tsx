@@ -33,7 +33,6 @@ const server = Bun.serve({
             // This is run on server startup and on `app/` file changes.
             // @see './build.js'
             const clientComponentMap = await readClientComponentMap();
-            console.log(clientComponentMap)
             // 👀 This is where the magic happens!
             // Render the server component tree to a stream.
             // This renders your server components in real time and

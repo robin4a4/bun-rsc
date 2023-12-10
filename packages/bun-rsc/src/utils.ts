@@ -2,7 +2,7 @@ export const src = process.cwd()
 export const dist = process.cwd() + "/dist"
 
 
-function combineUrl(path1: string, path2: string) {
+export function combineUrl(path1: string, path2: string) {
     if (path1.endsWith("/")) {
         path1 = path1.substring(0, path1.length - 1);
     }
