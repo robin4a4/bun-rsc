@@ -2,14 +2,18 @@
   "name": "bun-rsc",
   "type": "module",
   "devDependencies": {
-    "@types/react": "^18.2.31",
-    "@types/react-dom": "^18.2.14",
-    "bun-types": "latest",
-    "react": "18.3.0-next-3706edb81-20230308",
-    "react-dom": "18.3.0-next-3706edb81-20230308",
-    "react-server-dom-webpack": "0.0.0-experimental-41b4714f1-20230328"
+		"@types/react": "^18.2.21",
+		"@types/react-dom": "^18.2.7",
+		"bun-types": "latest"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
-  }
+  },
+  "dependencies": {
+		"arg": "^5.0.2",
+		"postcss": "^8.4.30",
+		"react": "18.3.0-canary-41f0e9dae-20230907",
+		"react-dom": "18.3.0-canary-41f0e9dae-20230907",
+		"react-server-dom-webpack": "18.3.0-canary-41f0e9dae-20230907"
+	}
 }

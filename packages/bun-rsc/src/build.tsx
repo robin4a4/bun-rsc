@@ -40,10 +40,12 @@ export async function build() {
 	}
 	
 	const result = await Bun.build({
+		target: "bun",
+		sourcemap: "none",
+		splitting: true,
 		format: "esm",
 		entrypoints: [resolveSrc("views/index.tsx")],
 		outdir: serverDist,
-        external: ["react", "react-dom", "react-server-dom-webpack"],
 		plugins: [
 			{
 				name: "rsc-server",
@@ -63,7 +65,7 @@ export async function build() {
 						const root = process.cwd()
 						const srcSplit = root.split("/")
 						const currentDirectoryName = combineUrl(srcSplit[srcSplit.length - 1], path.replace(root, ""))
-						const outputKey = combineUrl("dist/client", currentDirectoryName)
+						const outputKey = combineUrl("/dist/client", currentDirectoryName)
 						
 						if (isDebug) console.log("outputKey", outputKey)
 
@@ -116,6 +118,8 @@ export async function build() {
 			fileURLToPath(new URL("router.tsx", import.meta.url)),
 		],
 		outdir: clientDist,
+		target: "browser",
+		sourcemap: "none",
 		splitting: true,
 	});
 	console.log(clientResult)

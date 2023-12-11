@@ -7,16 +7,12 @@
     "build": "bun run ../bun-rsc/src/build.tsx"
   },
   "devDependencies": {
-    "@types/react": "^18.2.0",
-    "@types/react-dom": "^18.2.14",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
     "bun-types": "latest"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "bun-rsc": "workspaces:*"
+    "bun-rsc": "workspace:*"
   }
 }
