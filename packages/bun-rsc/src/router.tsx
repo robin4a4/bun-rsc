@@ -1,10 +1,8 @@
 // @ts-expect-error Module '"react"' has no exported member 'use'.
 import { StrictMode, useEffect, useState, use, startTransition } from "react";
 import { createRoot } from "react-dom/client";
-import {
-  /* FOR FRAMEWORK DEVS */ createFromFetch,
-  // @ts-ignore
-} from "react-server-dom-webpack/client";
+// @ts-expect-error Module '"react-server-dom-webpack"' don't have types
+import {createFromFetch} from "react-server-dom-webpack/client";
 
 // @ts-expect-error
 const root = createRoot(document.getElementById("root"));
@@ -14,10 +12,10 @@ root.render(
   </StrictMode>
 );
 
-let callbacks = [];
+let callbacks: Array<(...args: any) => any> = [];
 // @ts-expect-error Property 'router' does not exist on type 'Window & typeof globalThis'.
 window.router = {
-  navigate(/** @type {string} */ url) {
+  navigate(url: string) {
     window.history.replaceState({}, "", url);
     callbacks.forEach((cb) => cb());
   },

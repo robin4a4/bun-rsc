@@ -6,6 +6,7 @@ import {
 	resolveSrc,
 	writeClientComponentMap,
 } from "./utils.js";
+import { ClientEntry } from "./types.js";
 
 const isDebug = true
 const transpiler = new Bun.Transpiler({ loader: "tsx" })
@@ -20,17 +21,9 @@ function isClientComponent(code: string) {
  * Build all server and client components with esbuild
  */
 export async function build() {
-	/**
-	 * Mapping from client-side component ID to React metadata.
-	 * This is read by the server when generating the RSC stream.
-	 * @type {Record<string, any>}
-	 */
-	const clientComponentMap = {};
 
-	/**
-	 * Discovered client modules to bundle with esbuild separately.
-	 * @type {Set<string>}
-	 */
+	const clientComponentMap: Record<string, ClientEntry> = {};
+
 	const clientEntryPoints = new Set<string>();
 
 	console.log("💿 Building server components");
@@ -101,8 +94,6 @@ export async function build() {
 		],
 	});
 
-	console.log(result)
-	// console.log(clientComponentMap);
 	if (!fs.existsSync(clientDist)) {
 		await fs.promises.mkdir(clientDist, { recursive: true });
 	}
@@ -122,7 +113,7 @@ export async function build() {
 		sourcemap: "none",
 		splitting: true,
 	});
-	console.log(clientResult)
+
 	// // Write mapping from client-side component ID to chunk
 	// // This is read by the server when generating the RSC stream.
 	await writeClientComponentMap(clientComponentMap);
