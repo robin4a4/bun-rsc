@@ -1,7 +1,7 @@
 // @ts-ignore
-import * as ReactServerDom from "react-server-dom-webpack/server.browser";
+import * as ReactServerDomServer from "react-server-dom-webpack/server.browser";
 // @ts-ignore
-import { createFromReadableStream } from "react-server-dom-webpack/client";
+import * as ReactServerDomClient from "react-server-dom-webpack/client";
 // @ts-ignore
 import { createElement, use } from "react";
 import ReactDOMServer from "react-dom/server";
@@ -16,6 +16,19 @@ import { Layout } from "./Layout";
 const port = 8080;
 
 const __bun__module_map__ = new Map();
+
+
+function stringifyJSX(key: string, value: any) {
+    if (value === Symbol.for("react.element")) {
+      // We can't pass a symbol, so pass our magic string instead.
+      return "$RE"; // Could be arbitrary. I picked RE for React Element.
+    } else if (typeof value === "string" && value.startsWith("$")) {
+      // To avoid clashes, prepend an extra $ to any string already starting with $.
+      return "$" + value;
+    } else {
+      return value;
+    }
+  }
 
 const server = Bun.serve({
   port,
@@ -41,7 +54,7 @@ const server = Bun.serve({
       );
 
       const clientComponentMap = await readClientComponentMap();
-      const stream = ReactServerDom.renderToReadableStream(
+      const stream = ReactServerDomServer.renderToReadableStream(
         Page,
         clientComponentMap
       );
@@ -66,12 +79,13 @@ const server = Bun.serve({
 
     // Serve HTML homepage that fetches and renders the server component.
     if (pathname.startsWith("/")) {
-      global.__webpack_chunk_load__ = async function(moduleId) {
+        // @ts-ignore
+        global.__webpack_chunk_load__ = async function(moduleId) {
         const mod = await import(combineUrl(process.cwd(), moduleId));
         __bun__module_map__.set(moduleId, mod);
         return mod;
     };
-
+    // @ts-ignore
     global.__webpack_require__ = function(moduleId) {
         // TODO: handle non-default exports
         console.log("require", moduleId)
@@ -104,14 +118,15 @@ const server = Bun.serve({
           '*': ssrMetadata,
         },
       };
-      const stream = ReactServerDom.renderToReadableStream(
+
+      const stream = ReactServerDomServer.renderToReadableStream(
         Page,
         clientComponentMap
       );
 
-      const response = createFromReadableStream(stream, {
+      const component = await ReactServerDomClient.createFromReadableStream(stream, {
         ssrManifest: {
-          moduleMap: translationMap,
+        moduleMap: translationMap,
           moduleLoading: {
             prefix: '/',
           }
@@ -119,17 +134,20 @@ const server = Bun.serve({
       });
 
       function ClientRoot() {
-        return <Layout>{use(response)}</Layout>;
+        return <Layout>{component}</Layout>;
       }
+
+      const clientJSXString = JSON.stringify(<ClientRoot/>, stringifyJSX);
 
       const ssrStream = await ReactDOMServer.renderToReadableStream(
         <ClientRoot />,
         {
-            bootstrapScripts: ["/dist/client/bun-rsc/src/router.js"],
+            bootstrapModules: ["/dist/client/router.js"],
             bootstrapScriptContent: `global = window;
 
             const __bun__module_map__ = new Map();
-    
+            window.__INITIAL_CLIENT_JSX_STRING__ = ${JSON.stringify(clientJSXString).replace(/</g, "\\u003c")};
+
             // we just use webpack's function names to avoid forking react
             global.__webpack_chunk_load__ = async function(moduleId) {
                 const mod = await import(moduleId);
