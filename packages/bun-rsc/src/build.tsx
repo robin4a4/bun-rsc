@@ -11,7 +11,8 @@ import { ClientEntry } from "./types.js";
 const isDebug = true
 const transpiler = new Bun.Transpiler({ loader: "tsx" })
 
-const clientDist = resolveDist("client/");
+const clientDistRSC = resolveDist("client/rsc");
+const clientDistSSR = resolveDist("client/ssr");
 
 function isClientComponent(code: string) {
 	return code.startsWith('"use client"') || code.startsWith("'use client'")
@@ -32,7 +33,7 @@ export async function build() {
 		await fs.promises.mkdir(serverDist, { recursive: true });
 	}
 	
-	const result = await Bun.build({
+	await Bun.build({
 		target: "bun",
 		sourcemap: "none",
 		splitting: true,
@@ -58,31 +59,25 @@ export async function build() {
 						const root = process.cwd()
 						const srcSplit = root.split("/")
 						const currentDirectoryName = combineUrl(srcSplit[srcSplit.length - 1], path.replace(root, ""))
-						const outputKey = combineUrl("/dist/client", currentDirectoryName)
+						const rscOutputKey = combineUrl("/dist/client/rsc", currentDirectoryName)
 						
-						if (isDebug) console.log("outputKey", outputKey)
-
 						const moduleExports = transpiler.scan(code).exports
-						if (isDebug) console.log("exports", moduleExports)
-
 						let refCode = ""
 						for (const exp of moduleExports) {
 							let id = null
 							if (exp === "default") {
-								id = `${outputKey}#default`
+								id = `${rscOutputKey}#default`
 								refCode += `\nexport default { $$typeof: Symbol.for("react.client.reference"), $$async: false, $$id: "${id}", name: "default" }`
 							} else {
-								id = `${outputKey}#${exp}`
+								id = `${rscOutputKey}#${exp}`
 								refCode += `\nexport const ${exp} = { $$typeof: Symbol.for("react.client.reference"), $$async: false, $$id: "${id}", name: "${exp}" }`
 							}
 							clientComponentMap[id] = {
-								id: outputKey.replace(".tsx", ".js").replace(".ts", ".js"),
-								chunks: [outputKey.replace(".tsx", ".js").replace(".ts", ".js")],
+								id: rscOutputKey.replace(".tsx", ".js").replace(".ts", ".js"),
+								chunks: [rscOutputKey.replace(".tsx", ".js").replace(".ts", ".js")],
 								name: exp, // TODO support named exports
 							};
 						}
-
-						if (isDebug) console.log("generated code", refCode)
 
 						return {
 							contents: refCode,
@@ -94,24 +89,43 @@ export async function build() {
 		],
 	});
 
-	if (!fs.existsSync(clientDist)) {
-		await fs.promises.mkdir(clientDist, { recursive: true });
+	if (!fs.existsSync(clientDistRSC)) {
+		await fs.promises.mkdir(clientDistRSC, { recursive: true });
+	}
+
+	if (!fs.existsSync(clientDistSSR)) {
+		await fs.promises.mkdir(clientDistSSR, { recursive: true });
 	}
 
 	if (clientEntryPoints.size > 0) {
 		console.log("🏝 Building client components");
 	}
 
-	const clientResult = await Bun.build({
+	// Build client components for CSR
+	await Bun.build({
 		format: "esm",
 		entrypoints: [
 			...clientEntryPoints,
 			fileURLToPath(new URL("router.tsx", import.meta.url)),
 		],
-		outdir: clientDist,
+		outdir: clientDistRSC,
 		target: "browser",
 		sourcemap: "none",
 		splitting: true,
+	});
+	
+	// Build client components for SSR
+	await Bun.build({
+		format: "esm",
+		entrypoints: [
+			...clientEntryPoints,
+			fileURLToPath(new URL("router.tsx", import.meta.url)),
+		],
+		outdir: clientDistSSR,
+		target: "browser",
+		sourcemap: "none",
+		splitting: true,
+		external: ["react", "react-dom"],
 	});
 
 	// // Write mapping from client-side component ID to chunk
