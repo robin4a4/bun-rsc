@@ -10,7 +10,6 @@ export function Layout({children}: PropsWithChildren) {
             <title>Future of React</title>
             <script src="https://cdn.tailwindcss.com"></script>
         </head>
-        
         <body>
             {children}
         </body>

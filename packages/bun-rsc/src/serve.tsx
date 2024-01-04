@@ -79,18 +79,17 @@ const server = Bun.serve({
 
     // Serve HTML homepage that fetches and renders the server component.
     if (pathname.startsWith("/")) {
-        // @ts-ignore
-        global.__webpack_chunk_load__ = async function(moduleId) {
-        const mod = await import(combineUrl(process.cwd(), moduleId));
-        __bun__module_map__.set(moduleId, mod);
-        return mod;
-    };
-    // @ts-ignore
-    global.__webpack_require__ = function(moduleId) {
-        // TODO: handle non-default exports
-        console.log("require", moduleId)
-        return __bun__module_map__.get(moduleId);
-    };
+      // @ts-ignore
+      global.__webpack_chunk_load__ = async function(moduleId) {
+          const mod = await import(combineUrl(process.cwd(), moduleId));
+          __bun__module_map__.set(moduleId, mod);
+          return mod;
+      };
+      // @ts-ignore
+      global.__webpack_require__ = function(moduleId) {
+          console.log("require", moduleId, __bun__module_map__.get(moduleId))
+          return __bun__module_map__.get(moduleId)
+      };
 
       const PageModule = await import(
         resolveServerDist(
@@ -112,30 +111,21 @@ const server = Bun.serve({
 
       const clientComponentMap = await readClientComponentMap();
 
-      const ssrMetadata = clientComponentMap["/dist/client/example/components/Counter.tsx#default"];
-      const translationMap = {
-        [ssrMetadata.id]: {
-          '*': ssrMetadata,
-        },
-      };
-
-      const stream = ReactServerDomServer.renderToReadableStream(
+      const rscStream = ReactServerDomServer.renderToReadableStream(
         Page,
         clientComponentMap
       );
 
-      const component = await ReactServerDomClient.createFromReadableStream(stream, {
-        ssrManifest: {
-        moduleMap: translationMap,
-          moduleLoading: {
-            prefix: '/',
-          }
-        },
-      });
+      const rscComponentPromise = ReactServerDomClient.createFromReadableStream(rscStream);
 
       function ClientRoot() {
-        return <Layout>{component}</Layout>;
+        return <Layout>{use(rscComponentPromise)}</Layout>;
       }
+        
+      // function ClientRoot() {
+      //   const [test, pouet] = useState(0)
+      //   return <Layout></Layout>;
+      // }
 
       const clientJSXString = JSON.stringify(<ClientRoot/>, stringifyJSX);
 
