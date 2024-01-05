@@ -1,4 +1,4 @@
-import Counter from "./Counter";
+import Counter from "../components/Counter";
 
 export default async function Home() {
     const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
