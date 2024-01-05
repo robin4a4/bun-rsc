@@ -121,11 +121,6 @@ const server = Bun.serve({
       function ClientRoot() {
         return <Layout>{use(rscComponentPromise)}</Layout>;
       }
-        
-      // function ClientRoot() {
-      //   const [test, pouet] = useState(0)
-      //   return <Layout></Layout>;
-      // }
 
       const clientJSXString = JSON.stringify(<ClientRoot/>, stringifyJSX);
 
