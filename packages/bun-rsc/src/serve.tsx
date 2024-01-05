@@ -2,7 +2,8 @@
 import * as ReactServerDomServer from "react-server-dom-webpack/server.browser";
 // @ts-ignore
 import * as ReactServerDomClient from "react-server-dom-webpack/client";
-import { createElement } from "react";
+// @ts-ignore
+import { createElement, use } from "react";
 import ReactDOMServer from "react-dom/server";
 import {
   rscClientComponentMapUrl,
@@ -53,7 +54,7 @@ const server = Bun.serve({
       /**
        * Return server component directly if requested via AJAX.
        */
-      if (searchParams.get("ajasxRSC") === "true") {
+      if (searchParams.get("ajaxRSC") === "true") {
         const clientComponentMap = await readMap(rscClientComponentMapUrl);
 
         const rscStream = ReactServerDomServer.renderToReadableStream(
@@ -89,11 +90,14 @@ const server = Bun.serve({
           clientComponentMap
         );
 
-        const rscComponent =
-          await ReactServerDomClient.createFromReadableStream(rscStream);
+        const rscComponent = ReactServerDomClient.createFromReadableStream(rscStream);
+        
+        function ClientRoot() {
+          return <Layout>{use(rscComponent)}</Layout>
+        }
 
         const ssrStream = await ReactDOMServer.renderToReadableStream(
-          Layout({ children: rscComponent }),
+          <ClientRoot/>,
           {
             bootstrapModules: ["/dist/client/bun-rsc/src/router.rsc.js"],
             bootstrapScriptContent: `global = window;
@@ -119,7 +123,7 @@ const server = Bun.serve({
         });
       }
     }
-    const { pathname, searchParams } = new URL(request.url);
+    const { pathname } = new URL(request.url);
 
     if (pathname.startsWith("/dist/client")) {
       const filePath = pathname.replace("/dist/client/", "");
@@ -129,11 +133,6 @@ const server = Bun.serve({
           "Content-Type": "application/javascript",
         },
       });
-    }
-
-    // Serve HTML homepage that fetches and renders the server component.
-    if (pathname.startsWith("/")) {
-      
     }
 
     return new Response("404!");

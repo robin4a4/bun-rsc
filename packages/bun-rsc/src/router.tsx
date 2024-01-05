@@ -7,8 +7,9 @@ import { Layout } from "./Layout";
 import { combineUrl } from "./utils";
 
 hydrateRoot(document, <Router/>);
+
 const queryParam = new URLSearchParams({
-  ajasxRSC: "true",
+  ajaxRSC: "true",
 });
 function Router() {
   const [url, setUrl] = useState(window.location.href + "?" + queryParam.toString());
