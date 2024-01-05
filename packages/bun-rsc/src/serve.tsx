@@ -84,14 +84,12 @@ const server = Bun.serve({
     if (pathname.startsWith("/")) {
       // @ts-ignore
       global.__webpack_chunk_load__ = async function(moduleId) {
-        console.log(combineUrl(process.cwd(), moduleId))
           const mod = await import(combineUrl(process.cwd(), moduleId));
           __bun__module_map__.set(moduleId, mod);
           return mod;
       };
       // @ts-ignore
       global.__webpack_require__ = function(moduleId) {
-          console.log("require", moduleId, __bun__module_map__.get(moduleId))
           return __bun__module_map__.get(moduleId)
       };
 
@@ -123,20 +121,14 @@ const server = Bun.serve({
 
       const rscComponent = await ReactServerDomClient.createFromReadableStream(rscStream);
 
-      const clientJSXString = JSON.stringify(
-        Layout({children: rscComponent}), stringifyJSX
-      )
-
       const ssrStream = await ReactDOMServer.renderToReadableStream(
-        Layout(rscComponent),
+        Layout({children: rscComponent}),
         {
             bootstrapModules: ["/dist/client/bun-rsc/src/router.rsc.js"],
             bootstrapScriptContent: `global = window;
 
             const __bun__module_map__ = new Map();
-            window.__INITIAL_CLIENT_JSX_STRING__ = ${JSON.stringify(clientJSXString)};
 
-            // we just use webpack's function names to avoid forking react
             global.__webpack_chunk_load__ = async function(moduleId) {
                 const mod = await import(moduleId);
                 __bun__module_map__.set(moduleId, mod);

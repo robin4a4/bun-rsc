@@ -1,4 +1,4 @@
-import { type PropsWithChildren } from "react";
+import { Suspense, type PropsWithChildren } from "react";
 
 export function Layout({children}: PropsWithChildren) {
     return (
