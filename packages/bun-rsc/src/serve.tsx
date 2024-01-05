@@ -3,7 +3,7 @@ import * as ReactServerDomServer from "react-server-dom-webpack/server.browser";
 // @ts-ignore
 import * as ReactServerDomClient from "react-server-dom-webpack/client";
 // @ts-ignore
-import { createElement, use } from "react";
+import { createElement } from "react";
 import ReactDOMServer from "react-dom/server";
 import {
   rscClientComponentMapUrl,
@@ -12,8 +12,8 @@ import {
   readMap,
   resolveClientDist,
   resolveServerDist,
-  ssrTranslationMapUrl,
 } from "./utils";
+
 import { Layout } from "./Layout";
 
 const port = 8080;
@@ -121,22 +121,20 @@ const server = Bun.serve({
         clientComponentMap
       );
 
-      const rscComponentPromise = ReactServerDomClient.createFromReadableStream(rscStream);
+      const rscComponent = await ReactServerDomClient.createFromReadableStream(rscStream);
 
-      function ClientRoot() {
-        return <Layout>{use(rscComponentPromise)}</Layout>;
-      }
-
-      const clientJSXString = JSON.stringify(<ClientRoot/>, stringifyJSX);
+      const clientJSXString = JSON.stringify(
+        Layout({children: rscComponent}), stringifyJSX
+      )
 
       const ssrStream = await ReactDOMServer.renderToReadableStream(
-        <ClientRoot />,
+        Layout(rscComponent),
         {
-            bootstrapModules: ["/dist/client/router.js"],
+            bootstrapModules: ["/dist/client/bun-rsc/src/router.rsc.js"],
             bootstrapScriptContent: `global = window;
 
             const __bun__module_map__ = new Map();
-            window.__INITIAL_CLIENT_JSX_STRING__ = ${JSON.stringify(clientJSXString).replace(/</g, "\\u003c")};
+            window.__INITIAL_CLIENT_JSX_STRING__ = ${JSON.stringify(clientJSXString)};
 
             // we just use webpack's function names to avoid forking react
             global.__webpack_chunk_load__ = async function(moduleId) {
