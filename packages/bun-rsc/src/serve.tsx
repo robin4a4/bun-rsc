@@ -6,7 +6,8 @@ import * as ReactServerDomClient from "react-server-dom-webpack/client";
 import { createElement, use } from "react";
 import ReactDOMServer from "react-dom/server";
 import {
-  clientComponentMapUrl,
+  rscClientComponentMapUrl,
+  ssrClientComponentMapUrl,
   combineUrl,
   readMap,
   resolveClientDist,
@@ -55,7 +56,7 @@ const server = Bun.serve({
         Object.fromEntries(searchParams)
       );
 
-      const clientComponentMap = await readMap(clientComponentMapUrl);
+      const clientComponentMap = await readMap(rscClientComponentMapUrl);
       const stream = ReactServerDomServer.renderToReadableStream(
         Page,
         clientComponentMap
@@ -83,6 +84,7 @@ const server = Bun.serve({
     if (pathname.startsWith("/")) {
       // @ts-ignore
       global.__webpack_chunk_load__ = async function(moduleId) {
+        console.log(combineUrl(process.cwd(), moduleId))
           const mod = await import(combineUrl(process.cwd(), moduleId));
           __bun__module_map__.set(moduleId, mod);
           return mod;
@@ -111,19 +113,15 @@ const server = Bun.serve({
         Object.fromEntries(searchParams)
       );
 
-      const clientComponentMap = await readMap(clientComponentMapUrl);
-      const ssrTranslationMap = await readMap(ssrTranslationMapUrl);
+      const clientComponentMap = await readMap(ssrClientComponentMapUrl);
+      // const ssrTranslationMap = await readMap(ssrTranslationMapUrl);
 
       const rscStream = ReactServerDomServer.renderToReadableStream(
         Page,
         clientComponentMap
       );
 
-      const rscComponentPromise = ReactServerDomClient.createFromReadableStream(rscStream, {
-        ssrManifest: {
-          moduleMap: ssrTranslationMap,
-        }
-      });
+      const rscComponentPromise = ReactServerDomClient.createFromReadableStream(rscStream);
 
       function ClientRoot() {
         return <Layout>{use(rscComponentPromise)}</Layout>;

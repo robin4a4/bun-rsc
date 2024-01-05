@@ -1,7 +1,8 @@
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import {
-	clientComponentMapUrl,
+  rscClientComponentMapUrl,
+  ssrClientComponentMapUrl,
   combineUrl,
   resolveDist,
   resolveSrc,
@@ -13,8 +14,7 @@ import { BuildConfig } from "bun";
 
 const transpiler = new Bun.Transpiler({ loader: "tsx" });
 
-const clientDistRSC = resolveDist("client/rsc");
-const clientDistSSR = resolveDist("client/ssr");
+const clientDist = resolveDist("client");
 
 function isClientComponent(code: string) {
   return code.startsWith('"use client"') || code.startsWith("'use client'");
@@ -24,7 +24,8 @@ function isClientComponent(code: string) {
  * Build all server and client components with esbuild
  */
 export async function build() {
-  const clientComponentMap: Record<string, ClientEntry> = {};
+  const rscClientComponentMap: Record<string, ClientEntry> = {};
+  const ssrClientComponentMap: Record<string, ClientEntry> = {};
   const ssrTranslationMap: Record<string, SsrTranslationEntry> = {};
 
   const clientEntryPoints = new Set<string>();
@@ -65,46 +66,38 @@ export async function build() {
               srcSplit[srcSplit.length - 1],
               path.replace(root, "")
             );
-            const rscOutputKey = combineUrl(
-              "/dist/client/rsc",
-              currentDirectoryName
-            );
-            const ssrOutputKey = combineUrl(
-              "/dist/client/ssr",
-              currentDirectoryName
-            );
+            const outputKey = combineUrl("/dist/client", currentDirectoryName);
 
             const moduleExports = transpiler.scan(code).exports;
             let refCode = "";
             for (const exp of moduleExports) {
-              let rscId = null;
-              let ssrId = null;
+              let id = null;
               if (exp === "default") {
-                rscId = `${rscOutputKey}#default`;
-                ssrId = `${ssrOutputKey}#default`;
-                refCode += `\nexport default { $$typeof: Symbol.for("react.client.reference"), $$async: false, $$id: "${rscId}", name: "default" }`;
+                id = `${outputKey}#default`;
+                refCode += `\nexport default { $$typeof: Symbol.for("react.client.reference"), $$async: false, $$id: "${id}", name: "default" }`;
               } else {
-                rscId = `${rscOutputKey}#${exp}`;
-                refCode += `\nexport const ${exp} = { $$typeof: Symbol.for("react.client.reference"), $$async: false, $$id: "${rscId}", name: "${exp}" }`;
-                ssrId = `${ssrOutputKey}#${exp}`;
+                id = `${outputKey}#${exp}`;
+                refCode += `\nexport const ${exp} = { $$typeof: Symbol.for("react.client.reference"), $$async: false, $$id: "${id}", name: "${exp}" }`;
               }
-              clientComponentMap[rscId] = {
-                id: rscOutputKey.replace(".tsx", ".js").replace(".ts", ".js"),
-                chunks: [
-                  rscOutputKey.replace(".tsx", ".js").replace(".ts", ".js"),
-                ],
+              const rscChunkId = outputKey
+                .replace(".tsx", ".rsc.js")
+                .replace(".ts", ".rsc.js");
+              rscClientComponentMap[id] = {
+                id: rscChunkId,
+                chunks: [rscChunkId],
                 name: exp,
               };
-              clientComponentMap[ssrId] = {
-                id: ssrOutputKey.replace(".tsx", ".js").replace(".ts", ".js"),
-                chunks: [
-                  ssrOutputKey.replace(".tsx", ".js").replace(".ts", ".js"),
-                ],
+              const ssrChunkId = outputKey
+                .replace(".tsx", ".ssr.js")
+                .replace(".ts", ".ssr.js");
+              ssrClientComponentMap[id] = {
+                id: ssrChunkId,
+                chunks: [ssrChunkId],
                 name: exp,
               };
-			  ssrTranslationMap[rscId] = {
-				[exp]: clientComponentMap[ssrId]
-			  }
+              //   ssrTranslationMap[rscId] = {
+              // 	[exp]: clientComponentMap[ssrId]
+              //   }
             }
 
             return {
@@ -117,12 +110,8 @@ export async function build() {
     ],
   });
 
-  if (!fs.existsSync(clientDistRSC)) {
-    await fs.promises.mkdir(clientDistRSC, { recursive: true });
-  }
-
-  if (!fs.existsSync(clientDistSSR)) {
-    await fs.promises.mkdir(clientDistSSR, { recursive: true });
+  if (!fs.existsSync(clientDist)) {
+    await fs.promises.mkdir(clientDist, { recursive: true });
   }
 
   if (clientEntryPoints.size > 0) {
@@ -135,25 +124,29 @@ export async function build() {
       ...clientEntryPoints,
       fileURLToPath(new URL("router.tsx", import.meta.url)),
     ],
-    outdir: clientDistRSC,
     target: "browser",
     sourcemap: "none",
     splitting: true,
+    outdir: clientDist,
   };
 
   // Build client components for CSR
-  await Bun.build(clientBuildOptions);
-
-  // Build client components for SSR
   await Bun.build({
     ...clientBuildOptions,
+    naming: "[dir]/[name].rsc.[ext]",
+  });
+
+  // Build client components for SSR. React is externalized to avoid duplication and hooks errors at stream generation time.
+  await Bun.build({
+    ...clientBuildOptions,
+    naming: "[dir]/[name].ssr.[ext]",
     external: ["react", "react-dom"],
   });
 
-  // // Write mapping from client-side component ID to chunk
-  // // This is read by the server when generating the RSC stream.
-  await writeMap(clientComponentMapUrl, clientComponentMap);
-  await writeMap(ssrTranslationMapUrl, ssrTranslationMap);
+  // Write the client component maps
+  await writeMap(rscClientComponentMapUrl, rscClientComponentMap);
+  await writeMap(ssrClientComponentMapUrl, ssrClientComponentMap);
+  //   await writeMap(ssrTranslationMapUrl, ssrTranslationMap);
 }
 
 build();

@@ -29,7 +29,8 @@ export function resolveServerDist(path: string) {
   return combineUrl(resolveDist("server/"), path);
 }
 
-export const clientComponentMapUrl = resolveDist("clientComponentMap.json")
+export const rscClientComponentMapUrl = resolveDist("clientComponentMap.rsc.json")
+export const ssrClientComponentMapUrl = resolveDist("clientComponentMap.ssr.json")
 export const ssrTranslationMapUrl = resolveDist("ssrTranslationMap.json")
 
 export async function writeMap(mapUrl: string, bundleMap: Record<string, any>) {
