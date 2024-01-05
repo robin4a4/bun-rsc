@@ -6,10 +6,12 @@ import * as ReactServerDomClient from "react-server-dom-webpack/client";
 import { createElement, use } from "react";
 import ReactDOMServer from "react-dom/server";
 import {
+  clientComponentMapUrl,
   combineUrl,
-  readClientComponentMap,
+  readMap,
   resolveClientDist,
   resolveServerDist,
+  ssrTranslationMapUrl,
 } from "./utils";
 import { Layout } from "./Layout";
 
@@ -53,7 +55,7 @@ const server = Bun.serve({
         Object.fromEntries(searchParams)
       );
 
-      const clientComponentMap = await readClientComponentMap();
+      const clientComponentMap = await readMap(clientComponentMapUrl);
       const stream = ReactServerDomServer.renderToReadableStream(
         Page,
         clientComponentMap
@@ -109,14 +111,19 @@ const server = Bun.serve({
         Object.fromEntries(searchParams)
       );
 
-      const clientComponentMap = await readClientComponentMap();
+      const clientComponentMap = await readMap(clientComponentMapUrl);
+      const ssrTranslationMap = await readMap(ssrTranslationMapUrl);
 
       const rscStream = ReactServerDomServer.renderToReadableStream(
         Page,
         clientComponentMap
       );
 
-      const rscComponentPromise = ReactServerDomClient.createFromReadableStream(rscStream);
+      const rscComponentPromise = ReactServerDomClient.createFromReadableStream(rscStream, {
+        ssrManifest: {
+          moduleMap: ssrTranslationMap,
+        }
+      });
 
       function ClientRoot() {
         return <Layout>{use(rscComponentPromise)}</Layout>;

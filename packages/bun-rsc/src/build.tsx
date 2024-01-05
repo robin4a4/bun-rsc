@@ -1,12 +1,14 @@
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import {
+	clientComponentMapUrl,
   combineUrl,
   resolveDist,
   resolveSrc,
-  writeClientComponentMap,
+  ssrTranslationMapUrl,
+  writeMap,
 } from "./utils.js";
-import { ClientEntry } from "./types.js";
+import { ClientEntry, SsrTranslationEntry } from "./types.js";
 import { BuildConfig } from "bun";
 
 const transpiler = new Bun.Transpiler({ loader: "tsx" });
@@ -22,8 +24,8 @@ function isClientComponent(code: string) {
  * Build all server and client components with esbuild
  */
 export async function build() {
-  const clientComponentMapRSC: Record<string, ClientEntry> = {};
-  const clientComponentMapSSR: Record<string, ClientEntry> = {};
+  const clientComponentMap: Record<string, ClientEntry> = {};
+  const ssrTranslationMap: Record<string, SsrTranslationEntry> = {};
 
   const clientEntryPoints = new Set<string>();
 
@@ -86,20 +88,23 @@ export async function build() {
                 refCode += `\nexport const ${exp} = { $$typeof: Symbol.for("react.client.reference"), $$async: false, $$id: "${rscId}", name: "${exp}" }`;
                 ssrId = `${ssrOutputKey}#${exp}`;
               }
-              clientComponentMapRSC[rscId] = {
+              clientComponentMap[rscId] = {
                 id: rscOutputKey.replace(".tsx", ".js").replace(".ts", ".js"),
                 chunks: [
                   rscOutputKey.replace(".tsx", ".js").replace(".ts", ".js"),
                 ],
                 name: exp,
               };
-              clientComponentMapSSR[ssrId] = {
+              clientComponentMap[ssrId] = {
                 id: ssrOutputKey.replace(".tsx", ".js").replace(".ts", ".js"),
                 chunks: [
                   ssrOutputKey.replace(".tsx", ".js").replace(".ts", ".js"),
                 ],
                 name: exp,
               };
+			  ssrTranslationMap[rscId] = {
+				[exp]: clientComponentMap[ssrId]
+			  }
             }
 
             return {
@@ -147,8 +152,8 @@ export async function build() {
 
   // // Write mapping from client-side component ID to chunk
   // // This is read by the server when generating the RSC stream.
-  await writeClientComponentMap(clientComponentMapRSC, "rsc");
-  await writeClientComponentMap(clientComponentMapSSR, "ssr");
+  await writeMap(clientComponentMapUrl, clientComponentMap);
+  await writeMap(ssrTranslationMapUrl, ssrTranslationMap);
 }
 
 build();

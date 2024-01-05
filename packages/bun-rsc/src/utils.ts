@@ -29,13 +29,14 @@ export function resolveServerDist(path: string) {
   return combineUrl(resolveDist("server/"), path);
 }
 
-export const clientComponentMapUrls = {"ssr": resolveDist("clientComponentMap.ssr.json"), "rsc": resolveDist("clientComponentMap.rsc.json")};
+export const clientComponentMapUrl = resolveDist("clientComponentMap.json")
+export const ssrTranslationMapUrl = resolveDist("ssrTranslationMap.json")
 
-export async function writeClientComponentMap(bundleMap: Record<string, any>, type: "ssr" | "rsc") {
-  await Bun.write(clientComponentMapUrls[type], JSON.stringify(bundleMap));
+export async function writeMap(mapUrl: string, bundleMap: Record<string, any>) {
+  await Bun.write(mapUrl, JSON.stringify(bundleMap));
 }
 
-export async function readClientComponentMap(type: "ssr" | "rsc" = "rsc") {
-  const bundleMap = await Bun.file(clientComponentMapUrls[type]).text();
+export async function readMap(mapUrl: string) {
+  const bundleMap = await Bun.file(mapUrl).text();
   return JSON.parse(bundleMap);
 }
