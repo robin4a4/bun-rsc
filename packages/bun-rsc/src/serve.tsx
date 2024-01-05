@@ -2,20 +2,19 @@
 import * as ReactServerDomServer from "react-server-dom-webpack/server.browser";
 // @ts-ignore
 import * as ReactServerDomClient from "react-server-dom-webpack/client";
-// @ts-ignore
 import { createElement } from "react";
 import ReactDOMServer from "react-dom/server";
 import {
   rscClientComponentMapUrl,
   ssrClientComponentMapUrl,
-  combineUrl,
   readMap,
   resolveClientDist,
   resolveSrc,
   resolveServerFileFromFilePath,
-} from "./utils";
+} from "./utils.server";
 
 import { Layout } from "./Layout";
+import { combineUrl } from "./utils";
 
 const port = 8080;
 

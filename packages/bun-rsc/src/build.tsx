@@ -3,14 +3,14 @@ import { fileURLToPath } from "node:url";
 import {
   rscClientComponentMapUrl,
   ssrClientComponentMapUrl,
-  combineUrl,
   resolveDist,
   resolveSrc,
   writeMap,
-} from "./utils.js";
+} from "./utils.server.js";
 import { ClientEntry } from "./types.js";
 import { BuildConfig } from "bun";
 import recursive from "recursive-readdir";
+import { combineUrl } from "./utils.js";
 
 const transpiler = new Bun.Transpiler({ loader: "tsx" });
 
@@ -97,9 +97,6 @@ export async function build() {
                 chunks: [ssrChunkId],
                 name: exp,
               };
-              //   ssrTranslationMap[rscId] = {
-              // 	[exp]: clientComponentMap[ssrId]
-              //   }
             }
 
             return {
