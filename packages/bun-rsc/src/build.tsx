@@ -6,11 +6,11 @@ import {
   combineUrl,
   resolveDist,
   resolveSrc,
-  ssrTranslationMapUrl,
   writeMap,
 } from "./utils.js";
-import { ClientEntry, SsrTranslationEntry } from "./types.js";
+import { ClientEntry } from "./types.js";
 import { BuildConfig } from "bun";
+import recursive from "recursive-readdir";
 
 const transpiler = new Bun.Transpiler({ loader: "tsx" });
 
@@ -26,7 +26,6 @@ function isClientComponent(code: string) {
 export async function build() {
   const rscClientComponentMap: Record<string, ClientEntry> = {};
   const ssrClientComponentMap: Record<string, ClientEntry> = {};
-  const ssrTranslationMap: Record<string, SsrTranslationEntry> = {};
 
   const clientEntryPoints = new Set<string>();
 
@@ -37,12 +36,15 @@ export async function build() {
   }
 
   // Build server components
+
+  const entrypoints = await recursive(resolveSrc("views"));
+
   await Bun.build({
     target: "bun",
     sourcemap: "none",
     splitting: true,
     format: "esm",
-    entrypoints: [resolveSrc("views/index.tsx")],
+    entrypoints,
     outdir: serverDist,
     plugins: [
       {
@@ -146,7 +148,6 @@ export async function build() {
   // Write the client component maps
   await writeMap(rscClientComponentMapUrl, rscClientComponentMap);
   await writeMap(ssrClientComponentMapUrl, ssrClientComponentMap);
-  //   await writeMap(ssrTranslationMapUrl, ssrTranslationMap);
 }
 
 build();

@@ -4,7 +4,7 @@ import { hydrateRoot } from "react-dom/client";
 // @ts-expect-error Module '"react-server-dom-webpack"' don't have types
 import {createFromFetch} from "react-server-dom-webpack/client";
 import { Layout } from "./Layout";
-
+console.log()
 hydrateRoot(document, <Router/>);
 
 let callbacks: Array<(...args: any) => any> = [];
@@ -17,7 +17,8 @@ window.router = {
 };
 
 function Router() {
-  const [url, setUrl] = useState("/rsc" + window.location.search);
+  
+  const [url, setUrl] = useState(window.location.href + `?ajasxRSC=true`);
 
   useEffect(() => {
     function handleNavigate() {

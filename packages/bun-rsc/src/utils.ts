@@ -29,6 +29,13 @@ export function resolveServerDist(path: string) {
   return combineUrl(resolveDist("server/"), path);
 }
 
+
+export function resolveServerFileFromFilePath(filePath: string) {
+  const filePathAfterSrc = filePath.substring(src.length).replace("/views/", "").replace(".tsx", ".js");
+  return resolveServerDist(filePathAfterSrc);
+}
+
+
 export const rscClientComponentMapUrl = resolveDist("clientComponentMap.rsc.json")
 export const ssrClientComponentMapUrl = resolveDist("clientComponentMap.ssr.json")
 export const ssrTranslationMapUrl = resolveDist("ssrTranslationMap.json")
