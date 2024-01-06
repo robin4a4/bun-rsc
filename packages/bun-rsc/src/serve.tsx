@@ -87,15 +87,16 @@ const server = Bun.serve({
 
         const rscStream = ReactServerDomServer.renderToReadableStream(
           Page,
-          clientComponentMap
+          clientComponentMap,
         );
 
         const rscComponent = ReactServerDomClient.createFromReadableStream(rscStream);
-        
+
         function ClientRoot() {
           return <Layout>{use(rscComponent)}</Layout>
         }
-
+        // Hack retrieved from Marz "this is a temporary hack to only render a single 'frame'"
+        const abortController = new AbortController()
         const ssrStream = await ReactDOMServer.renderToReadableStream(
           <ClientRoot/>,
           {
@@ -116,8 +117,11 @@ const server = Bun.serve({
                   console.log("require", moduleId)
                   return __bun__module_map__.get(moduleId);
               };`,
+              signal: abortController.signal,
+              onError() {}
           }
         );
+        abortController.abort()
         return new Response(ssrStream, {
           headers: { "Content-type": "text/html" },
         });
