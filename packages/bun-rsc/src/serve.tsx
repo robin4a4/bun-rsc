@@ -64,40 +64,40 @@ export async function serve(request: Request) {
 					"Access-Control-Allow-Origin": "*",
 				},
 			});
-		} else {
-			/**
-			 * Return an SSR'd HTML page if requested via browser.
-			 */
-			// @ts-ignore
-			global.__webpack_chunk_load__ = async (moduleId) => {
-				const mod = await import(combineUrl(process.cwd(), moduleId));
-				__bun__module_map__.set(moduleId, mod);
-				return mod;
-			};
-			// @ts-ignore
-			global.__webpack_require__ = (moduleId) =>
-				__bun__module_map__.get(moduleId);
+		}
+		/**
+		 * Return an SSR'd HTML page if requested via browser.
+		 */
+		// @ts-ignore
+		global.__webpack_chunk_load__ = async (moduleId) => {
+			const mod = await import(combineUrl(process.cwd(), moduleId));
+			__bun__module_map__.set(moduleId, mod);
+			return mod;
+		};
+		// @ts-ignore
+		global.__webpack_require__ = (moduleId) =>
+			__bun__module_map__.get(moduleId);
 
-			const clientComponentMap = await readMap(ssrClientComponentMapUrl);
+		const clientComponentMap = await readMap(ssrClientComponentMapUrl);
 
-			const rscStream = ReactServerDomServer.renderToReadableStream(
-				Page,
-				clientComponentMap,
-			);
+		const rscStream = ReactServerDomServer.renderToReadableStream(
+			Page,
+			clientComponentMap,
+		);
 
-			const rscComponent =
-				ReactServerDomClient.createFromReadableStream(rscStream);
+		const rscComponent =
+			ReactServerDomClient.createFromReadableStream(rscStream);
 
-			function ClientRoot() {
-				return <Layout>{use(rscComponent)}</Layout>;
-			}
-			// Hack retrieved from Marz "this is a temporary hack to only render a single 'frame'"
-			const abortController = new AbortController();
-			const ssrStream = await ReactDOMServer.renderToReadableStream(
-				<ClientRoot />,
-				{
-					bootstrapModules: ["/dist/client/bun-rsc/src/router.rsc.js"],
-					bootstrapScriptContent: `global = window;
+		function ClientRoot() {
+			return <Layout>{use(rscComponent)}</Layout>;
+		}
+		// Hack retrieved from Marz "this is a temporary hack to only render a single 'frame'"
+		const abortController = new AbortController();
+		const ssrStream = await ReactDOMServer.renderToReadableStream(
+			<ClientRoot />,
+			{
+				bootstrapModules: ["/dist/client/bun-rsc/src/router.rsc.js"],
+				bootstrapScriptContent: `global = window;
               global.__CURRENT_ROUTE__ = "${request.url}";  
 
               const __bun__module_map__ = new Map();
@@ -113,15 +113,14 @@ export async function serve(request: Request) {
                   console.log("require", moduleId)
                   return __bun__module_map__.get(moduleId);
               };`,
-					signal: abortController.signal,
-					onError() {},
-				},
-			);
-			abortController.abort();
-			return new Response(ssrStream, {
-				headers: { "Content-type": "text/html" },
-			});
-		}
+				signal: abortController.signal,
+				onError() {},
+			},
+		);
+		abortController.abort();
+		return new Response(ssrStream, {
+			headers: { "Content-type": "text/html" },
+		});
 	}
 	const { pathname } = new URL(request.url);
 

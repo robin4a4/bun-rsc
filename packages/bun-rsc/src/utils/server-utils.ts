@@ -1,7 +1,7 @@
 import { combineUrl } from "./common-utils";
 
-export const src = process.cwd();
-export const dist = process.cwd() + "/dist";
+export const src = `${process.cwd()}/src`;
+export const dist = `${process.cwd()}/dist`;
 
 export function resolveSrc(path: string) {
 	return combineUrl(src, path);

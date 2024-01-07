@@ -8,7 +8,7 @@ export function Layout({ children }: PropsWithChildren) {
 				<meta httpEquiv="X-UA-Compatible" content="IE=edge" />
 				<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 				<title>Future of React</title>
-				<script src="https://cdn.tailwindcss.com"></script>
+				<script src="https://cdn.tailwindcss.com" />
 			</head>
 			<body>{children}</body>
 		</html>

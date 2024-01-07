@@ -1,12 +1,13 @@
 {
+  "version": "0.0.1",
   "name": "bun-rsc",
   "type": "module",
   "bin": {
-    "bun-rsc": "./dist/cli/cli.js"
+    "bun-rsc": "./dist/cli.js"
   },
   "scripts": {
     "lint": "bunx @biomejs/biome check --apply ./src",
-    "build": "bun run ./build.ts",
+    "build": "bun run ./src/cli/build.ts",
     "release": "bun run build && bunx changeset publish && git push --follow-tags"
   },
   "publishConfig": {
@@ -45,6 +46,7 @@
     "react": "18.3.0-canary-41f0e9dae-20230907",
     "react-dom": "18.3.0-canary-41f0e9dae-20230907",
     "react-server-dom-webpack": "18.3.0-canary-41f0e9dae-20230907",
-    "recursive-readdir": "^2.2.3"
+    "recursive-readdir": "^2.2.3",
+    "ws": "^8.16.0"
   }
 }

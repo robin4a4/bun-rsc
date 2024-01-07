@@ -121,7 +121,7 @@ export async function build() {
 		format: "esm",
 		entrypoints: [
 			...clientEntryPoints,
-			fileURLToPath(new URL("router.tsx", import.meta.url)),
+			fileURLToPath(new URL("../src/router.tsx", import.meta.url)),
 		],
 		target: "browser",
 		sourcemap: "none",
@@ -130,17 +130,25 @@ export async function build() {
 	};
 
 	// Build client components for CSR
-	await Bun.build({
+	const csrResults = await Bun.build({
 		...clientBuildOptions,
 		naming: "[dir]/[name].rsc.[ext]",
 	});
+	console.log("[BUN RSC] CSR build success:", csrResults.success ? "✅" : "❌");
+	if (!csrResults.success) {
+		console.log(csrResults.logs);
+	}
 
 	// Build client components for SSR. React is externalized to avoid duplication and hooks errors at stream generation time.
-	await Bun.build({
+	const ssrResults = await Bun.build({
 		...clientBuildOptions,
 		naming: "[dir]/[name].ssr.[ext]",
 		external: ["react", "react-dom"],
 	});
+	console.log("[BUN RSC] SSR build success:", ssrResults.success ? "✅" : "❌");
+	if (!ssrResults.success) {
+		console.log(ssrResults.logs);
+	}
 
 	// Write the client component maps
 	await writeMap(rscClientComponentMapUrl, rscClientComponentMap);

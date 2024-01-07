@@ -1,11 +1,13 @@
 export function combineUrl(path1: string, path2: string) {
+	let firstPath = path1;
+	let secondPath = path2;
 	if (path1.endsWith("/")) {
-		path1 = path1.substring(0, path1.length - 1);
+		firstPath = path1.substring(0, path1.length - 1);
 	}
 	if (path2.startsWith("/")) {
-		path2 = path2.substring(1);
+		secondPath = path2.substring(1);
 	}
-	return path1 + "/" + path2;
+	return `${firstPath}/${secondPath}`;
 }
 
 export const refreshPort = 21717;

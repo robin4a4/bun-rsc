@@ -1,3 +1,5 @@
+#!/usr/bin/env bun
+import packageJson from "../../package.json";
 import fs from "node:fs";
 import { cac } from "cac";
 import { build } from "../build";
@@ -10,6 +12,7 @@ const port = 3000;
 
 // Dev server
 cli.command("dev").action(async () => {
+	console.log("[BUN RSC] Starting dev server");
 	try {
 		const sockets = createWebSocketServer();
 		await build();
@@ -31,6 +34,7 @@ cli.command("dev").action(async () => {
 
 // Build command
 cli.command("build").action(async () => {
+	console.log("[BUN RSC] Building your app");
 	await build();
 });
 
@@ -41,5 +45,9 @@ cli.command("serve").action(async () => {
 		fetch: serve,
 	});
 
-	console.log(`Listening on ${server.port}`);
+	console.log(`[BUN RSC] Listening on ${server.port}`);
 });
+
+cli.help();
+cli.version(packageJson.version);
+cli.parse();

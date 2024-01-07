@@ -13,14 +13,14 @@ const queryParam = new URLSearchParams({
 });
 function Router() {
 	const [url, setUrl] = useState(
-		window.location.href + "?" + queryParam.toString(),
+		`${window.location.href}?${queryParam.toString()}`,
 	);
 
 	useEffect(() => {
 		function navigate(url: string) {
 			startTransition(() => {
 				setUrl(
-					combineUrl(window.location.origin, url) + "?" + queryParam.toString(),
+					`${combineUrl(window.location.origin, url)}?${queryParam.toString()}`,
 				);
 			});
 		}
