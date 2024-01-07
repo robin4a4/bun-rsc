@@ -65,7 +65,7 @@ function Router() {
 	}, []);
 
 	return (
-		<Layout>
+		<Layout manifest={JSON.parse(window.__MANIFEST_STRING__)}>
 			<ServerOutput url={url} />
 		</Layout>
 	);

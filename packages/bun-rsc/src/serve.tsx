@@ -8,6 +8,7 @@ import * as ReactServerDomServer from "react-server-dom-webpack/server.browser";
 import {
 	readMap,
 	resolveClientDist,
+	resolveDist,
 	resolveServerFileFromFilePath,
 	resolveSrc,
 	rscClientComponentMapUrl,
@@ -23,6 +24,9 @@ const router = new Bun.FileSystemRouter({
 	style: "nextjs",
 	dir: resolveSrc("views"),
 });
+
+const manifestString = await Bun.file(resolveDist("manifest.json")).text();
+const manifest = JSON.parse(manifestString);
 
 export async function serve(request: Request) {
 	const match = router.match(request.url);
@@ -89,7 +93,7 @@ export async function serve(request: Request) {
 			ReactServerDomClient.createFromReadableStream(rscStream);
 
 		function ClientRoot() {
-			return <Layout>{use(rscComponent)}</Layout>;
+			return <Layout manifest={manifest}>{use(rscComponent)}</Layout>;
 		}
 		// Hack retrieved from Marz "this is a temporary hack to only render a single 'frame'"
 		const abortController = new AbortController();
@@ -99,7 +103,7 @@ export async function serve(request: Request) {
 				bootstrapModules: ["/dist/client/bun-rsc/src/router.rsc.js"],
 				bootstrapScriptContent: `global = window;
               global.__CURRENT_ROUTE__ = "${request.url}";  
-
+				global.__MANIFEST_STRING__ = ${JSON.stringify(manifestString)};
               const __bun__module_map__ = new Map();
   
               global.__webpack_chunk_load__ = async function(moduleId) {
@@ -109,8 +113,6 @@ export async function serve(request: Request) {
               };
       
               global.__webpack_require__ = function(moduleId) {
-                  // TODO: handle non-default exports
-                  console.log("require", moduleId)
                   return __bun__module_map__.get(moduleId);
               };`,
 				signal: abortController.signal,
@@ -124,12 +126,12 @@ export async function serve(request: Request) {
 	}
 	const { pathname } = new URL(request.url);
 
-	if (pathname.startsWith("/dist/client")) {
-		const filePath = pathname.replace("/dist/client/", "");
-		const contents = Bun.file(resolveClientDist(filePath));
+	if (pathname.startsWith("/dist")) {
+		const filePath = pathname.replace("/dist", "");
+		const contents = Bun.file(resolveDist(filePath));
 		return new Response(contents, {
 			headers: {
-				"Content-Type": "application/javascript",
+				"Content-Type": contents.type,
 			},
 		});
 	}
