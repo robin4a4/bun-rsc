@@ -42,7 +42,7 @@
     "@types/recursive-readdir": "^2.2.4",
     "arg": "^5.0.2",
     "cac": "^6.7.14",
-    "postcss": "^8.4.30",
+    "postcss": "^8.4.33",
     "react": "18.3.0-canary-41f0e9dae-20230907",
     "react-dom": "18.3.0-canary-41f0e9dae-20230907",
     "react-server-dom-webpack": "18.3.0-canary-41f0e9dae-20230907",
