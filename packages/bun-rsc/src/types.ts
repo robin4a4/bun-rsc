@@ -1,7 +1,7 @@
 export type ClientEntry = {
-    id: string;
-    chunks: string[];
-    name: string;
-}
+	id: string;
+	chunks: string[];
+	name: string;
+};
 
-export type SsrTranslationEntry = Record<string, ClientEntry>
+export type SsrTranslationEntry = Record<string, ClientEntry>;
