@@ -1,5 +1,5 @@
 import { WebSocketServer } from "ws";
-import { refreshPort } from "./utils/common-utils";
+import { refreshPort } from "./const";
 
 export function createWebSocketServer() {
 	const wsServer = new WebSocketServer({

@@ -5,8 +5,11 @@ import { hydrateRoot } from "react-dom/client";
 import { createFromFetch } from "react-server-dom-webpack/client";
 import { Layout } from "./components/Layout";
 import { combineUrl } from "./utils/common-utils";
+import { clientLiveReload } from "./ws/client";
 
 hydrateRoot(document, <Router />);
+
+clientLiveReload();
 
 const queryParam = new URLSearchParams({
 	ajaxRSC: "true",

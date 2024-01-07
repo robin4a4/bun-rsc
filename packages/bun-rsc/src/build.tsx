@@ -134,8 +134,8 @@ export async function build() {
 		...clientBuildOptions,
 		naming: "[dir]/[name].rsc.[ext]",
 	});
-	console.log("[BUN RSC] CSR build success:", csrResults.success ? "✅" : "❌");
 	if (!csrResults.success) {
+		console.log("[BUN RSC] CSR build success: ❌");
 		console.log(csrResults.logs);
 	}
 
@@ -145,8 +145,8 @@ export async function build() {
 		naming: "[dir]/[name].ssr.[ext]",
 		external: ["react", "react-dom"],
 	});
-	console.log("[BUN RSC] SSR build success:", ssrResults.success ? "✅" : "❌");
 	if (!ssrResults.success) {
+		console.log("[BUN RSC] SSR build success: ❌");
 		console.log(ssrResults.logs);
 	}
 

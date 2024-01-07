@@ -1,10 +1,10 @@
 #!/usr/bin/env bun
-import packageJson from "../../package.json";
 import fs from "node:fs";
 import { cac } from "cac";
+import packageJson from "../../package.json";
 import { build } from "../build";
 import { serve } from "../serve";
-import { createWebSocketServer } from "../ws-server";
+import { createWebSocketServer } from "../ws/server";
 
 const cli = cac("bun-rsc");
 

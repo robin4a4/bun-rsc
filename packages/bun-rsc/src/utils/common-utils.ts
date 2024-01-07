@@ -9,5 +9,3 @@ export function combineUrl(path1: string, path2: string) {
 	}
 	return `${firstPath}/${secondPath}`;
 }
-
-export const refreshPort = 21717;
