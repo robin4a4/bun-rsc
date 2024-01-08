@@ -3,3 +3,5 @@ export type ClientEntry = {
     chunks: string[];
     name: string;
 }
+
+export type SsrTranslationEntry = Record<string, ClientEntry>
