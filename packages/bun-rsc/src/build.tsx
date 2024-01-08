@@ -111,6 +111,12 @@ export async function build() {
 		outdir: serverDist,
 		plugins: serverBuildPlugins,
 	});
+	if (!serverBuildResult.success) {
+		console.log("[BUN RSC] Server build success: ❌");
+		console.log(serverBuildResult.logs);
+	}
+
+
 
 	async function parseCSS(files: BuildArtifact[]) {
 		const cssFiles = files.filter((f) => f.path.endsWith(".css"));

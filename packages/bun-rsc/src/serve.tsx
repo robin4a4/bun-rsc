@@ -25,11 +25,16 @@ const router = new Bun.FileSystemRouter({
 	dir: resolveSrc("views"),
 });
 
-const manifestString = await Bun.file(resolveDist("manifest.json")).text();
-const manifest = JSON.parse(manifestString);
-
 export async function serve(request: Request) {
 	const match = router.match(request.url);
+	let manifestString = "";
+	let manifest: Array<string> = []
+	try {
+		manifestString = await Bun.file(resolveDist("manifest.json")).text();
+		manifest = JSON.parse(manifestString);
+	} catch(e) {
+		console.log("No manifest found.")
+	}
 	if (match) {
 		const searchParams = new URLSearchParams(match.query);
 

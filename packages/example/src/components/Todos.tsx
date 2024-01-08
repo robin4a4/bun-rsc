@@ -4,7 +4,7 @@ export async function Todos() {
     const data = await fetch("https://jsonplaceholder.typicode.com/todos").then(res => res.json());
     return (<>
             {data.map((todo: any) => {
-                return <p>{todo.title}</p>
+                return <p className="text-yellow-500">{todo.title}</p>
             })}
         </>
     )
