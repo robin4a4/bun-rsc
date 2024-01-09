@@ -118,13 +118,14 @@ export async function build() {
 						const moduleExports = TSTranspiler.scan(code).exports;
 						let refCode = "";
 						for (const exp of moduleExports) {
-							const id =
-								exp === "default"
-									? `${outputKey}#default`
-									: `${outputKey}#${exp}`;
-							refCode += `export${exp === "default" ? " default " : " "}const ${
-								exp === "default" ? "default" : exp
-							} = ${ReactServerDomClient.createServerReference(id)}`;
+							let id;
+							if (exp === "default") {
+								id = `${outputKey}#default`;
+								refCode += `\nexport default { $$typeof: Symbol.for("react.server.reference"), $$async: false, $$id: "${id}", name: "default" }`;
+							} else {
+								id = `${outputKey}#${exp}`;
+								refCode += `\nexport const ${exp} = { $$typeof: Symbol.for("react.server.reference"), $$async: false, $$id: "${id}", name: "${exp}" }`;
+							}
 							const chunkId = outputKey
 								.replace(".tsx", ".js")
 								.replace(".ts", ".js");
@@ -135,7 +136,7 @@ export async function build() {
 								name: exp,
 							};
 						}
-						console.log(refCode, serverActionMap);
+
 						return {
 							contents: refCode,
 							loader: "js",
