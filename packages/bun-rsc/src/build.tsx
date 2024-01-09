@@ -121,9 +121,9 @@ export async function build() {
 								exp === "default"
 									? `${outputKey}#default`
 									: `${outputKey}#${exp}`;
-							refCode += `export${exp === "default" ? " default " : " "}const ${
-								exp === "default" ? "default" : exp
-							} = ${ReactServerDomServer.registerServerReference({}, outputKey, exp)}`;
+							// refCode += `export${exp === "default" ? " default " : " "}const ${
+							// 	exp === "default" ? "default" : exp
+							// } = ${ReactServerDomServer.registerServerReference({}, outputKey, exp)}`;
 							const chunkId = outputKey
 								.replace(".tsx", ".js")
 								.replace(".ts", ".js");
