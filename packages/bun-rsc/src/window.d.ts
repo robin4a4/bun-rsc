@@ -3,3 +3,5 @@ declare global {
     __MANIFEST_STRING__: string;
   }
 }
+
+export {};

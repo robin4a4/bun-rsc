@@ -19,5 +19,8 @@
       "bun-types", // add Bun global
       "web"
     ]
-  }
+  },
+  "include": [
+    "src/"
+  ]
 }

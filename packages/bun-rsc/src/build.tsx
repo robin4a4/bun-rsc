@@ -6,20 +6,28 @@ import recursive from "recursive-readdir";
 import { ClientEntry } from "./types.js";
 import { combineUrl } from "./utils/common-utils.js";
 import {
+	resolveClientDist,
 	resolveDist,
-	resolveRoot,
+	resolveRoot, resolveServerDist,
 	resolveSrc,
-	rscClientComponentMapUrl,
+	rscClientComponentMapUrl, serverActionMapUrl,
 	ssrClientComponentMapUrl,
 	writeMap,
 } from "./utils/server-utils.js";
+// @ts-ignore
+import * as ReactServerDomClient from "react-server-dom-webpack/client";
 
-const transpiler = new Bun.Transpiler({ loader: "tsx" });
+const TSXTranspiler = new Bun.Transpiler({ loader: "tsx" });
+const TSTranspiler = new Bun.Transpiler({ loader: "ts" });
 
-const clientDist = resolveDist("client");
+const clientDist = resolveClientDist()
 
-function isClientComponent(code: string) {
+function isClientComponentModule(code: string) {
 	return code.startsWith('"use client"') || code.startsWith("'use client'");
+}
+
+function isServerActionModule(code: string) {
+	return code.startsWith('"use server"') || code.startsWith("'use server'");
 }
 
 /**
@@ -28,8 +36,10 @@ function isClientComponent(code: string) {
 export async function build() {
 	const rscClientComponentMap: Record<string, ClientEntry> = {};
 	const ssrClientComponentMap: Record<string, ClientEntry> = {};
+	const serverActionMap: Record<string, ClientEntry> = {};
 
 	const clientEntryPoints = new Set<string>();
+	const serverEntryPoints = new Set<string>();
 
 	console.log("💿 Building server components");
 	const serverDist = resolveDist("server/");
@@ -38,65 +48,88 @@ export async function build() {
 	}
 
 	// Build server components
-	const entrypoints = await recursive(resolveSrc("views"));
+	const entrypoints = await recursive(resolveSrc("pages"));
 
 	const serverBuildPlugins: BunPlugin[] = [
 		{
-			name: "build-server-components",
+			name: "build-client-components-and-server-actions",
 			setup(build) {
 				build.onLoad({ filter: /\.(ts|tsx)$/ }, async ({ path }) => {
 					const code = await Bun.file(path).text();
-					if (!isClientComponent(code)) {
-						// if not a client component, just return the code and let it be bundled
-						return {
-							contents: code,
-							loader: "tsx",
-						};
-					}
-					clientEntryPoints.add(path);
-
-					// if it is a client component, return a reference to the client bundle
 					const root = process.cwd();
 					const srcSplit = root.split("/");
 					const currentDirectoryName = combineUrl(
 						srcSplit[srcSplit.length - 1],
 						path.replace(root, ""),
 					);
-					const outputKey = combineUrl("/dist/client", currentDirectoryName);
+					if (isClientComponentModule(code)) {
+						// if it is a client component, return a reference to the client bundle
+						clientEntryPoints.add(path);
 
-					const moduleExports = transpiler.scan(code).exports;
-					let refCode = "";
-					for (const exp of moduleExports) {
-						let id = null;
-						if (exp === "default") {
-							id = `${outputKey}#default`;
-							refCode += `\nexport default { $$typeof: Symbol.for("react.client.reference"), $$async: false, $$id: "${id}", name: "default" }`;
-						} else {
-							id = `${outputKey}#${exp}`;
-							refCode += `\nexport const ${exp} = { $$typeof: Symbol.for("react.client.reference"), $$async: false, $$id: "${id}", name: "${exp}" }`;
+						const outputKey = resolveClientDist(currentDirectoryName)
+
+						const moduleExports = TSXTranspiler.scan(code).exports;
+						let refCode = "";
+						for (const exp of moduleExports) {
+							let id = null;
+							if (exp === "default") {
+								id = `${outputKey}#default`;
+								refCode += `\nexport default { $$typeof: Symbol.for("react.client.reference"), $$async: false, $$id: "${id}", name: "default" }`;
+							} else {
+								id = `${outputKey}#${exp}`;
+								refCode += `\nexport const ${exp} = { $$typeof: Symbol.for("react.client.reference"), $$async: false, $$id: "${id}", name: "${exp}" }`;
+							}
+							const rscChunkId = outputKey
+								.replace(".tsx", ".rsc.js")
+								.replace(".ts", ".rsc.js");
+							rscClientComponentMap[id] = {
+								id: rscChunkId,
+								chunks: [rscChunkId],
+								name: exp,
+							};
+							const ssrChunkId = outputKey
+								.replace(".tsx", ".ssr.js")
+								.replace(".ts", ".ssr.js");
+							ssrClientComponentMap[id] = {
+								id: ssrChunkId,
+								chunks: [ssrChunkId],
+								name: exp,
+							};
 						}
-						const rscChunkId = outputKey
-							.replace(".tsx", ".rsc.js")
-							.replace(".ts", ".rsc.js");
-						rscClientComponentMap[id] = {
-							id: rscChunkId,
-							chunks: [rscChunkId],
-							name: exp,
+
+						return {
+							contents: refCode,
+							loader: "js",
 						};
-						const ssrChunkId = outputKey
-							.replace(".tsx", ".ssr.js")
-							.replace(".ts", ".ssr.js");
-						ssrClientComponentMap[id] = {
-							id: ssrChunkId,
-							chunks: [ssrChunkId],
-							name: exp,
+					} else if (isServerActionModule(code)) {
+						serverEntryPoints.add(path);
+
+						const outputKey = resolveServerDist(currentDirectoryName);
+						const moduleExports = TSTranspiler.scan(code).exports;
+
+						let refCode = "";
+						for (const exp of moduleExports) {
+							const id = exp === "default" ? `${outputKey}#default` : `${outputKey}#${exp}`;
+							refCode += ReactServerDomClient.createServerReference(id);
+							const chunkId = outputKey
+								.replace(".tsx", ".js")
+								.replace(".ts", ".js");
+
+							serverActionMap[id] = {
+								id: chunkId,
+								chunks: [chunkId],
+								name: exp,
+							};
+						}
+						return {
+							contents: refCode,
+							loader: "js",
 						};
 					}
-
 					return {
-						contents: refCode,
-						loader: "js",
-					};
+							contents: code,
+							loader: "tsx",
+						};
 				});
 			},
 		},
@@ -193,4 +226,5 @@ export async function build() {
 	// Write the client component maps
 	await writeMap(rscClientComponentMapUrl, rscClientComponentMap);
 	await writeMap(ssrClientComponentMapUrl, ssrClientComponentMap);
+	await writeMap(serverActionMapUrl, serverActionMap);
 }

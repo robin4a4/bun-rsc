@@ -22,7 +22,7 @@ const __bun__module_map__ = new Map();
 
 const router = new Bun.FileSystemRouter({
 	style: "nextjs",
-	dir: resolveSrc("views"),
+	dir: resolveSrc("pages"),
 });
 
 export async function serve(request: Request) {
