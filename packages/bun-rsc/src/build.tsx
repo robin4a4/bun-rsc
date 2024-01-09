@@ -6,11 +6,14 @@ import recursive from "recursive-readdir";
 import { ClientEntry } from "./types.js";
 import { combineUrl } from "./utils/common-utils.js";
 import {
+	bunBuildDirectory,
 	resolveClientDist,
 	resolveDist,
-	resolveRoot, resolveServerDist,
+	resolveRoot,
+	resolveServerDist,
 	resolveSrc,
-	rscClientComponentMapUrl, serverActionMapUrl,
+	rscClientComponentMapUrl,
+	serverActionMapUrl,
 	ssrClientComponentMapUrl,
 	writeMap,
 } from "./utils/server-utils.js";
@@ -20,7 +23,7 @@ import * as ReactServerDomClient from "react-server-dom-webpack/client";
 const TSXTranspiler = new Bun.Transpiler({ loader: "tsx" });
 const TSTranspiler = new Bun.Transpiler({ loader: "ts" });
 
-const clientDist = resolveClientDist()
+const clientDist = resolveClientDist();
 
 function isClientComponentModule(code: string) {
 	return code.startsWith('"use client"') || code.startsWith("'use client'");
@@ -39,7 +42,7 @@ export async function build() {
 	const serverActionMap: Record<string, ClientEntry> = {};
 
 	const clientEntryPoints = new Set<string>();
-	const serverEntryPoints = new Set<string>();
+	const serverActionEntryPoints = new Set<string>();
 
 	console.log("💿 Building server components");
 	const serverDist = resolveDist("server/");
@@ -66,7 +69,10 @@ export async function build() {
 						// if it is a client component, return a reference to the client bundle
 						clientEntryPoints.add(path);
 
-						const outputKey = resolveClientDist(currentDirectoryName)
+						const outputKey = combineUrl(
+							`/${bunBuildDirectory}/client`,
+							currentDirectoryName,
+						);
 
 						const moduleExports = TSXTranspiler.scan(code).exports;
 						let refCode = "";
@@ -101,16 +107,24 @@ export async function build() {
 							contents: refCode,
 							loader: "js",
 						};
-					} else if (isServerActionModule(code)) {
-						serverEntryPoints.add(path);
+					}
+					if (isServerActionModule(code)) {
+						serverActionEntryPoints.add(path);
 
-						const outputKey = resolveServerDist(currentDirectoryName);
+						const outputKey = combineUrl(
+							`/${bunBuildDirectory}/server`,
+							currentDirectoryName,
+						);
 						const moduleExports = TSTranspiler.scan(code).exports;
-
 						let refCode = "";
 						for (const exp of moduleExports) {
-							const id = exp === "default" ? `${outputKey}#default` : `${outputKey}#${exp}`;
-							refCode += ReactServerDomClient.createServerReference(id);
+							const id =
+								exp === "default"
+									? `${outputKey}#default`
+									: `${outputKey}#${exp}`;
+							refCode += `export${exp === "default" ? " default " : " "}const ${
+								exp === "default" ? "default" : exp
+							} = ${ReactServerDomClient.createServerReference(id)}`;
 							const chunkId = outputKey
 								.replace(".tsx", ".js")
 								.replace(".ts", ".js");
@@ -121,15 +135,18 @@ export async function build() {
 								name: exp,
 							};
 						}
+						console.log(refCode, serverActionMap);
 						return {
 							contents: refCode,
 							loader: "js",
 						};
 					}
+
+					// If not a client component, return the original code
 					return {
-							contents: code,
-							loader: "tsx",
-						};
+						contents: code,
+						loader: "tsx",
+					};
 				});
 			},
 		},
@@ -149,41 +166,25 @@ export async function build() {
 		console.log(serverBuildResult.logs);
 	}
 
-
-
-	async function parseCSS(files: BuildArtifact[]) {
-		const cssFiles = files.filter((f) => f.path.endsWith(".css"));
-		const manifest: Array<String> = []
-		try {
-			const postcssConfig = await import(resolveRoot("postcss.config.js"));
-			const postcssConfigPlugins = Object.entries(postcssConfig.plugins).map(
-				([name, options]) => {
-					const plugin = require(name);
-					return plugin(options);
-				},
-			);
-			for (const f of cssFiles) {
-				const rawCSS = await Bun.file(f.path).text();
-				const result = await postcss(postcssConfigPlugins).process(rawCSS, {
-					from: f.path,
-				});
-				await Bun.write(f.path, result.css)
-				const fileName = f.path.replace(resolveRoot(""), "/")
-				manifest.push(fileName)
-			}
-			await Bun.write(resolveDist("manifest.json"), JSON.stringify(manifest))
-		} catch (e) {
-			console.log(e);
-		}
-	}
-
-	/**
-	 * Parse CSS files with postcss
-	 */
-	parseCSS(serverBuildResult.outputs)
-
 	if (!fs.existsSync(clientDist)) {
 		await fs.promises.mkdir(clientDist, { recursive: true });
+	}
+
+	if (clientEntryPoints.size > 0) {
+		console.log("💪 Building server actions");
+	}
+
+	const serverActionResults = await Bun.build({
+		format: "esm",
+		entrypoints: [...serverActionEntryPoints],
+		target: "browser",
+		sourcemap: "none",
+		splitting: true,
+		outdir: serverDist,
+	});
+	if (!serverActionResults.success) {
+		console.log("[BUN RSC] Server actions build success: ❌");
+		console.log(serverActionResults.logs);
 	}
 
 	if (clientEntryPoints.size > 0) {
@@ -227,4 +228,35 @@ export async function build() {
 	await writeMap(rscClientComponentMapUrl, rscClientComponentMap);
 	await writeMap(ssrClientComponentMapUrl, ssrClientComponentMap);
 	await writeMap(serverActionMapUrl, serverActionMap);
+
+	/**
+	 * Parse CSS files with postcss
+	 */
+	async function parseCSS(files: BuildArtifact[]) {
+		const cssFiles = files.filter((f) => f.path.endsWith(".css"));
+		const manifest: Array<string> = [];
+		try {
+			const postcssConfig = await import(resolveRoot("postcss.config.js"));
+			const postcssConfigPlugins = Object.entries(postcssConfig.plugins).map(
+				([name, options]) => {
+					const plugin = require(name);
+					return plugin(options);
+				},
+			);
+			for (const f of cssFiles) {
+				const rawCSS = await Bun.file(f.path).text();
+				const result = await postcss(postcssConfigPlugins).process(rawCSS, {
+					from: f.path,
+				});
+				await Bun.write(f.path, result.css);
+				const fileName = f.path.replace(resolveRoot(""), "/");
+				manifest.push(fileName);
+			}
+			await Bun.write(resolveDist("manifest.json"), JSON.stringify(manifest));
+		} catch (e) {
+			console.log(e);
+		}
+	}
+
+	parseCSS(serverBuildResult.outputs);
 }

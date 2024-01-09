@@ -3,6 +3,7 @@ import { combineUrl } from "./common-utils";
 export const root = process.cwd();
 export const src = `${process.cwd()}/src`;
 export const dist = `${process.cwd()}/__BUN_RSC`;
+export const bunBuildDirectory = "__BUN_RSC";
 
 export function resolveRoot(path: string) {
 	return combineUrl(root, path);
@@ -39,9 +40,7 @@ export const ssrClientComponentMapUrl = resolveDist(
 	"clientComponentMap.ssr.json",
 );
 
-export const serverActionMapUrl = resolveDist(
-	"serverActionMap.json",
-);
+export const serverActionMapUrl = resolveDist("serverActionMap.json");
 export const ssrTranslationMapUrl = resolveDist("ssrTranslationMap.json");
 
 export async function writeMap(mapUrl: string, bundleMap: Record<string, any>) {

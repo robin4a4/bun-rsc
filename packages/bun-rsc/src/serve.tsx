@@ -6,6 +6,7 @@ import * as ReactServerDomClient from "react-server-dom-webpack/client";
 // @ts-ignore
 import * as ReactServerDomServer from "react-server-dom-webpack/server.browser";
 import {
+	bunBuildDirectory,
 	readMap,
 	resolveClientDist,
 	resolveDist,
@@ -28,12 +29,12 @@ const router = new Bun.FileSystemRouter({
 export async function serve(request: Request) {
 	const match = router.match(request.url);
 	let manifestString = "";
-	let manifest: Array<string> = []
+	let manifest: Array<string> = [];
 	try {
 		manifestString = await Bun.file(resolveDist("manifest.json")).text();
 		manifest = JSON.parse(manifestString);
-	} catch(e) {
-		console.log("No manifest found.")
+	} catch (e) {
+		console.log("No manifest found.");
 	}
 	if (match) {
 		const searchParams = new URLSearchParams(match.query);
@@ -105,7 +106,9 @@ export async function serve(request: Request) {
 		const ssrStream = await ReactDOMServer.renderToReadableStream(
 			<ClientRoot />,
 			{
-				bootstrapModules: ["/dist/client/bun-rsc/src/router.rsc.js"],
+				bootstrapModules: [
+					`/${bunBuildDirectory}/client/bun-rsc/src/router.rsc.js`,
+				],
 				bootstrapScriptContent: `global = window;
               global.__CURRENT_ROUTE__ = "${request.url}";  
 				global.__MANIFEST_STRING__ = ${JSON.stringify(manifestString)};
@@ -131,8 +134,8 @@ export async function serve(request: Request) {
 	}
 	const { pathname } = new URL(request.url);
 
-	if (pathname.startsWith("/dist")) {
-		const filePath = pathname.replace("/dist", "");
+	if (pathname.startsWith(`/${bunBuildDirectory}`)) {
+		const filePath = pathname.replace(`/${bunBuildDirectory}`, "");
 		const contents = Bun.file(resolveDist(filePath));
 		return new Response(contents, {
 			headers: {
