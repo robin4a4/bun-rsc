@@ -10,7 +10,6 @@ import {
 	resolveClientDist,
 	resolveDist,
 	resolveRoot,
-	resolveServerDist,
 	resolveSrc,
 	rscClientComponentMapUrl,
 	serverActionMapUrl,
@@ -18,7 +17,7 @@ import {
 	writeMap,
 } from "./utils/server-utils.js";
 // @ts-ignore
-import * as ReactServerDomClient from "react-server-dom-webpack/client";
+import * as ReactServerDomServer from "react-server-dom-webpack/server.browser";
 
 const TSXTranspiler = new Bun.Transpiler({ loader: "tsx" });
 const TSTranspiler = new Bun.Transpiler({ loader: "ts" });
@@ -118,14 +117,13 @@ export async function build() {
 						const moduleExports = TSTranspiler.scan(code).exports;
 						let refCode = "";
 						for (const exp of moduleExports) {
-							let id;
-							if (exp === "default") {
-								id = `${outputKey}#default`;
-								refCode += `\nexport default { $$typeof: Symbol.for("react.server.reference"), $$async: false, $$id: "${id}", name: "default" }`;
-							} else {
-								id = `${outputKey}#${exp}`;
-								refCode += `\nexport const ${exp} = { $$typeof: Symbol.for("react.server.reference"), $$async: false, $$id: "${id}", name: "${exp}" }`;
-							}
+							const id =
+								exp === "default"
+									? `${outputKey}#default`
+									: `${outputKey}#${exp}`;
+							refCode += `export${exp === "default" ? " default " : " "}const ${
+								exp === "default" ? "default" : exp
+							} = ${ReactServerDomServer.registerServerReference({}, outputKey, exp)}`;
 							const chunkId = outputKey
 								.replace(".tsx", ".js")
 								.replace(".ts", ".js");
@@ -136,7 +134,7 @@ export async function build() {
 								name: exp,
 							};
 						}
-
+						console.log(refCode, serverActionMap);
 						return {
 							contents: refCode,
 							loader: "js",

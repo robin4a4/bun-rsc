@@ -6,7 +6,7 @@ const results = await Bun.build({
 	splitting: true,
 });
 
-console.log("[BUN RSC] CSR build success:", results.success ? "✅" : "❌");
+console.log("[BUN RSC] BUN RSC build success:", results.success ? "✅" : "❌");
 if (!results.success) {
 	console.log(results.logs);
 }
