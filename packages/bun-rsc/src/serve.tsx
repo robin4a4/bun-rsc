@@ -6,9 +6,9 @@ import * as ReactServerDomClient from "react-server-dom-webpack/client";
 // @ts-ignore
 import * as ReactServerDomServer from "react-server-dom-webpack/server.browser";
 import {
-	bunBuildDirectory,
+	BUN_RSC_SPECIFIC_KEYWORD,
+	RSC_CONTENT_TYPE,
 	readMap,
-	resolveClientDist,
 	resolveDist,
 	resolveServerFileFromFilePath,
 	resolveSrc,
@@ -70,7 +70,7 @@ export async function serve(request: Request) {
 			return new Response(rscStream, {
 				// "Content-type" based on https://github.com/facebook/react/blob/main/fixtures/flight/server/global.js#L159
 				headers: {
-					"Content-type": "text/x-component",
+					"Content-type": RSC_CONTENT_TYPE,
 					"Access-Control-Allow-Origin": "*",
 				},
 			});
@@ -107,7 +107,7 @@ export async function serve(request: Request) {
 			<ClientRoot />,
 			{
 				bootstrapModules: [
-					`/${bunBuildDirectory}/client/bun-rsc/src/router.rsc.js`,
+					`/${BUN_RSC_SPECIFIC_KEYWORD}/client/bun-rsc/src/router.rsc.js`,
 				],
 				bootstrapScriptContent: `global = window;
               global.__CURRENT_ROUTE__ = "${request.url}";  
@@ -134,8 +134,8 @@ export async function serve(request: Request) {
 	}
 	const { pathname } = new URL(request.url);
 
-	if (pathname.startsWith(`/${bunBuildDirectory}`)) {
-		const filePath = pathname.replace(`/${bunBuildDirectory}`, "");
+	if (pathname.startsWith(`/${BUN_RSC_SPECIFIC_KEYWORD}`)) {
+		const filePath = pathname.replace(`/${BUN_RSC_SPECIFIC_KEYWORD}`, "");
 		const contents = Bun.file(resolveDist(filePath));
 		return new Response(contents, {
 			headers: {

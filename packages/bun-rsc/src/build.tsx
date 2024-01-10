@@ -6,7 +6,8 @@ import recursive from "recursive-readdir";
 import { ClientEntry } from "./types.js";
 import { combineUrl } from "./utils/common-utils.js";
 import {
-	bunBuildDirectory,
+	BUN_RSC_SPECIFIC_KEYWORD,
+	callServer,
 	resolveClientDist,
 	resolveDist,
 	resolveRoot,
@@ -16,6 +17,7 @@ import {
 	ssrClientComponentMapUrl,
 	writeMap,
 } from "./utils/server-utils.js";
+import * as ReactServerDomClient from "react-server-dom-webpack/client";
 
 const TSXTranspiler = new Bun.Transpiler({ loader: "tsx" });
 const TSTranspiler = new Bun.Transpiler({ loader: "ts" });
@@ -67,7 +69,7 @@ export async function build() {
 						clientEntryPoints.add(path);
 
 						const outputKey = combineUrl(
-							`/${bunBuildDirectory}/client`,
+							`/${BUN_RSC_SPECIFIC_KEYWORD}/client`,
 							currentDirectoryName,
 						);
 
@@ -109,18 +111,27 @@ export async function build() {
 						serverActionEntryPoints.add(path);
 
 						const outputKey = combineUrl(
-							`/${bunBuildDirectory}/server`,
+							`/${BUN_RSC_SPECIFIC_KEYWORD}/server`,
 							currentDirectoryName,
 						);
 						const moduleExports = TSTranspiler.scan(code).exports;
-						let refCode = "import * as ReactServerDomClient from 'react-server-dom-webpack/client'\n";
+
+						const createServerActionProxy = (id: string) => {
+							// See: https://github.com/facebook/react/pull/26632
+							return ReactServerDomClient.createServerReference(id, callServer);
+						};
+
+						let refCode =
+							"import * as ReactServerDomClient from 'react-server-dom-webpack/client'\n";
 						for (const exp of moduleExports) {
 							const id =
 								exp === "default"
 									? `${outputKey}#default`
 									: `${outputKey}#${exp}`;
 							refCode += `
-							export${exp === "default" ? " default " : " "}const ${exp} = ReactServerDomClient.createServerReference("${id}")
+							export${
+								exp === "default" ? " default " : " "
+							}const ${exp} = ReactServerDomClient.createServerReference("${id}")
 							${exp}.$$typeof = Symbol.for("react.server.reference")
 							`;
 							const chunkId = outputKey
