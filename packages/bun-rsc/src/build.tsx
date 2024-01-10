@@ -16,8 +16,6 @@ import {
 	ssrClientComponentMapUrl,
 	writeMap,
 } from "./utils/server-utils.js";
-// @ts-ignore
-import * as ReactServerDomServer from "react-server-dom-webpack/server.browser";
 
 const TSXTranspiler = new Bun.Transpiler({ loader: "tsx" });
 const TSTranspiler = new Bun.Transpiler({ loader: "ts" });
@@ -115,15 +113,16 @@ export async function build() {
 							currentDirectoryName,
 						);
 						const moduleExports = TSTranspiler.scan(code).exports;
-						let refCode = "";
+						let refCode = "import * as ReactServerDomClient from 'react-server-dom-webpack/client'\n";
 						for (const exp of moduleExports) {
 							const id =
 								exp === "default"
 									? `${outputKey}#default`
 									: `${outputKey}#${exp}`;
-							// refCode += `export${exp === "default" ? " default " : " "}const ${
-							// 	exp === "default" ? "default" : exp
-							// } = ${ReactServerDomServer.registerServerReference({}, outputKey, exp)}`;
+							refCode += `
+							export${exp === "default" ? " default " : " "}const ${exp} = ReactServerDomClient.createServerReference("${id}")
+							${exp}.$$typeof = Symbol.for("react.server.reference")
+							`;
 							const chunkId = outputKey
 								.replace(".tsx", ".js")
 								.replace(".ts", ".js");
