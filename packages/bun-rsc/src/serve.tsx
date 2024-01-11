@@ -91,7 +91,7 @@ export async function serve(request: Request) {
 		const pageMeta: Meta = PageModule.meta;
 
 		// Render the Page component and send the query params as props.
-		const Page = createElement(PageComponent, Object.fromEntries(searchParams));
+		const Page = <Layout meta={pageMeta} manifest={manifest}>{createElement(PageComponent, Object.fromEntries(searchParams))}</Layout>;
 
 		/**
 		 * Return server component directly if requested via AJAX.
