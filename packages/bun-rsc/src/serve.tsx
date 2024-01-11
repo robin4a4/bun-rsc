@@ -1,5 +1,5 @@
 // @ts-ignore
-import { createElement, use } from "react";
+import {createElement, ReactNode, use} from "react";
 import ReactDOMServer from "react-dom/server";
 // @ts-ignore
 import * as ReactServerDomClient from "react-server-dom-webpack/client";
@@ -65,6 +65,8 @@ export async function serve(request: Request) {
 	}
 	if (match) {
 		const searchParams = new URLSearchParams(match.query);
+		const params = match.params
+
 		if (middleware) {
 			const middlewareResponse = await middleware({
 				request,
@@ -89,9 +91,13 @@ export async function serve(request: Request) {
 
 		const PageComponent = PageModule.default;
 		const pageMeta: Meta = PageModule.meta;
+		const props = {
+			searchParams: Object.fromEntries(searchParams),
+			params,
+		}
 
 		// Render the Page component and send the query params as props.
-		const Page = <Layout meta={pageMeta} manifest={manifest}>{createElement(PageComponent, Object.fromEntries(searchParams))}</Layout>;
+		const Page = <Layout meta={pageMeta} manifest={manifest}>{createElement(PageComponent, props)}</Layout>;
 
 		/**
 		 * Return server component directly if requested via AJAX.
@@ -135,11 +141,7 @@ export async function serve(request: Request) {
 			ReactServerDomClient.createFromReadableStream(rscStream);
 
 		function ClientRoot() {
-			return (
-				<Layout meta={pageMeta} manifest={manifest}>
-					{use(rscComponent)}
-				</Layout>
-			);
+			return use(rscComponent) as ReactNode;
 		}
 		// Hack retrieved from Marz "this is a temporary hack to only render a single 'frame'"
 		const abortController = new AbortController();

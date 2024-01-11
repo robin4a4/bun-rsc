@@ -6,16 +6,12 @@ export type ClientEntry = {
 
 export type SsrTranslationEntry = Record<string, ClientEntry>;
 
-export type QueryDefaultType =
-	| Record<string, unknown>
-	| Record<string, unknown>[]
-	| null;
 
 export type Params = {
 	[key: string]: string | string[] | undefined;
 };
 
-export type ViewProps = {
+export type PageProps = {
 	searchParams: URLSearchParams;
 	params?: Params;
 };

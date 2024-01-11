@@ -11,11 +11,13 @@ hydrateRoot(document, <Router />);
 clientLiveReload();
 
 const queryParam = new URLSearchParams({
+	...Object.fromEntries(new URLSearchParams(window.location.search)),
 	ajaxRSC: "true",
 });
 function Router() {
+	console.log(window.location.href)
 	const [url, setUrl] = useState(
-		`${window.location.href}?${queryParam.toString()}`,
+		`${window.location.origin}?${queryParam.toString()}`,
 	);
 
 	useEffect(() => {
