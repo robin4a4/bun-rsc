@@ -2,6 +2,8 @@ import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import { type BuildArtifact, BuildConfig, type BunPlugin } from "bun";
 import postcss from "postcss";
+// @ts-ignore
+import * as ReactServerDomClient from "react-server-dom-webpack/client";
 import recursive from "recursive-readdir";
 import { ClientEntry } from "./types.js";
 import { combineUrl } from "./utils/common-utils.js";
@@ -17,7 +19,6 @@ import {
 	ssrClientComponentMapUrl,
 	writeMap,
 } from "./utils/server-utils.js";
-import * as ReactServerDomClient from "react-server-dom-webpack/client";
 
 const TSXTranspiler = new Bun.Transpiler({ loader: "tsx" });
 const TSTranspiler = new Bun.Transpiler({ loader: "ts" });

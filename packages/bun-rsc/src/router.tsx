@@ -1,5 +1,4 @@
-// @ts-expect-error
-import { startTransition, use, useEffect, useState } from "react";
+import { startTransition, use, useEffect, useState, type ReactNode } from "react";
 import { hydrateRoot } from "react-dom/client";
 // @ts-expect-error
 import { createFromFetch } from "react-server-dom-webpack/client";
@@ -65,7 +64,7 @@ function Router() {
 	}, []);
 
 	return (
-		<Layout manifest={JSON.parse(window.__MANIFEST_STRING__)}>
+		<Layout meta={JSON.parse(window.__META_STRING__)} manifest={JSON.parse(window.__MANIFEST_STRING__)}>
 			<ServerOutput url={url} />
 		</Layout>
 	);
@@ -73,7 +72,7 @@ function Router() {
 
 const initialCache = new Map();
 
-function ServerOutput({ url }: { url: string }) {
+function ServerOutput({ url }: { url: string }): ReactNode {
 	const [cache, setCache] = useState(initialCache);
 	if (!cache.has(url)) {
 		cache.set(url, createFromFetch(fetch(url)));

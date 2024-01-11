@@ -1,7 +1,7 @@
 /// <reference types="react/experimental" />
-
-import { combineUrl } from "./common-utils";
+// @ts-ignore
 import { createFromFetch, encodeReply } from "react-server-dom-webpack/client";
+import { combineUrl } from "./common-utils";
 
 export const BUN_RSC_SPECIFIC_KEYWORD = "__BUN_RSC";
 export const ACTIONS_ROUTE_PREFIX = `/${BUN_RSC_SPECIFIC_KEYWORD}/actions/`;

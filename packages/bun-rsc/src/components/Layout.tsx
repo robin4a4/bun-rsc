@@ -1,19 +1,18 @@
-import { type PropsWithChildren, Suspense } from "react";
+import { type PropsWithChildren } from "react";
+import { Meta } from "../types";
+import { MetaTags } from "./MetaTags";
+import { Statics } from "./Statics";
 
-export function Layout({ children, manifest }: PropsWithChildren<{manifest: Array<string>}>) {
+export function Layout({
+	children,
+	meta,
+	manifest,
+}: PropsWithChildren<{ meta: Meta; manifest: Array<string> }>) {
 	return (
 		<html lang="en">
 			<head>
-				<meta charSet="UTF-8" />
-				<meta httpEquiv="X-UA-Compatible" content="IE=edge" />
-				<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-				<title>Future of React</title>
-				{manifest.map((path) => {
-					if (path.endsWith(".css")) {
-						return <link key={path} rel="stylesheet" href={path} />;
-					}
-					return null;
-				})}
+				<MetaTags meta={meta} />
+				<Statics manifest={manifest} />
 			</head>
 			<body>{children}</body>
 		</html>

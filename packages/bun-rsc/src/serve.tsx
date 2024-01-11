@@ -17,6 +17,7 @@ import {
 } from "./utils/server-utils";
 
 import { Layout } from "./components/Layout";
+import { BootstrapType, Meta, MiddlewareType } from "./types.ts";
 import { combineUrl } from "./utils/common-utils";
 
 const __bun__module_map__ = new Map();
@@ -25,6 +26,32 @@ const router = new Bun.FileSystemRouter({
 	style: "nextjs",
 	dir: resolveSrc("pages"),
 });
+
+const bootstrapSrcPath = "src/bootstrap.ts";
+const bootstrapFile = Bun.file(bootstrapSrcPath);
+const bootstrapExists = await bootstrapFile.exists();
+
+if (bootstrapExists) {
+	const bootstrapModule = (await import(
+		`${process.cwd()}/${bootstrapSrcPath}`
+	)) as { default: BootstrapType };
+
+	if (bootstrapModule.default && typeof bootstrapModule.default === "function")
+		bootstrapModule.default();
+}
+
+let middleware: MiddlewareType | null = null;
+const middlewareSrcPath = "src/middleware.ts";
+const middlewareFile = Bun.file(middlewareSrcPath);
+const middlewareExists = await middlewareFile.exists();
+
+if (middlewareExists) {
+	const middlewareModule = (await import(
+		`${process.cwd()}/${middlewareSrcPath}`
+	)) as { default: MiddlewareType };
+
+	middleware = middlewareModule.default;
+}
 
 export async function serve(request: Request) {
 	const match = router.match(request.url);
@@ -38,7 +65,16 @@ export async function serve(request: Request) {
 	}
 	if (match) {
 		const searchParams = new URLSearchParams(match.query);
-
+		if (middleware) {
+			const middlewareResponse = await middleware({
+				request,
+				params: match.params,
+				searchParams,
+			});
+			if (middlewareResponse) {
+				return middlewareResponse;
+			}
+		}
 		const serverFilePath = resolveServerFileFromFilePath(match.filePath);
 
 		const PageModule = await import(
@@ -51,11 +87,11 @@ export async function serve(request: Request) {
 			}}`
 		);
 
+		const PageComponent = PageModule.default;
+		const pageMeta: Meta = PageModule.meta;
+
 		// Render the Page component and send the query params as props.
-		const Page = createElement(
-			PageModule.default,
-			Object.fromEntries(searchParams),
-		);
+		const Page = createElement(PageComponent, Object.fromEntries(searchParams));
 
 		/**
 		 * Return server component directly if requested via AJAX.
@@ -99,7 +135,11 @@ export async function serve(request: Request) {
 			ReactServerDomClient.createFromReadableStream(rscStream);
 
 		function ClientRoot() {
-			return <Layout manifest={manifest}>{use(rscComponent)}</Layout>;
+			return (
+				<Layout meta={pageMeta} manifest={manifest}>
+					{use(rscComponent)}
+				</Layout>
+			);
 		}
 		// Hack retrieved from Marz "this is a temporary hack to only render a single 'frame'"
 		const abortController = new AbortController();
@@ -110,19 +150,21 @@ export async function serve(request: Request) {
 					`/${BUN_RSC_SPECIFIC_KEYWORD}/client/bun-rsc/src/router.rsc.js`,
 				],
 				bootstrapScriptContent: `global = window;
-              global.__CURRENT_ROUTE__ = "${request.url}";  
+              	global.__CURRENT_ROUTE__ = "${request.url}";  
 				global.__MANIFEST_STRING__ = ${JSON.stringify(manifestString)};
-              const __bun__module_map__ = new Map();
+				global.__META_STRING__ = ${JSON.stringify(JSON.stringify(pageMeta))};
+					
+			  const __bun__module_map__ = new Map();
   
-              global.__webpack_chunk_load__ = async function(moduleId) {
-                  const mod = await import(moduleId);
-                  __bun__module_map__.set(moduleId, mod);
-                  return mod;
-              };
-      
-              global.__webpack_require__ = function(moduleId) {
-                  return __bun__module_map__.get(moduleId);
-              };`,
+			  global.__webpack_chunk_load__ = async function(moduleId) {
+				  const mod = await import(moduleId);
+				  __bun__module_map__.set(moduleId, mod);
+				  return mod;
+			  };
+	  
+			  global.__webpack_require__ = function(moduleId) {
+				  return __bun__module_map__.get(moduleId);
+			  };`,
 				signal: abortController.signal,
 				onError() {},
 			},

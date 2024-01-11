@@ -2,6 +2,11 @@ import Counter from "../components/Counter";
 import { Todos } from "../components/Todos";
 import { Suspense } from "react";
 
+export const meta = {
+    title: "SALUT",
+    description: "Salut description",
+}
+
 export default async function Salut() {
     return <>
         <h1>SALUT</h1>

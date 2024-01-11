@@ -1,5 +1,11 @@
 import Counter from "../components/Counter";
 import '../global.css'
+
+export const meta = {
+	title: "HOME",
+	description: "My app description",
+}
+
 export default async function Home() {
 	return (
 		<>
