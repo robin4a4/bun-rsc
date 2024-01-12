@@ -1,12 +1,13 @@
 import Counter from "../components/Counter";
 import '../global.css'
+import {PageProps} from "bun-rsc";
 
 export const meta = {
 	title: "HOME",
 	description: "My app description",
 }
 
-export default async function Page({ searchParams }) {
+export default async function Page({ searchParams }: PageProps) {
 	console.log("working", searchParams)
 	return (
 		<>

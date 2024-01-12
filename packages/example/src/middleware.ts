@@ -1,5 +1,6 @@
+import {type MiddlewareType} from "bun-rsc";
 
-const middleware = async () => {
+const middleware: MiddlewareType = async ({request, searchParams}) => {
 	if (false)
 		return new Response("Not sdkjfhsdkfjhk", { status: 404 })
 };
