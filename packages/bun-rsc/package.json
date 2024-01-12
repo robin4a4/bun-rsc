@@ -3,6 +3,10 @@
   "name": "bun-rsc",
   "type": "module",
   "types": "./dist/types.d.ts",
+  "exports": {
+    ".": "./dist/exports/index.js",
+    "./package.json": "./package.json"
+  },
   "bin": {
     "bun-rsc": "./dist/cli/cli.js"
   },

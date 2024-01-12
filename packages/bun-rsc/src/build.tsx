@@ -2,14 +2,11 @@ import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import { type BuildArtifact, BuildConfig, type BunPlugin } from "bun";
 import postcss from "postcss";
-// @ts-ignore
-import * as ReactServerDomClient from "react-server-dom-webpack/client";
 import recursive from "recursive-readdir";
 import { ClientEntry } from "./types.js";
-import { combineUrl } from "./utils/common-utils.js";
+import { combineUrl } from "./utils/common.js";
 import {
 	BUN_RSC_SPECIFIC_KEYWORD,
-	callServer,
 	resolveClientDist,
 	resolveDist,
 	resolveRoot,
@@ -18,7 +15,7 @@ import {
 	serverActionMapUrl,
 	ssrClientComponentMapUrl,
 	writeMap,
-} from "./utils/server-utils.js";
+} from "./utils/server.js";
 
 const TSXTranspiler = new Bun.Transpiler({ loader: "tsx" });
 const TSTranspiler = new Bun.Transpiler({ loader: "ts" });
@@ -115,15 +112,14 @@ export async function build() {
 							`/${BUN_RSC_SPECIFIC_KEYWORD}/server`,
 							currentDirectoryName,
 						);
+						const currentDirectoryNameSplit = currentDirectoryName.split("/");
+						const pathToServerRoot = currentDirectoryNameSplit
+							.map(() => "..")
+							.join("/");
+						console.log(pathToServerRoot);
 						const moduleExports = TSTranspiler.scan(code).exports;
 
-						const createServerActionProxy = (id: string) => {
-							// See: https://github.com/facebook/react/pull/26632
-							return ReactServerDomClient.createServerReference(id, callServer);
-						};
-
-						let refCode =
-							"import * as ReactServerDomClient from 'react-server-dom-webpack/client'\n";
+						let refCode = `import {createServerAction} from "bun-rsc"`;
 						for (const exp of moduleExports) {
 							const id =
 								exp === "default"
@@ -132,8 +128,7 @@ export async function build() {
 							refCode += `
 							export${
 								exp === "default" ? " default " : " "
-							}const ${exp} = ReactServerDomClient.createServerReference("${id}")
-							${exp}.$$typeof = Symbol.for("react.server.reference")
+							}const ${exp} = createServerAction("${id}")
 							`;
 							const chunkId = outputKey
 								.replace(".tsx", ".js")
@@ -170,6 +165,7 @@ export async function build() {
 		entrypoints,
 		outdir: serverDist,
 		plugins: serverBuildPlugins,
+		external: ["bun-rsc"],
 	});
 	if (!serverBuildResult.success) {
 		console.log("[BUN RSC] Server build success: ❌");

@@ -1,9 +1,15 @@
-import { startTransition, use, useEffect, useState, type ReactNode } from "react";
+import {
+	startTransition,
+	use,
+	useEffect,
+	useState,
+	type ReactNode,
+} from "react";
 import { hydrateRoot } from "react-dom/client";
 // @ts-expect-error
 import { createFromFetch } from "react-server-dom-webpack/client";
 import { Layout } from "./components/Layout";
-import { combineUrl } from "./utils/common-utils";
+import { combineUrl } from "./utils/common";
 import { clientLiveReload } from "./ws/client";
 
 hydrateRoot(document, <Router />);
@@ -15,7 +21,7 @@ const queryParam = new URLSearchParams({
 	ajaxRSC: "true",
 });
 function Router() {
-	console.log(window.location.href)
+	console.log(window.location.href);
 	const [url, setUrl] = useState(
 		`${window.location.origin}?${queryParam.toString()}`,
 	);
@@ -65,9 +71,7 @@ function Router() {
 		};
 	}, []);
 
-	return (
-		<ServerOutput url={url} />
-	);
+	return <ServerOutput url={url} />;
 }
 
 const initialCache = new Map();

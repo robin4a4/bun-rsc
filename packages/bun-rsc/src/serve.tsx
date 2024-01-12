@@ -14,11 +14,11 @@ import {
 	resolveSrc,
 	rscClientComponentMapUrl,
 	ssrClientComponentMapUrl,
-} from "./utils/server-utils";
+} from "./utils/server.ts";
 
 import { Layout } from "./components/Layout";
 import { BootstrapType, Meta, MiddlewareType } from "./types.ts";
-import { combineUrl } from "./utils/common-utils";
+import { combineUrl } from "./utils/common.ts";
 
 const __bun__module_map__ = new Map();
 

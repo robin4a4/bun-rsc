@@ -1,7 +1,5 @@
 /// <reference types="react/experimental" />
-// @ts-ignore
-import { createFromFetch, encodeReply } from "react-server-dom-webpack/client";
-import { combineUrl } from "./common-utils";
+import { combineUrl } from "./common";
 
 export const BUN_RSC_SPECIFIC_KEYWORD = "__BUN_RSC";
 export const ACTIONS_ROUTE_PREFIX = `/${BUN_RSC_SPECIFIC_KEYWORD}/actions/`;
@@ -58,32 +56,3 @@ export async function readMap(mapUrl: string) {
 	const bundleMap = await Bun.file(mapUrl).text();
 	return JSON.parse(bundleMap);
 }
-
-export const callServer = async (id: string, args: any[]) => {
-	const url = ACTIONS_ROUTE_PREFIX + encodeURIComponent(id);
-
-	let requestOpts: Pick<RequestInit, "headers" | "body">;
-	if (!Array.isArray(args) || args.some((a) => a instanceof FormData)) {
-		requestOpts = {
-			headers: { accept: RSC_CONTENT_TYPE },
-			body: await encodeReply(args),
-		};
-	} else {
-		requestOpts = {
-			headers: {
-				accept: RSC_CONTENT_TYPE,
-				"content-type": "application/json",
-			},
-			body: JSON.stringify(args),
-		};
-	}
-
-	const responsePromise = fetch(url, {
-		method: "POST",
-		...requestOpts,
-	});
-
-	const { actionResult } = await createFromFetch(responsePromise);
-
-	return actionResult;
-};
