@@ -91,8 +91,10 @@ export async function serve(request: Request) {
 
 		const PageComponent = PageModule.default;
 		const pageMeta: Meta = PageModule.meta;
-		const props = {
-			searchParams: Object.fromEntries(searchParams),
+		const searchParamsObject = Object.fromEntries(searchParams)
+		delete searchParamsObject.ajaxRSC
+		const props: {} = {
+			searchParams: searchParamsObject,
 			params,
 		}
 
