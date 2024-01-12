@@ -1,7 +1,7 @@
 import { type PropsWithChildren } from "react";
 import { Meta } from "../types";
 import { MetaTags } from "./MetaTags";
-import { Statics } from "./Statics";
+import { StaticTags } from "./StaticTags";
 
 export function Layout({
 	children,
@@ -12,7 +12,7 @@ export function Layout({
 		<html lang="en">
 			<head>
 				<MetaTags meta={meta} />
-				<Statics manifest={manifest} />
+				<StaticTags manifest={manifest} />
 			</head>
 			<body>{children}</body>
 		</html>

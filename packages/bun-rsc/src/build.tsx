@@ -205,7 +205,7 @@ export async function build() {
 		format: "esm",
 		entrypoints: [
 			...clientEntryPoints,
-			fileURLToPath(new URL("../src/router.tsx", import.meta.url)),
+			fileURLToPath(new URL("../../src/router.tsx", import.meta.url)),
 		],
 		target: "browser",
 		sourcemap: "none",

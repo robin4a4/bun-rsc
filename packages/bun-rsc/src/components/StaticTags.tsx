@@ -1,4 +1,4 @@
-export function Statics({ manifest }: { manifest: Array<string> }) {
+export function StaticTags({ manifest }: { manifest: Array<string> }) {
 	return (
 		<>
 			{manifest.map((path) => {

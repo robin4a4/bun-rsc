@@ -19,7 +19,7 @@ export type PageProps = {
 export type Meta = {
 	title: string;
 	description: string;
-	icon: string;
+	icon?: string;
 };
 
 export type RequestType = {

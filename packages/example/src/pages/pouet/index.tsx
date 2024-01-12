@@ -1,6 +1,6 @@
 import { addTodo } from "../../actions.ts";
 
-export default async function Pouet() {
+export async function Page() {
 	return (
 		<>
 			<h1>POUET</h1>

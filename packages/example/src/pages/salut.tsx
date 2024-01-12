@@ -7,7 +7,7 @@ export const meta = {
     description: "Salut description",
 }
 
-export default async function Salut() {
+export async function Page() {
     return <>
         <h1>SALUT</h1>
         <a href="/">Home</a>

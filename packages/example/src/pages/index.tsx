@@ -7,8 +7,8 @@ export const meta = {
 	description: "My app description",
 }
 
-export default async function Page({ searchParams }: PageProps) {
-	console.log("working", searchParams)
+export async function Page({ searchParams }: PageProps) {
+
 	return (
 		<>
 			<h1 className="bg-green-500 border border-green-500">Home yes tu ne reves pas salut de outf</h1>
