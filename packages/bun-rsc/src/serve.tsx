@@ -1,5 +1,5 @@
 // @ts-ignore
-import {createElement, ReactNode, use} from "react";
+import { createElement, ReactNode, use } from "react";
 import ReactDOMServer from "react-dom/server";
 // @ts-ignore
 import * as ReactServerDomClient from "react-server-dom-webpack/client";
@@ -65,7 +65,7 @@ export async function serve(request: Request) {
 	}
 	if (match) {
 		const searchParams = new URLSearchParams(match.query);
-		const params = match.params
+		const params = match.params;
 
 		if (middleware) {
 			const middlewareResponse = await middleware({
@@ -78,9 +78,10 @@ export async function serve(request: Request) {
 			}
 		}
 		const serverFilePath = resolveServerFileFromFilePath(match.filePath);
-		const serverFileErrorPath = resolveServerFileFromFilePath(match.filePath.split(".")[0] + ".error.js");
+		const serverFileErrorPath = resolveServerFileFromFilePath(
+			`${match.filePath.split(".")[0]}.error.js`,
+		);
 		try {
-
 			const PageModule = await import(
 				`${serverFilePath}${
 					// Invalidate cached module on every request in dev mode
@@ -93,15 +94,20 @@ export async function serve(request: Request) {
 
 			const PageComponent = PageModule.Page;
 			const pageMeta: Meta = PageModule.meta;
-			const searchParamsObject = Object.fromEntries(searchParams)
-			delete searchParamsObject.ajaxRSC
-			const props: {} = {
+			const searchParamsObject = Object.fromEntries(searchParams);
+			// biome-ignore lint/performance/noDelete: <explanation>
+			delete searchParamsObject.ajaxRSC;
+			const props = {
 				searchParams: searchParamsObject,
 				params,
-			}
+			};
 
 			// Render the Page component and send the query params as props.
-			const Page = <Layout meta={pageMeta} manifest={manifest}>{createElement(PageComponent, props)}</Layout>;
+			const Page = (
+				<Layout meta={pageMeta} manifest={manifest}>
+					{createElement(PageComponent, props)}
+				</Layout>
+			);
 
 			/**
 			 * Return server component directly if requested via AJAX.
@@ -194,12 +200,21 @@ export async function serve(request: Request) {
 			const ErrorPageComponent = ErrorPageModule.Error;
 
 			// Render the Page component and send the query params as props.
-			const ErrorPage = <Layout meta={{
-				title: "Error",
-				description: "Error",
-			}} manifest={manifest}>{ErrorPageComponent({error})}</Layout>;
-			console.log(ErrorPage)
-			const ssrStream = await ReactDOMServer.renderToReadableStream(<ErrorPage />)
+			const ErrorPage = () => (
+				<Layout
+					meta={{
+						title: "Error",
+						description: "Error",
+					}}
+					manifest={manifest}
+				>
+					{ErrorPageComponent({ error })}
+				</Layout>
+			);
+			console.log(ErrorPage);
+			const ssrStream = await ReactDOMServer.renderToReadableStream(
+				<ErrorPage />,
+			);
 			return new Response(ssrStream, {
 				headers: { "Content-type": "text/html" },
 			});
