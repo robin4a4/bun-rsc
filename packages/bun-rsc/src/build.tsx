@@ -50,8 +50,15 @@ export async function build() {
 	// Build server components
 	const entrypoints = await recursive(resolveSrc("pages"));
 
-	const serverBuildPlugins: BunPlugin[] = [
-		{
+	const serverBuildResult = await Bun.build({
+		target: "bun",
+		sourcemap: "none",
+		splitting: true,
+		format: "esm",
+		entrypoints,
+		outdir: serverDist,
+		external: ["bun-rsc"],
+		plugins: [{
 			name: "build-client-components-and-server-actions",
 			setup(build) {
 				build.onLoad({ filter: /\.(ts|tsx)$/ }, async ({ path }) => {
@@ -99,12 +106,77 @@ export async function build() {
 								name: exp,
 							};
 						}
-
 						return {
 							contents: refCode,
 							loader: "js",
 						};
 					}
+					
+					// If not a client component, return the original code
+					return {
+						contents: code,
+						loader: "tsx",
+					};
+				});
+			},
+		}],
+	});
+	if (!serverBuildResult.success) {
+		console.log("[BUN RSC] Server build success: ❌");
+		console.log(serverBuildResult.logs);
+	}
+
+	if (!fs.existsSync(clientDist)) {
+		await fs.promises.mkdir(clientDist, { recursive: true });
+	}
+
+	if (clientEntryPoints.size > 0) {
+		console.log("💪 Building server actions");
+	}	
+	
+	if (serverActionEntryPoints.size > 0) {
+		console.log("💪 Building server actions");
+		
+		const serverActionResults = await Bun.build({
+			format: "esm",
+			entrypoints: [...serverActionEntryPoints],
+			target: "browser",
+			sourcemap: "none",
+			splitting: true,
+			outdir: serverDist,
+		});
+		if (!serverActionResults.success) {
+			console.log("[BUN RSC] Server actions build success: ❌");
+			console.log(serverActionResults.logs);
+		}
+	}
+
+	if (clientEntryPoints.size > 0) {
+		console.log("🏝 Building client components");
+	}
+
+	const clientBuildOptions: BuildConfig = {
+		format: "esm",
+		entrypoints: [
+			...clientEntryPoints,
+			fileURLToPath(new URL("../../src/router.tsx", import.meta.url)),
+		],
+		target: "browser",
+		sourcemap: "none",
+		splitting: true,
+		outdir: clientDist,
+		plugins: [{
+			name: "server-actions",
+			setup(build) {
+				build.onLoad({ filter: /\.(ts|tsx)$/ }, async ({ path }) => {
+					const code = await Bun.file(path).text();
+					const root = process.cwd();
+					const srcSplit = root.split("/");
+					const currentDirectoryName = combineUrl(
+						srcSplit[srcSplit.length - 1],
+						path.replace(root, ""),
+					);
+
 					if (isServerActionModule(code)) {
 						serverActionEntryPoints.add(path);
 
@@ -146,7 +218,7 @@ export async function build() {
 							loader: "js",
 						};
 					}
-
+					
 					// If not a client component, return the original code
 					return {
 						contents: code,
@@ -154,59 +226,7 @@ export async function build() {
 					};
 				});
 			},
-		},
-	];
-
-	const serverBuildResult = await Bun.build({
-		target: "bun",
-		sourcemap: "none",
-		splitting: true,
-		format: "esm",
-		entrypoints,
-		outdir: serverDist,
-		plugins: serverBuildPlugins,
-		external: ["bun-rsc"],
-	});
-	if (!serverBuildResult.success) {
-		console.log("[BUN RSC] Server build success: ❌");
-		console.log(serverBuildResult.logs);
-	}
-
-	if (!fs.existsSync(clientDist)) {
-		await fs.promises.mkdir(clientDist, { recursive: true });
-	}
-
-	if (clientEntryPoints.size > 0) {
-		console.log("💪 Building server actions");
-	}
-
-	const serverActionResults = await Bun.build({
-		format: "esm",
-		entrypoints: [...serverActionEntryPoints],
-		target: "browser",
-		sourcemap: "none",
-		splitting: true,
-		outdir: serverDist,
-	});
-	if (!serverActionResults.success) {
-		console.log("[BUN RSC] Server actions build success: ❌");
-		console.log(serverActionResults.logs);
-	}
-
-	if (clientEntryPoints.size > 0) {
-		console.log("🏝 Building client components");
-	}
-
-	const clientBuildOptions: BuildConfig = {
-		format: "esm",
-		entrypoints: [
-			...clientEntryPoints,
-			fileURLToPath(new URL("../../src/router.tsx", import.meta.url)),
-		],
-		target: "browser",
-		sourcemap: "none",
-		splitting: true,
-		outdir: clientDist,
+		}],
 	};
 
 	// Build client components for CSR
