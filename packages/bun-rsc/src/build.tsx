@@ -7,6 +7,8 @@ import { ClientEntry } from "./types.js";
 import { combineUrl } from "./utils/common.js";
 import {
 	BUN_RSC_SPECIFIC_KEYWORD,
+	createClientModuleId,
+	createServerModuleId,
 	dist,
 	resolveClientDist,
 	resolveDist,
@@ -75,33 +77,24 @@ export async function build() {
 				setup(build) {
 					build.onLoad({ filter: /\.(ts|tsx)$/ }, async ({ path }) => {
 						const code = await Bun.file(path).text();
-						const root = process.cwd();
-						const srcSplit = root.split("/");
-						const currentDirectoryName = combineUrl(
-							srcSplit[srcSplit.length - 1],
-							path.replace(root, ""),
-						);
+
 						if (isClientComponentModule(code)) {
-							// if it is a client component, return a reference to the client bundle
+							// if it is a client component, return a reference to the client component bundle
 							clientEntryPoints.add(path);
 
-							const outputKey = combineUrl(
-								`/${BUN_RSC_SPECIFIC_KEYWORD}/client`,
-								currentDirectoryName,
-							);
-
 							const moduleExports = TSXTranspiler.scan(code).exports;
+							const moduleId = createClientModuleId(path);
 							let refCode = "";
 							for (const exp of moduleExports) {
 								let id = null;
 								if (exp === "default") {
-									id = `${outputKey}#default`;
+									id = `${moduleId}#default`;
 									refCode += `\nexport default { $$typeof: Symbol.for("react.client.reference"), $$async: false, $$id: "${id}", name: "default" }`;
 								} else {
-									id = `${outputKey}#${exp}`;
+									id = `${moduleId}#${exp}`;
 									refCode += `\nexport const ${exp} = { $$typeof: Symbol.for("react.client.reference"), $$async: false, $$id: "${id}", name: "${exp}" }`;
 								}
-								const rscChunkId = outputKey
+								const rscChunkId = moduleId
 									.replace(".tsx", ".rsc.js")
 									.replace(".ts", ".rsc.js");
 								rscClientComponentMap[id] = {
@@ -109,7 +102,7 @@ export async function build() {
 									chunks: [rscChunkId],
 									name: exp,
 								};
-								const ssrChunkId = outputKey
+								const ssrChunkId = moduleId
 									.replace(".tsx", ".ssr.js")
 									.replace(".ts", ".ssr.js");
 								ssrClientComponentMap[id] = {
@@ -125,26 +118,22 @@ export async function build() {
 						}
 
 						if (isServerActionModule(code)) {
-							// if it is a server action, return a reference to the client bundle
+							// if it is a server action, return a reference to the server action bundle
 							serverActionEntryPoints.add(path);
 
-							const outputKey = combineUrl(
-								`/${BUN_RSC_SPECIFIC_KEYWORD}/server`,
-								currentDirectoryName,
-							);
-
 							const moduleExports = TSTranspiler.scan(code).exports;
+							const moduleId = createServerModuleId(path);
 							let refCode = "";
 							for (const exp of moduleExports) {
 								let id = null;
 								if (exp === "default") {
-									id = `${outputKey}#default`;
+									id = `${moduleId}#default`;
 									refCode += `\nexport default { $$typeof: Symbol.for("react.server.reference"), $$id: "${id}", name: "default" }`;
 								} else {
-									id = `${outputKey}#${exp}`;
+									id = `${moduleId}#${exp}`;
 									refCode += `\nexport const ${exp} = { $$typeof: Symbol.for("react.server.reference"), $$id: "${id}", name: "${exp}" }`;
 								}
-								const serverActionChunkId = outputKey.replace(".ts", ".js");
+								const serverActionChunkId = moduleId.replace(".ts", ".js");
 								serverActionMap[id] = {
 									id: serverActionChunkId,
 									chunks: [serverActionChunkId],
@@ -334,7 +323,10 @@ export async function build() {
 				const fileName = f.path.replace(resolveRoot(""), "/");
 				manifest.push(fileName);
 			}
-			await Bun.write(resolveDist("manifest.json"), JSON.stringify(manifest));
+			await Bun.write(
+				resolveDist("css-manifest.json"),
+				JSON.stringify(manifest),
+			);
 		} catch (e) {
 			console.log(e);
 		}

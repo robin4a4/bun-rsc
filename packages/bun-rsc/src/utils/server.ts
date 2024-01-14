@@ -59,3 +59,25 @@ export async function readMap(mapUrl: string) {
 	const bundleMap = await Bun.file(mapUrl).text();
 	return JSON.parse(bundleMap);
 }
+
+export function createModuleId(path: string, type: "client" | "server") {
+	const root = process.cwd();
+	const srcSplit = root.split("/");
+	const currentDirectoryName = combineUrl(
+		srcSplit[srcSplit.length - 1],
+		path.replace(root, ""),
+	);
+	const moduleId = combineUrl(
+		`/${BUN_RSC_SPECIFIC_KEYWORD}/${type}`,
+		currentDirectoryName,
+	);
+	return moduleId;
+}
+
+export function createClientModuleId(path: string) {
+	return createModuleId(path, "client");
+}
+
+export function createServerModuleId(path: string) {
+	return createModuleId(path, "server");
+}

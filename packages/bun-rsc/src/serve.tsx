@@ -58,7 +58,7 @@ export async function serve(request: Request) {
 	let manifestString = "";
 	let manifest: Array<string> = [];
 	try {
-		manifestString = await Bun.file(resolveDist("manifest.json")).text();
+		manifestString = await Bun.file(resolveDist("css-manifest.json")).text();
 		manifest = JSON.parse(manifestString);
 	} catch (e) {
 		console.log("No manifest found.");
@@ -104,7 +104,7 @@ export async function serve(request: Request) {
 
 			// Render the Page component and send the query params as props.
 			const Page = (
-				<Layout meta={pageMeta} manifest={manifest}>
+				<Layout meta={pageMeta} cssManifest={manifest}>
 					{createElement(PageComponent, props)}
 				</Layout>
 			);
@@ -206,7 +206,7 @@ export async function serve(request: Request) {
 						title: "Error",
 						description: "Error",
 					}}
-					manifest={manifest}
+					cssManifest={manifest}
 				>
 					{ErrorPageComponent({ error })}
 				</Layout>
