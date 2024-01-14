@@ -84,6 +84,12 @@ export async function build() {
 
 							const moduleExports = TSXTranspiler.scan(code).exports;
 							const moduleId = createClientModuleId(path);
+							// Here we make the consumer app import the client apis that we expose in the exports folder
+							// A similar approach would have been to just write the object:
+							//
+							// `export default { $$typeof: Symbol.for("react.client.reference"), $$async: false, $$id: "${id}", name: "default" }`
+							//
+							// I just like complicated things
 							let refCode = "import {createClientReference} from 'bun-rsc'\n";
 							for (const exp of moduleExports) {
 								let id = null;
@@ -123,6 +129,7 @@ export async function build() {
 
 							const moduleExports = TSTranspiler.scan(code).exports;
 							const moduleId = createServerModuleId(path);
+							// here we make the consumer app import the server actions api that we expose in the exports folder
 							let refCode =
 								"import {createServerReferenceServer} from 'bun-rsc'\n";
 							for (const exp of moduleExports) {
@@ -181,6 +188,7 @@ export async function build() {
 			sourcemap: "none",
 			splitting: true,
 			outdir: serverDist,
+			external: ["react", "react-dom"],
 		});
 		if (!serverActionResults.success) {
 			console.log("[BUN RSC] Server actions build success: ❌");

@@ -4,8 +4,8 @@
   "type": "module",
   "scripts": {
     "dev": "bun-rsc dev",
-    "serve": "bun run ../bun-rsc/src/serve.tsx",
-    "build": "bun run ../bun-rsc/src/build.tsx"
+    "serve": "bun-rsc serve",
+    "build": "bun-rsc build"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.16",

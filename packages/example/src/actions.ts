@@ -1,5 +1,5 @@
-"use server"
+"use server";
 
-export function addTodo(formData: FormData) {
-    console.log("test")
+export async function addTodo(formData: FormData) {
+	console.log("test");
 }
