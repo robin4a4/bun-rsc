@@ -1,15 +1,17 @@
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
-import { type BuildArtifact, BuildConfig, type BunPlugin } from "bun";
+import { type BuildArtifact, BuildConfig } from "bun";
 import postcss from "postcss";
 import recursive from "recursive-readdir";
 import { ClientEntry } from "./types.js";
 import { combineUrl } from "./utils/common.js";
 import {
 	BUN_RSC_SPECIFIC_KEYWORD,
+	dist,
 	resolveClientDist,
 	resolveDist,
 	resolveRoot,
+	resolveServerDist,
 	resolveSrc,
 	rscClientComponentMapUrl,
 	serverActionMapUrl,
@@ -36,6 +38,8 @@ function isServerActionModule(code: string) {
  * ========================================================================
  * */
 export async function build() {
+	fs.rmSync(dist, { recursive: true });
+
 	const rscClientComponentMap: Record<string, ClientEntry> = {};
 	const ssrClientComponentMap: Record<string, ClientEntry> = {};
 	const serverActionMap: Record<string, ClientEntry> = {};
@@ -44,7 +48,7 @@ export async function build() {
 	const serverActionEntryPoints = new Set<string>();
 
 	console.log("💿 Building server components");
-	const serverDist = resolveDist("server/");
+	const serverDist = resolveServerDist();
 	if (!fs.existsSync(serverDist)) {
 		await fs.promises.mkdir(serverDist, { recursive: true });
 	}

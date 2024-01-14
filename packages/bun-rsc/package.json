@@ -12,8 +12,8 @@
   },
   "scripts": {
     "lint": "bunx @biomejs/biome check --apply ./src",
-    "dev": "bun --watch run ./src/cli/build.ts",
-    "build": "bun run ./src/cli/build.ts",
+    "dev": "bun --watch run ./src/cli/build-cli.ts",
+    "build": "bun run ./src/cli/build-cli.ts",
     "release": "bun run build && bunx changeset publish && git push --follow-tags"
   },
   "publishConfig": {

@@ -7,7 +7,7 @@ import {
 
 import { ACTIONS_ROUTE_PREFIX, RSC_CONTENT_TYPE } from "../utils/server";
 
-const callServer = async (id: string, args: any[]) => {
+const callServer = async (id: string, args: unknown[]) => {
 	const url = ACTIONS_ROUTE_PREFIX + encodeURIComponent(id);
 
 	let requestOpts: Pick<RequestInit, "headers" | "body">;

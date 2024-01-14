@@ -48,7 +48,10 @@ export const ssrClientComponentMapUrl = resolveDist(
 export const serverActionMapUrl = resolveDist("serverActionMap.json");
 export const ssrTranslationMapUrl = resolveDist("ssrTranslationMap.json");
 
-export async function writeMap(mapUrl: string, bundleMap: Record<string, any>) {
+export async function writeMap(
+	mapUrl: string,
+	bundleMap: Record<string, unknown>,
+) {
 	await Bun.write(mapUrl, JSON.stringify(bundleMap));
 }
 

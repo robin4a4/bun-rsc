@@ -7,9 +7,6 @@
     "enabled": true,
     "rules": {
       "recommended": true,
-      "suspicious": {
-        "noExplicitAny": "off"
-      },
       "complexity": {
         "noForEach": "off"
       }

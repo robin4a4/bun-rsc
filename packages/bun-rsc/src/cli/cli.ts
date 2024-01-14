@@ -26,8 +26,8 @@ cli.command("dev").action(async () => {
 			}
 			console.log(`[BUN RSC] - Detected ${event} in ${filename}`);
 		});
-	} catch (e: any) {
-		console.log(`error when starting dev server:\n${e.stack}`);
+	} catch (e: unknown) {
+		console.log(`error when starting dev server:\n${e}`);
 		process.exit(1);
 	}
 });
