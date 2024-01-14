@@ -130,17 +130,12 @@ export async function build() {
 							const moduleExports = TSTranspiler.scan(code).exports;
 							const moduleId = createServerModuleId(path);
 							// here we make the consumer app import the server actions api that we expose in the exports folder
-							let refCode =
-								"import {createServerReferenceServer} from 'bun-rsc'\n";
+							let refCode = `import {createServerReferenceServer} from 'bun-rsc'
+
+							${code}`;
 							for (const exp of moduleExports) {
-								let id = null;
-								if (exp === "default") {
-									id = `${moduleId}#default`;
-									refCode += `export default createServerReferenceServer("${id}", "default")`;
-								} else {
-									id = `${moduleId}#${exp}`;
-									refCode += `export const ${exp} = createServerReferenceServer("${id}", "${exp}")`;
-								}
+								const id = `${moduleId}#${exp}`;
+								refCode += `if (typeof ${exp} === 'function') createServerReferenceServer(${exp}, "${id}", "${exp}")`;
 								const serverActionChunkId = moduleId.replace(".ts", ".js");
 								serverActionMap[id] = {
 									id: serverActionChunkId,
@@ -150,7 +145,7 @@ export async function build() {
 							}
 							return {
 								contents: refCode,
-								loader: "js",
+								loader: "ts",
 							};
 						}
 

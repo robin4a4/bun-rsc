@@ -1,8 +1,12 @@
 import {
-	registerServerReference,
-	// @ts-ignore
+  registerServerReference,
+  // @ts-ignore
 } from "react-server-dom-webpack/server.browser";
 
-export function createServerReferenceServer(id: string, exp: string) {
-	return registerServerReference({}, id, exp);
+export function createServerReferenceServer(
+  fn: (...args: unknown[]) => unknown,
+  id: string,
+  exp: string
+) {
+  registerServerReference(fn, id, exp);
 }
