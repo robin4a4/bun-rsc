@@ -36,7 +36,7 @@ const callServer = async (id: string, args: unknown[]) => {
 	return actionResult;
 };
 
-export const createServerAction = (id: string) => {
+export const createServerReferenceClient = (id: string) => {
 	// See: https://github.com/facebook/react/pull/26632
 	return createServerReference(id, callServer);
 };

@@ -84,15 +84,15 @@ export async function build() {
 
 							const moduleExports = TSXTranspiler.scan(code).exports;
 							const moduleId = createClientModuleId(path);
-							let refCode = "";
+							let refCode = "import {createClientReference} from 'bun-rsc'\n";
 							for (const exp of moduleExports) {
 								let id = null;
 								if (exp === "default") {
 									id = `${moduleId}#default`;
-									refCode += `\nexport default { $$typeof: Symbol.for("react.client.reference"), $$async: false, $$id: "${id}", name: "default" }`;
+									refCode += `export default createClientReference("${id}", "default")`;
 								} else {
 									id = `${moduleId}#${exp}`;
-									refCode += `\nexport const ${exp} = { $$typeof: Symbol.for("react.client.reference"), $$async: false, $$id: "${id}", name: "${exp}" }`;
+									refCode += `export const ${exp} = createClientReference("${id}", "${exp}")`;
 								}
 								const rscChunkId = moduleId
 									.replace(".tsx", ".rsc.js")
@@ -123,15 +123,16 @@ export async function build() {
 
 							const moduleExports = TSTranspiler.scan(code).exports;
 							const moduleId = createServerModuleId(path);
-							let refCode = "";
+							let refCode =
+								"import {createServerReferenceServer} from 'bun-rsc'\n";
 							for (const exp of moduleExports) {
 								let id = null;
 								if (exp === "default") {
 									id = `${moduleId}#default`;
-									refCode += `\nexport default { $$typeof: Symbol.for("react.server.reference"), $$id: "${id}", name: "default" }`;
+									refCode += `export default createServerReferenceServer("${id}", "default")`;
 								} else {
 									id = `${moduleId}#${exp}`;
-									refCode += `\nexport const ${exp} = { $$typeof: Symbol.for("react.server.reference"), $$id: "${id}", name: "${exp}" }`;
+									refCode += `export const ${exp} = createServerReferenceServer("${id}", "${exp}")`;
 								}
 								const serverActionChunkId = moduleId.replace(".ts", ".js");
 								serverActionMap[id] = {
@@ -229,17 +230,17 @@ export async function build() {
 								console.log(pathToServerRoot);
 								const moduleExports = TSTranspiler.scan(code).exports;
 
-								let refCode = `import {createServerAction} from "bun-rsc"`;
+								let refCode = `import {createServerReferenceClient} from "bun-rsc"`;
 								for (const exp of moduleExports) {
 									const id =
 										exp === "default"
 											? `${outputKey}#default`
 											: `${outputKey}#${exp}`;
 									refCode += `
-							export${
-								exp === "default" ? " default " : " "
-							}const ${exp} = createServerAction("${id}")
-							`;
+												export${
+													exp === "default" ? " default " : " "
+												}const ${exp} = createServerReferenceClient("${id}")
+												`;
 									const chunkId = outputKey
 										.replace(".tsx", ".js")
 										.replace(".ts", ".js");
