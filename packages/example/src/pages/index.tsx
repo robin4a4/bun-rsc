@@ -1,4 +1,4 @@
-import Counter from "../components/Counter";
+// import Counter from "../components/Counter";
 import "../global.css";
 import { PageProps } from "bun-rsc";
 
@@ -16,7 +16,7 @@ export async function Page({ searchParams }: PageProps) {
 			<a href="/">Home</a>
 			<a href="/salut">Salut</a>
 			<a href="/pouet">pouet</a>
-			<Counter />
+			{/* <Counter /> */}
 		</>
 	);
 }

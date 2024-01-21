@@ -2,9 +2,12 @@
   "version": "0.0.1",
   "name": "bun-rsc",
   "type": "module",
-  "types": "./dist/types.d.ts",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./dist/exports/index.js",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/exports/index.js"
+    },
     "./package.json": "./package.json"
   },
   "bin": {
@@ -50,9 +53,9 @@
     "bun-plugin-dts": "^0.2.1",
     "cac": "^6.7.14",
     "postcss": "^8.4.33",
-    "react": "18.3.0-canary-41f0e9dae-20230907",
-    "react-dom": "18.3.0-canary-41f0e9dae-20230907",
-    "react-server-dom-webpack": "18.3.0-canary-41f0e9dae-20230907",
+    "react": "18.3.0-canary-5c607369c-20240116",
+    "react-dom": "18.3.0-canary-5c607369c-20240116",
+    "react-server-dom-webpack": "18.3.0-canary-5c607369c-20240116",
     "recursive-readdir": "^2.2.3",
     "ws": "^8.16.0"
   }

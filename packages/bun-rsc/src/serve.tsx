@@ -1,10 +1,11 @@
 // @ts-ignore
 import { createElement, ReactNode, use } from "react";
-import ReactDOMServer from "react-dom/server";
 // @ts-ignore
-import * as ReactServerDomClient from "react-server-dom-webpack/client";
+import ReactDOMServer from "react-dom/server.edge";
 // @ts-ignore
-import * as ReactServerDomServer from "react-server-dom-webpack/server.browser";
+import * as ReactServerDomClient from "react-server-dom-webpack/client.edge";
+// @ts-ignore
+import * as ReactServerDomServer from "react-server-dom-webpack/server.edge";
 import {
 	BUN_RSC_SPECIFIC_KEYWORD,
 	RSC_CONTENT_TYPE,
@@ -18,9 +19,6 @@ import {
 
 import { Layout } from "./components/Layout";
 import { BootstrapType, Meta, MiddlewareType } from "./types.ts";
-import { combineUrl } from "./utils/common.ts";
-
-const __bun__module_map__ = new Map();
 
 const router = new Bun.FileSystemRouter({
 	style: "nextjs",
@@ -130,16 +128,6 @@ export async function serve(request: Request) {
 			/**
 			 * Return an SSR'd HTML page if requested via browser.
 			 */
-			// @ts-ignore
-			global.__webpack_chunk_load__ = async (moduleId) => {
-				const mod = await import(combineUrl(process.cwd(), moduleId));
-				__bun__module_map__.set(moduleId, mod);
-				return mod;
-			};
-			// @ts-ignore
-			global.__webpack_require__ = (moduleId) =>
-				__bun__module_map__.get(moduleId);
-
 			const clientComponentMap = await readMap(ssrClientComponentMapUrl);
 
 			const rscStream = ReactServerDomServer.renderToReadableStream(
@@ -147,14 +135,22 @@ export async function serve(request: Request) {
 				clientComponentMap,
 			);
 
-			const rscComponent =
-				ReactServerDomClient.createFromReadableStream(rscStream);
+			const rscComponent = ReactServerDomClient.createFromReadableStream(
+				rscStream,
+				{
+					ssrManifest: {
+						moduleMap: null,
+						moduleLoading: null,
+					},
+				},
+			);
 
 			function ClientRoot() {
 				return use(rscComponent) as ReactNode;
 			}
 			// Hack retrieved from Marz "this is a temporary hack to only render a single 'frame'"
 			const abortController = new AbortController();
+
 			const ssrStream = await ReactDOMServer.renderToReadableStream(
 				<ClientRoot />,
 				{
@@ -211,7 +207,6 @@ export async function serve(request: Request) {
 					{ErrorPageComponent({ error })}
 				</Layout>
 			);
-			console.log(ErrorPage);
 			const ssrStream = await ReactDOMServer.renderToReadableStream(
 				<ErrorPage />,
 			);

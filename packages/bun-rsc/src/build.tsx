@@ -21,6 +21,21 @@ import {
 	writeMap,
 } from "./utils/server.js";
 
+const __bun__module_map__ = new Map();
+
+// @ts-ignore
+const __webpack_chunk_load__ = async (moduleId) => {
+	const mod = await import(combineUrl(process.cwd(), moduleId));
+	__bun__module_map__.set(moduleId, mod);
+	return mod;
+};
+// @ts-ignore
+global.__webpack_chunk_load__ = __webpack_chunk_load__;
+// @ts-ignore
+const __webpack_require__ = (moduleId) => __bun__module_map__.get(moduleId);
+// @ts-ignore
+global.__webpack_require__ = __webpack_require__;
+
 const TSXTranspiler = new Bun.Transpiler({ loader: "tsx" });
 const TSTranspiler = new Bun.Transpiler({ loader: "ts" });
 
