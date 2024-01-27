@@ -1,6 +1,6 @@
 # bun-rsc
 
-Ultra minimalist React server component implementation using bun.
+Ultra minimalist React server component implementation using bun. Absolutely experimental and messy.
 
 Heavily inspired by:
 - https://github.com/bholmesdev/simple-rsc
