@@ -8,7 +8,6 @@ import {
 import { hydrateRoot } from "react-dom/client";
 // @ts-expect-error
 import { createFromFetch } from "react-server-dom-webpack/client";
-import { Layout } from "./components/Layout";
 import { combineUrl } from "./utils/common";
 import { clientLiveReload } from "./ws/client";
 
@@ -21,7 +20,6 @@ const queryParam = new URLSearchParams({
 	ajaxRSC: "true",
 });
 function Router() {
-	console.log(window.location.href);
 	const [url, setUrl] = useState(
 		`${window.location.origin}?${queryParam.toString()}`,
 	);

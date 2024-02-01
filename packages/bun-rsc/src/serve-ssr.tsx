@@ -1,24 +1,17 @@
 // @ts-ignore
-import { createElement, ReactNode, use } from "react";
+import { ReactNode, use } from "react";
 // @ts-ignore
 import ReactDOMServer from "react-dom/server.edge";
-// @ts-ignore
-import * as ReactServerDomClient from "react-server-dom-webpack/client.edge";
-// @ts-ignore
-import * as ReactServerDomServer from "react-server-dom-webpack/server.edge";
 import {
 	BUN_RSC_SPECIFIC_KEYWORD,
-	RSC_CONTENT_TYPE,
-	readMap,
 	resolveDist,
 	resolveServerFileFromFilePath,
 	resolveSrc,
-	rscClientComponentMapUrl,
-	ssrClientComponentMapUrl,
 } from "./utils/server.ts";
 
-import { Layout } from "./components/Layout";
-import { BootstrapType, Meta, MiddlewareType } from "./types.ts";
+import { Layout } from "./components/Layout.tsx";
+import { BootstrapType, MiddlewareType } from "./types.ts";
+import { combineUrl } from "./utils/common.ts";
 
 const router = new Bun.FileSystemRouter({
 	style: "nextjs",
@@ -80,73 +73,12 @@ export async function serve(request: Request) {
 			`${match.filePath.split(".")[0]}.error.js`,
 		);
 		try {
-			const PageModule = await import(
-				`${serverFilePath}${
-					// Invalidate cached module on every request in dev mode
-					// WARNING: can cause memory leaks for long-running dev servers!
-					process.env.NODE_ENV === "development"
-						? `?invalidate=${Date.now()}`
-						: ""
-				}}`
-			);
-
-			const PageComponent = PageModule.Page;
-			const pageMeta: Meta = PageModule.meta;
-			const searchParamsObject = Object.fromEntries(searchParams);
-			// biome-ignore lint/performance/noDelete: <explanation>
-			delete searchParamsObject.ajaxRSC;
-			const props = {
-				searchParams: searchParamsObject,
-				params,
-			};
-
-			// Render the Page component and send the query params as props.
-			const Page = (
-				<Layout meta={pageMeta} cssManifest={manifest}>
-					{createElement(PageComponent, props)}
-				</Layout>
-			);
-
-			/**
-			 * Return server component directly if requested via AJAX.
-			 */
-			if (searchParams.get("ajaxRSC") === "true") {
-				const clientComponentMap = await readMap(rscClientComponentMapUrl);
-
-				const rscStream = ReactServerDomServer.renderToReadableStream(
-					Page,
-					clientComponentMap,
-				);
-				return new Response(rscStream, {
-					// "Content-type" based on https://github.com/facebook/react/blob/main/fixtures/flight/server/global.js#L159
-					headers: {
-						"Content-type": RSC_CONTENT_TYPE,
-						"Access-Control-Allow-Origin": "*",
-					},
-				});
-			}
-			/**
-			 * Return an SSR'd HTML page if requested via browser.
-			 */
-			const clientComponentMap = await readMap(ssrClientComponentMapUrl);
-
-			const rscStream = ReactServerDomServer.renderToReadableStream(
-				Page,
-				clientComponentMap,
-			);
-
-			const rscComponent = ReactServerDomClient.createFromReadableStream(
-				rscStream,
-				{
-					ssrManifest: {
-						moduleMap: null,
-						moduleLoading: null,
-					},
-				},
+			const rscComponent = fetch(
+				combineUrl(BUN_RSC_SPECIFIC_KEYWORD, match.pathname),
 			);
 
 			function ClientRoot() {
-				return use(rscComponent) as ReactNode;
+				return use(rscComponent as any) as ReactNode;
 			}
 			// Hack retrieved from Marz "this is a temporary hack to only render a single 'frame'"
 			const abortController = new AbortController();
@@ -182,7 +114,6 @@ export async function serve(request: Request) {
 				headers: { "Content-type": "text/html" },
 			});
 		} catch (error: unknown) {
-			console.error(error);
 			const ErrorPageModule = await import(
 				`${serverFileErrorPath}${
 					// Invalidate cached module on every request in dev mode

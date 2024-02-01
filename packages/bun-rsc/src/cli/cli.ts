@@ -3,7 +3,7 @@ import fs from "node:fs";
 import { cac } from "cac";
 import packageJson from "../../package.json";
 import { build } from "../build";
-import { serve } from "../serve";
+import { serve } from "../serve-rsc";
 import { createWebSocketServer } from "../ws/server";
 
 const cli = cac("bun-rsc");
