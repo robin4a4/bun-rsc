@@ -1,4 +1,6 @@
 import Counter from "../components/Counter";
+import Counter2 from "../components/sub1/Counter2";
+import Counter3 from "../sub2/Counter3";
 import "../global.css";
 
 import { PageProps } from "bun-rsc";
@@ -18,6 +20,8 @@ export async function Page({ searchParams }: PageProps) {
 			<a href="/salut">Salut</a>
 			<a href="/pouet">pouet</a>
 			<Counter />
+			<Counter2 />
+			<Counter3 />
 		</>
 	);
 }

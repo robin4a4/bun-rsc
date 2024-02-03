@@ -58,7 +58,6 @@ export async function build() {
 	fs.rmSync(dist, { recursive: true });
 
 	const rscClientComponentMap: Record<string, ClientEntry> = {};
-	const ssrClientComponentMap: Record<string, ClientEntry> = {};
 	const serverActionMap: Record<string, ClientEntry> = {};
 
 	const clientEntryPoints = new Set<string>();
@@ -122,14 +121,6 @@ export async function build() {
 									chunks: [rscChunkId],
 									name: exp,
 								};
-								// const ssrChunkId = moduleId
-								// 	.replace(".tsx", ".ssr.js")
-								// 	.replace(".ts", ".ssr.js");
-								// ssrClientComponentMap[id] = {
-								// 	id: ssrChunkId,
-								// 	chunks: [ssrChunkId],
-								// 	name: exp,
-								// };
 							}
 							return {
 								contents: refCode,
@@ -223,6 +214,7 @@ export async function build() {
 	}
 
 	if (clientEntryPoints.size > 0) {
+		console.log(clientEntryPoints);
 		log.i("🏝 Building client components");
 
 		const clientBuildOptions: BuildConfig = {
@@ -302,23 +294,11 @@ export async function build() {
 		// Build client components for CSR
 		const csrResults = await Bun.build({
 			...clientBuildOptions,
-			naming: "[dir]/[name].rsc.[ext]",
 		});
 		if (!csrResults.success) {
 			log.e("CSR build failed");
 			console.log(csrResults.logs);
 		}
-
-		// Build client components for SSR. React is externalized to avoid duplication and hooks errors at stream generation time.
-		// const ssrResults = await Bun.build({
-		// 	...clientBuildOptions,
-		// 	naming: "[dir]/[name].ssr.[ext]",
-		// 	external: ["react", "react-dom"],
-		// });
-		// if (!ssrResults.success) {
-		// 	log.e("SSR build failed");
-		// 	console.log(ssrResults.logs);
-		// }
 	}
 
 	/**
@@ -327,7 +307,6 @@ export async function build() {
 	 * -------------------------------------------------------------------------------------
 	 * */
 	await writeMap(rscClientComponentMapUrl, rscClientComponentMap);
-	// await writeMap(ssrClientComponentMapUrl, ssrClientComponentMap);
 	await writeMap(serverActionMapUrl, serverActionMap);
 
 	/**
