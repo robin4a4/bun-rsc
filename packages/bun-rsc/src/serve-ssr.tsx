@@ -12,7 +12,7 @@ import {
 
 import { Layout } from "./components/Layout.tsx";
 import { BootstrapType, MiddlewareType } from "./types.ts";
-import { combineUrl } from "./utils/common.ts";
+import { combineUrl, log } from "./utils/common.ts";
 
 const router = new Bun.FileSystemRouter({
 	style: "nextjs",
@@ -53,9 +53,10 @@ export async function serveSSR(request: Request) {
 		manifestString = await Bun.file(resolveDist("css-manifest.json")).text();
 		manifest = JSON.parse(manifestString);
 	} catch (e) {
-		console.log("No manifest found.");
+		log.w("No css manifest found");
 	}
 	if (match) {
+		log.i(`Match found for url: ${request.url}`);
 		const searchParams = new URLSearchParams(match.query);
 		const params = match.params;
 
@@ -86,7 +87,7 @@ export async function serveSSR(request: Request) {
 
 			const pageMeta = PageModule.meta;
 			const rscUrl = combineUrl(BUN_RSC_SPECIFIC_KEYWORD, match.pathname);
-			console.log("[BUN RSC] -> Fetching rsc at ", rscUrl);
+			log.i(`Fetching rsc at : ${rscUrl}`);
 			const rscComponent = fetch(rscUrl);
 
 			function ClientRoot() {

@@ -44,11 +44,15 @@ const S_CONNECT_LEFT = s("├", "+");
 
 const S_ERROR = s("▲", "!");
 
-export function title(string: string) {
-	console.log(S_BAR_START, S_ITEM_FILLED, pc.bold(gradient.morning(string)));
-}
-
 export const log = {
+	title() {
+		console.log("\n");
+		console.log(
+			S_BAR_START,
+			S_ITEM_FILLED,
+			pc.bold(gradient.morning("BUN-RSC")),
+		);
+	},
 	i(string: string, isEnd = false) {
 		console.log(S_BAR);
 		console.log(
@@ -56,6 +60,7 @@ export const log = {
 			isEnd ? S_ITEM_FILLED : S_ITEM,
 			string,
 		);
+		if (isEnd) console.log("\n");
 	},
 	s(string: string, isEnd = false) {
 		console.log(S_BAR);
@@ -64,6 +69,7 @@ export const log = {
 			isEnd ? S_ITEM_FILLED : S_ITEM,
 			pc.green(string),
 		);
+		if (isEnd) console.log("\n");
 	},
 	w(string: string, isEnd = false) {
 		console.log(S_BAR);
@@ -72,9 +78,11 @@ export const log = {
 			isEnd ? S_ITEM_FILLED : S_ITEM,
 			pc.yellow(string),
 		);
+		if (isEnd) console.log("\n");
 	},
 	e(string: string) {
 		console.log(S_BAR);
 		console.log(S_BAR_END, S_ERROR, pc.red(string));
+		console.log("\n");
 	},
 };

@@ -4,7 +4,7 @@ import { type BuildArtifact, BuildConfig } from "bun";
 import postcss from "postcss";
 import recursive from "recursive-readdir";
 import { ClientEntry } from "./types.js";
-import { combineUrl } from "./utils/common.js";
+import { combineUrl, log } from "./utils/common.js";
 import {
 	BUN_RSC_SPECIFIC_KEYWORD,
 	createClientModuleId,
@@ -63,8 +63,7 @@ export async function build() {
 
 	const clientEntryPoints = new Set<string>();
 	const serverActionEntryPoints = new Set<string>();
-
-	console.log("💿 Building server components");
+	log.i("💿 Building server components");
 	const serverDist = resolveServerDist();
 	if (!fs.existsSync(serverDist)) {
 		await fs.promises.mkdir(serverDist, { recursive: true });
@@ -175,7 +174,7 @@ export async function build() {
 		],
 	});
 	if (!serverBuildResult.success) {
-		console.log("[BUN RSC] Server build success: ❌");
+		log.e("Server build failed");
 		console.log(serverBuildResult.logs);
 	}
 
@@ -189,7 +188,7 @@ export async function build() {
 	}
 
 	if (serverActionEntryPoints.size > 0) {
-		console.log("💪 Building server actions");
+		log.i("💪 Building server actions");
 
 		const serverActionResults = await Bun.build({
 			format: "esm",
@@ -201,13 +200,13 @@ export async function build() {
 			external: ["react", "react-dom"],
 		});
 		if (!serverActionResults.success) {
-			console.log("[BUN RSC] Server actions build success: ❌");
+			log.e("Server actions build failed");
 			console.log(serverActionResults.logs);
 		}
 	}
 
 	if (clientEntryPoints.size > 0) {
-		console.log("🏝 Building client components");
+		log.i("🏝 Building client components");
 
 		const clientBuildOptions: BuildConfig = {
 			format: "esm",
@@ -292,7 +291,7 @@ export async function build() {
 			naming: "[dir]/[name].rsc.[ext]",
 		});
 		if (!csrResults.success) {
-			console.log("[BUN RSC] CSR build success: ❌");
+			log.e("CSR build failed");
 			console.log(csrResults.logs);
 		}
 
@@ -303,7 +302,7 @@ export async function build() {
 			external: ["react", "react-dom"],
 		});
 		if (!ssrResults.success) {
-			console.log("[BUN RSC] SSR build success: ❌");
+			log.e("SSR build failed");
 			console.log(ssrResults.logs);
 		}
 	}
@@ -323,6 +322,7 @@ export async function build() {
 	 * -------------------------------------------------------------------------------------
 	 * */
 	async function parseCSS(files: BuildArtifact[]) {
+		log.i("🎨 Parsing CSS files with PostCSS");
 		const cssFiles = files.filter((f) => f.path.endsWith(".css"));
 		const manifest: Array<string> = [];
 		try {

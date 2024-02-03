@@ -15,6 +15,7 @@ import { createWebSocketServer } from "../ws/server";
 import { serveRSC } from "../../dist/serve/serve-rsc";
 
 import { serveSSR } from "../serve-ssr";
+import { log } from "../utils/common";
 
 const cli = cac("bun-rsc");
 
@@ -46,27 +47,28 @@ const port = 3000;
 
 // Build command
 cli.command("build").action(async () => {
-	console.log("[BUN RSC] Building your app");
+	log.title();
+	log.i("Building your app");
 	await build();
 });
 
 // Serve command
 cli.command("serve-ssr").action(async () => {
+	log.title();
 	const server = Bun.serve({
 		port: 3000,
 		fetch: serveSSR,
 	});
-
-	console.log(`[BUN RSC] Listening on ${server.port}`);
+	log.i(`SSR server listening on ${server.port}`);
 });
 
 cli.command("serve-rsc").action(async () => {
+	log.title();
 	const server = Bun.serve({
 		port: 3001,
 		fetch: serveRSC,
 	});
-
-	console.log(`[BUN RSC] Listening on ${server.port}`);
+	log.i(`RSC server listening on ${server.port}`);
 });
 
 cli.help();

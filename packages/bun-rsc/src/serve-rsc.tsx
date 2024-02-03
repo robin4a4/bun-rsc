@@ -14,7 +14,7 @@ import {
 
 import { Layout } from "./components/Layout.tsx";
 import { BootstrapType, Meta, MiddlewareType } from "./types.ts";
-import { combineUrl } from "./utils/common.ts";
+import { combineUrl, log } from "./utils/common.ts";
 
 const router = new Bun.FileSystemRouter({
 	style: "nextjs",
@@ -55,10 +55,10 @@ export async function serveRSC(request: Request) {
 		manifestString = await Bun.file(resolveDist("css-manifest.json")).text();
 		manifest = JSON.parse(manifestString);
 	} catch (e) {
-		console.log("No manifest found.");
+		log.w("No css manifest found");
 	}
 	if (match) {
-		console.log("[BUN RSC]", match);
+		log.i(`Match found for url: ${request.url}`);
 		const searchParams = new URLSearchParams(match.query);
 		const params = match.params;
 

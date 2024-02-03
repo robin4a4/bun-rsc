@@ -1,9 +1,9 @@
 import dts from "bun-plugin-dts";
 import fs from "node:fs";
 import * as esbuild from "esbuild";
-import { log, title } from "../utils/common";
+import { log } from "../utils/common";
 
-title("BUN-RSC");
+log.title();
 log.i("Building Bun RSC");
 fs.rmSync("./dist", { recursive: true });
 
