@@ -75,7 +75,6 @@ export async function serveRSC(request: Request) {
 			}
 		}
 		const serverFilePath = resolveServerFileFromFilePath(match.filePath);
-		console.log(serverFilePath);
 		try {
 			const PageModule = await import(
 				`${serverFilePath}${
@@ -86,7 +85,6 @@ export async function serveRSC(request: Request) {
 						: ""
 				}}`
 			);
-			console.log(PageModule);
 			const PageComponent = PageModule.Page;
 			const pageMeta: Meta = PageModule.meta;
 			const searchParamsObject = Object.fromEntries(searchParams);
@@ -96,21 +94,17 @@ export async function serveRSC(request: Request) {
 				searchParams: searchParamsObject,
 				params,
 			};
-			console.log(props);
 			// Render the Page component and send the query params as props.
 			const Page = (
 				<Layout meta={pageMeta} cssManifest={manifest}>
 					{createElement(PageComponent, props)}
 				</Layout>
 			);
-			console.log(Page);
 			const clientComponentMap = await readMap(rscClientComponentMapUrl);
-			console.log(clientComponentMap);
 			const rscStream = ReactServerDomServer.renderToReadableStream(
 				Page,
 				clientComponentMap,
 			);
-			console.log("stream", rscStream);
 			return new Response(rscStream, {
 				// "Content-type" based on https://github.com/facebook/react/blob/main/fixtures/flight/server/global.js#L159
 				headers: {

@@ -1,5 +1,7 @@
 // @ts-ignore
-import { ReactNode, use } from "react";
+import { use } from "react";
+// @ts-ignore
+import * as ReactServerDomClient from "react-server-dom-webpack/client";
 // @ts-ignore
 import ReactDOMServer from "react-dom/server.edge";
 import {
@@ -10,7 +12,6 @@ import {
 	resolveSrc,
 } from "./utils/server.ts";
 
-import { Layout } from "./components/Layout.tsx";
 import { BootstrapType, MiddlewareType } from "./types.ts";
 import { combineUrl, log } from "./utils/common.ts";
 
@@ -74,39 +75,67 @@ export async function serveSSR(request: Request) {
 		const serverFileErrorPath = resolveServerFileFromFilePath(
 			`${match.filePath.split(".")[0]}.error.js`,
 		);
-		try {
-			const PageModule = await import(
-				`${serverFilePath}${
-					// Invalidate cached module on every request in dev mode
-					// WARNING: can cause memory leaks for long-running dev servers!
-					process.env.NODE_ENV === "development"
-						? `?invalidate=${Date.now()}`
-						: ""
-				}}`
-			);
+		// try {
+		const PageModule = await import(
+			`${serverFilePath}${
+				// Invalidate cached module on every request in dev mode
+				// WARNING: can cause memory leaks for long-running dev servers!
+				process.env.NODE_ENV === "development"
+					? `?invalidate=${Date.now()}`
+					: ""
+			}}`
+		);
 
-			const pageMeta = PageModule.meta;
-			const rscUrl = combineUrl(
-				"http://localhost:3001",
-				combineUrl(BUN_RSC_SPECIFIC_KEYWORD, match.pathname),
-			);
-			log.i(`Fetching rsc at : ${rscUrl}`);
-			const rscComponent = await fetch(rscUrl);
-			console.log(rscComponent);
-			// function ClientRoot() {
-			// 	// @ts-ignore
-			// 	return use(rscComponent) as ReactNode;
-			// }
-			// Hack retrieved from Marz "this is a temporary hack to only render a single 'frame'"
-			const abortController = new AbortController();
+		const pageMeta = PageModule.meta;
+		const rscUrl = combineUrl(
+			"http://localhost:3001",
+			combineUrl(BUN_RSC_SPECIFIC_KEYWORD, match.pathname),
+		);
+		log.i(`Fetching rsc at : ${rscUrl}`);
 
-			const ssrStream = await ReactDOMServer.renderToReadableStream(
-				rscComponent,
-				{
-					bootstrapModules: [
-						`/${BUN_RSC_SPECIFIC_KEYWORD_STATICS}/client/bun-rsc/src/router.rsc.js`,
-					],
-					bootstrapScriptContent: `global = window;
+		const rscStream = await fetch(rscUrl).then((response) => {
+			// @ts-ignore
+			const reader = response.body.getReader();
+
+			return new ReadableStream({
+				async start(controller) {
+					while (true) {
+						const { done, value } = await reader.read();
+
+						if (done) {
+							break;
+						}
+
+						// Do something with the stream value, like logging or processing
+						console.log(value);
+
+						// You can also push the value to another stream or process it as needed
+						controller.enqueue(value);
+					}
+
+					controller.close();
+					reader.releaseLock();
+				},
+			});
+		});
+
+		console.log(rscStream);
+		const rscComponent =
+			ReactServerDomClient.createFromReadableStream(rscStream);
+		function ClientRoot() {
+			// @ts-ignore
+			return use(rscComponent) as ReactNode;
+		}
+		// Hack retrieved from Marz "this is a temporary hack to only render a single 'frame'"
+		const abortController = new AbortController();
+
+		const ssrStream = await ReactDOMServer.renderToReadableStream(
+			<ClientRoot />,
+			{
+				bootstrapModules: [
+					`/${BUN_RSC_SPECIFIC_KEYWORD_STATICS}/client/bun-rsc/src/router.rsc.js`,
+				],
+				bootstrapScriptContent: `global = window;
 					global.__CURRENT_ROUTE__ = "${request.url}";  
 					global.__MANIFEST_STRING__ = ${JSON.stringify(manifestString)};
 					global.__META_STRING__ = ${JSON.stringify(JSON.stringify(pageMeta))};
@@ -122,46 +151,46 @@ export async function serveSSR(request: Request) {
 				  global.__webpack_require__ = function(moduleId) {
 					  return __bun__module_map__.get(moduleId);
 				  };`,
-					signal: abortController.signal,
-					onError() {},
-				},
-			);
-			abortController.abort();
-			return new Response(ssrStream, {
-				headers: { "Content-type": "text/html" },
-			});
-		} catch (error: unknown) {
-			const ErrorPageModule = await import(
-				`${serverFileErrorPath}${
-					// Invalidate cached module on every request in dev mode
-					// WARNING: can cause memory leaks for long-running dev servers!
-					process.env.NODE_ENV === "development"
-						? `?invalidate=${Date.now()}`
-						: ""
-				}}`
-			);
+				signal: abortController.signal,
+				onError() {},
+			},
+		);
+		abortController.abort();
+		return new Response(ssrStream, {
+			headers: { "Content-type": "text/html" },
+		});
+		// } catch (error: unknown) {
+		// 	const ErrorPageModule = await import(
+		// 		`${serverFileErrorPath}${
+		// 			// Invalidate cached module on every request in dev mode
+		// 			// WARNING: can cause memory leaks for long-running dev servers!
+		// 			process.env.NODE_ENV === "development"
+		// 				? `?invalidate=${Date.now()}`
+		// 				: ""
+		// 		}}`
+		// 	);
 
-			const ErrorPageComponent = ErrorPageModule.Error;
+		// 	const ErrorPageComponent = ErrorPageModule.Error;
 
-			// Render the Page component and send the query params as props.
-			const ErrorPage = () => (
-				<Layout
-					meta={{
-						title: "Error",
-						description: "Error",
-					}}
-					cssManifest={manifest}
-				>
-					{ErrorPageComponent({ error })}
-				</Layout>
-			);
-			const ssrStream = await ReactDOMServer.renderToReadableStream(
-				<ErrorPage />,
-			);
-			return new Response(ssrStream, {
-				headers: { "Content-type": "text/html" },
-			});
-		}
+		// 	// Render the Page component and send the query params as props.
+		// 	const ErrorPage = () => (
+		// 		<Layout
+		// 			meta={{
+		// 				title: "Error",
+		// 				description: "Error",
+		// 			}}
+		// 			cssManifest={manifest}
+		// 		>
+		// 			{ErrorPageComponent({ error })}
+		// 		</Layout>
+		// 	);
+		// 	const ssrStream = await ReactDOMServer.renderToReadableStream(
+		// 		<ErrorPage />,
+		// 	);
+		// 	return new Response(ssrStream, {
+		// 		headers: { "Content-type": "text/html" },
+		// 	});
+		// }
 	}
 	const { pathname } = new URL(request.url);
 
