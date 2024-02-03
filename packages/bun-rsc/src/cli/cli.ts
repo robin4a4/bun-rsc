@@ -3,34 +3,46 @@ import fs from "node:fs";
 import { cac } from "cac";
 import packageJson from "../../package.json";
 import { build } from "../build";
-import { serve } from "../serve-rsc";
 import { createWebSocketServer } from "../ws/server";
+
+/*
+ Huge hack to get around the fact that bun does not support conditions yet
+ We want to use react-server condition for the rsc server and classic react for the ssr server
+ If conditions were supported we would have react be a dependency of  the consumer app and run
+ the serve rsc command with the react-server condition
+*/
+// @ts-ignore
+import { serveRSC } from "../../dist/serve/serve-rsc";
+
+import { serveSSR } from "../serve-ssr";
 
 const cli = cac("bun-rsc");
 
 const port = 3000;
 
 // Dev server
-cli.command("dev").action(async () => {
-	console.log("[BUN RSC] Starting dev server");
-	try {
-		const sockets = createWebSocketServer();
-		await build();
-		const devServer = Bun.serve({ port, fetch: serve });
+// cli.command("dev").action(async () => {
+// 	console.log("[BUN RSC] Starting dev server");
+// 	try {
+// 		const sockets = createWebSocketServer();
+// 		await build();
+// 		const devServerRSC = Bun.serve({ port, fetch: serveRSC });
+// 		const devServerSSR = Bun.serve({ port, fetch: serveSSR });
 
-		fs.watch("./src", { recursive: true }, async (event, filename) => {
-			await build();
-			devServer.reload({ fetch: serve });
-			for (const socket of sockets) {
-				socket.send("refresh");
-			}
-			console.log(`[BUN RSC] - Detected ${event} in ${filename}`);
-		});
-	} catch (e: unknown) {
-		console.log(`error when starting dev server:\n${e}`);
-		process.exit(1);
-	}
-});
+// 		fs.watch("./src", { recursive: true }, async (event, filename) => {
+// 			await build();
+// 			devServerRSC.reload({ fetch: serveRSC });
+// 			devServerSSR.reload({ fetch: serveSSR });
+// 			for (const socket of sockets) {
+// 				socket.send("refresh");
+// 			}
+// 			console.log(`[BUN RSC] - Detected ${event} in ${filename}`);
+// 		});
+// 	} catch (e: unknown) {
+// 		console.log(`error when starting dev server:\n${e}`);
+// 		process.exit(1);
+// 	}
+// });
 
 // Build command
 cli.command("build").action(async () => {
@@ -39,10 +51,19 @@ cli.command("build").action(async () => {
 });
 
 // Serve command
-cli.command("serve").action(async () => {
+cli.command("serve-ssr").action(async () => {
 	const server = Bun.serve({
-		port,
-		fetch: serve,
+		port: 3000,
+		fetch: serveSSR,
+	});
+
+	console.log(`[BUN RSC] Listening on ${server.port}`);
+});
+
+cli.command("serve-rsc").action(async () => {
+	const server = Bun.serve({
+		port: 3001,
+		fetch: serveRSC,
 	});
 
 	console.log(`[BUN RSC] Listening on ${server.port}`);

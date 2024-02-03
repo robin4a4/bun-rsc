@@ -11,7 +11,7 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "bun-rsc": "./dist/cli/cli.js"
+    "bun-rsc": "./dist/build/cli.js"
   },
   "scripts": {
     "lint": "bunx @biomejs/biome check --apply ./src",
@@ -52,6 +52,7 @@
     "arg": "^5.0.2",
     "bun-plugin-dts": "^0.2.1",
     "cac": "^6.7.14",
+    "esbuild": "^0.20.0",
     "postcss": "^8.4.33",
     "react": "18.3.0-canary-5c607369c-20240116",
     "react-dom": "18.3.0-canary-5c607369c-20240116",

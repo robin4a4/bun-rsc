@@ -44,7 +44,7 @@ if (middlewareExists) {
 	middleware = middlewareModule.default;
 }
 
-export async function serve(request: Request) {
+export async function serveSSR(request: Request) {
 	const match = router.match(request.url);
 	let manifestString = "";
 	let manifest: Array<string> = [];
@@ -73,12 +73,24 @@ export async function serve(request: Request) {
 			`${match.filePath.split(".")[0]}.error.js`,
 		);
 		try {
+			const PageModule = await import(
+				`${serverFilePath}${
+					// Invalidate cached module on every request in dev mode
+					// WARNING: can cause memory leaks for long-running dev servers!
+					process.env.NODE_ENV === "development"
+						? `?invalidate=${Date.now()}`
+						: ""
+				}}`
+			);
+
+			const pageMeta = PageModule.meta;
 			const rscComponent = fetch(
 				combineUrl(BUN_RSC_SPECIFIC_KEYWORD, match.pathname),
 			);
 
 			function ClientRoot() {
-				return use(rscComponent as any) as ReactNode;
+				// @ts-ignore
+				return use(rscComponent) as ReactNode;
 			}
 			// Hack retrieved from Marz "this is a temporary hack to only render a single 'frame'"
 			const abortController = new AbortController();

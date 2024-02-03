@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "dev": "bun-rsc dev",
-    "serve": "bun-rsc serve",
+    "serve-rsc": "bun-rsc serve-rsc",
+    "serve-ssr": "bun-rsc serve-ssr",
     "build": "bun-rsc build"
   },
   "devDependencies": {

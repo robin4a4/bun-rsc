@@ -47,7 +47,7 @@ if (middlewareExists) {
 	middleware = middlewareModule.default;
 }
 
-export async function serve(request: Request) {
+export async function serveRSC(request: Request) {
 	const match = router.match(combineUrl(BUN_RSC_SPECIFIC_KEYWORD, request.url));
 	let manifestString = "";
 	let manifest: Array<string> = [];
