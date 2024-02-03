@@ -101,15 +101,9 @@ export async function serveSSR(request: Request) {
 				async start(controller) {
 					while (true) {
 						const { done, value } = await reader.read();
-
 						if (done) {
 							break;
 						}
-
-						// Do something with the stream value, like logging or processing
-						console.log(value);
-
-						// You can also push the value to another stream or process it as needed
 						controller.enqueue(value);
 					}
 
@@ -119,7 +113,6 @@ export async function serveSSR(request: Request) {
 			});
 		});
 
-		console.log(rscStream);
 		const rscComponent =
 			ReactServerDomClient.createFromReadableStream(rscStream);
 		function ClientRoot() {

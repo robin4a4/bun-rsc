@@ -95,7 +95,7 @@ export async function build() {
 						if (isClientComponentModule(code)) {
 							// if it is a client component, return a reference to the client component bundle
 							clientEntryPoints.add(path);
-
+							console.log(path);
 							const moduleExports = TSXTranspiler.scan(code).exports;
 							const moduleId = createClientModuleId(path);
 							// Here we make the consumer app import the client apis that we expose in the exports folder
@@ -103,7 +103,7 @@ export async function build() {
 							//
 							// `export default { $$typeof: Symbol.for("react.client.reference"), $$async: false, $$id: "${id}", name: "default" }`
 							//
-							// I just like complicated things
+							// I just like complicated things (and also using the real apis that react provides instead of forking them)
 							let refCode = "import {createClientReference} from 'bun-rsc'\n";
 							for (const exp of moduleExports) {
 								let id = null;
@@ -122,14 +122,14 @@ export async function build() {
 									chunks: [rscChunkId],
 									name: exp,
 								};
-								const ssrChunkId = moduleId
-									.replace(".tsx", ".ssr.js")
-									.replace(".ts", ".ssr.js");
-								ssrClientComponentMap[id] = {
-									id: ssrChunkId,
-									chunks: [ssrChunkId],
-									name: exp,
-								};
+								// const ssrChunkId = moduleId
+								// 	.replace(".tsx", ".ssr.js")
+								// 	.replace(".ts", ".ssr.js");
+								// ssrClientComponentMap[id] = {
+								// 	id: ssrChunkId,
+								// 	chunks: [ssrChunkId],
+								// 	name: exp,
+								// };
 							}
 							return {
 								contents: refCode,
@@ -205,85 +205,99 @@ export async function build() {
 		}
 	}
 
+	log.i("🛣️ Building router");
+
+	const routerResults = await Bun.build({
+		format: "esm",
+		entrypoints: [
+			fileURLToPath(new URL("../../src/router.tsx", import.meta.url)),
+		],
+		target: "browser",
+		sourcemap: "none",
+		splitting: true,
+		outdir: clientDist,
+	});
+	if (!routerResults.success) {
+		log.e("Router build failed");
+		console.log(routerResults.logs);
+	}
+
 	if (clientEntryPoints.size > 0) {
 		log.i("🏝 Building client components");
 
 		const clientBuildOptions: BuildConfig = {
 			format: "esm",
-			entrypoints: [
-				...clientEntryPoints,
-				fileURLToPath(new URL("../../src/router.tsx", import.meta.url)),
-			],
+			entrypoints: [...clientEntryPoints],
 			target: "browser",
 			sourcemap: "none",
 			splitting: true,
 			outdir: clientDist,
-			plugins: [
-				{
-					/* WILL NOT WORK IF THE SERVER ACTIONS ARE STILL MODIFIED IN THE SERVER PAGES BUILD */
-					name: "server-actions",
-					setup(build) {
-						build.onLoad({ filter: /\.(ts|tsx)$/ }, async ({ path }) => {
-							const code = await Bun.file(path).text();
-							const root = process.cwd();
-							const srcSplit = root.split("/");
-							const currentDirectoryName = combineUrl(
-								srcSplit[srcSplit.length - 1],
-								path.replace(root, ""),
-							);
+			// plugins: [
+			// 	{
+			// 		/* WILL NOT WORK IF THE SERVER ACTIONS ARE STILL MODIFIED IN THE SERVER PAGES BUILD */
+			// 		name: "server-actions",
+			// 		setup(build) {
+			// 			build.onLoad({ filter: /\.(ts|tsx)$/ }, async ({ path }) => {
+			// 				const code = await Bun.file(path).text();
+			// 				const root = process.cwd();
+			// 				const srcSplit = root.split("/");
+			// 				const currentDirectoryName = combineUrl(
+			// 					srcSplit[srcSplit.length - 1],
+			// 					path.replace(root, ""),
+			// 				);
 
-							if (isServerActionModule(code)) {
-								serverActionEntryPoints.add(path);
+			// 				if (isServerActionModule(code)) {
+			// 					serverActionEntryPoints.add(path);
 
-								const outputKey = combineUrl(
-									`/${BUN_RSC_SPECIFIC_KEYWORD}/server`,
-									currentDirectoryName,
-								);
-								const currentDirectoryNameSplit =
-									currentDirectoryName.split("/");
-								const pathToServerRoot = currentDirectoryNameSplit
-									.map(() => "..")
-									.join("/");
-								console.log(pathToServerRoot);
-								const moduleExports = TSTranspiler.scan(code).exports;
+			// 					const outputKey = combineUrl(
+			// 						`/${BUN_RSC_SPECIFIC_KEYWORD}/server`,
+			// 						currentDirectoryName,
+			// 					);
+			// 					const currentDirectoryNameSplit =
+			// 						currentDirectoryName.split("/");
+			// 					const pathToServerRoot = currentDirectoryNameSplit
+			// 						.map(() => "..")
+			// 						.join("/");
+			// 					console.log(pathToServerRoot);
+			// 					const moduleExports = TSTranspiler.scan(code).exports;
 
-								let refCode = `import {createServerReferenceClient} from "bun-rsc"`;
-								for (const exp of moduleExports) {
-									const id =
-										exp === "default"
-											? `${outputKey}#default`
-											: `${outputKey}#${exp}`;
-									refCode += `
-												export${
-													exp === "default" ? " default " : " "
-												}const ${exp} = createServerReferenceClient("${id}")
-												`;
-									const chunkId = outputKey
-										.replace(".tsx", ".js")
-										.replace(".ts", ".js");
+			// 					let refCode = `import {createServerReferenceClient} from "bun-rsc"`;
+			// 					for (const exp of moduleExports) {
+			// 						const id =
+			// 							exp === "default"
+			// 								? `${outputKey}#default`
+			// 								: `${outputKey}#${exp}`;
+			// 						refCode += `
+			// 									export${
+			// 										exp === "default" ? " default " : " "
+			// 									}const ${exp} = createServerReferenceClient("${id}")
+			// 									`;
+			// 						const chunkId = outputKey
+			// 							.replace(".tsx", ".js")
+			// 							.replace(".ts", ".js");
 
-									serverActionMap[id] = {
-										id: chunkId,
-										chunks: [chunkId],
-										name: exp,
-									};
-								}
-								console.log(refCode, serverActionMap);
-								return {
-									contents: refCode,
-									loader: "js",
-								};
-							}
+			// 						serverActionMap[id] = {
+			// 							id: chunkId,
+			// 							chunks: [chunkId],
+			// 							name: exp,
+			// 						};
+			// 					}
+			// 					console.log(refCode, serverActionMap);
+			// 					return {
+			// 						contents: refCode,
+			// 						loader: "js",
+			// 					};
+			// 				}
 
-							// If not a client component, return the original code
-							return {
-								contents: code,
-								loader: "tsx",
-							};
-						});
-					},
-				},
-			],
+			// 				// If not a client component, return the original code
+			// 				return {
+			// 					contents: code,
+			// 					loader: "tsx",
+			// 				};
+			// 			});
+			// 		},
+			// 	},
+			// ],
 		};
 		// Build client components for CSR
 		const csrResults = await Bun.build({
@@ -296,15 +310,15 @@ export async function build() {
 		}
 
 		// Build client components for SSR. React is externalized to avoid duplication and hooks errors at stream generation time.
-		const ssrResults = await Bun.build({
-			...clientBuildOptions,
-			naming: "[dir]/[name].ssr.[ext]",
-			external: ["react", "react-dom"],
-		});
-		if (!ssrResults.success) {
-			log.e("SSR build failed");
-			console.log(ssrResults.logs);
-		}
+		// const ssrResults = await Bun.build({
+		// 	...clientBuildOptions,
+		// 	naming: "[dir]/[name].ssr.[ext]",
+		// 	external: ["react", "react-dom"],
+		// });
+		// if (!ssrResults.success) {
+		// 	log.e("SSR build failed");
+		// 	console.log(ssrResults.logs);
+		// }
 	}
 
 	/**
@@ -313,7 +327,7 @@ export async function build() {
 	 * -------------------------------------------------------------------------------------
 	 * */
 	await writeMap(rscClientComponentMapUrl, rscClientComponentMap);
-	await writeMap(ssrClientComponentMapUrl, ssrClientComponentMap);
+	// await writeMap(ssrClientComponentMapUrl, ssrClientComponentMap);
 	await writeMap(serverActionMapUrl, serverActionMap);
 
 	/**
@@ -322,7 +336,7 @@ export async function build() {
 	 * -------------------------------------------------------------------------------------
 	 * */
 	async function parseCSS(files: BuildArtifact[]) {
-		log.i("🎨 Parsing CSS files with PostCSS");
+		log.i("🎨 Parsing CSS files with PostCSS", true);
 		const cssFiles = files.filter((f) => f.path.endsWith(".css"));
 		const manifest: Array<string> = [];
 		try {
