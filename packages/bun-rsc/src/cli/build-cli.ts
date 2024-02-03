@@ -15,6 +15,7 @@ await esbuild.build({
 	bundle: true,
 	format: "esm",
 	outdir: "./dist/serve",
+	jsx: "preserve",
 	conditions: ["react-server"],
 });
 

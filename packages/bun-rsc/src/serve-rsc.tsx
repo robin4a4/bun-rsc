@@ -14,7 +14,7 @@ import {
 
 import { Layout } from "./components/Layout.tsx";
 import { BootstrapType, Meta, MiddlewareType } from "./types.ts";
-import { combineUrl, log } from "./utils/common.ts";
+import { log } from "./utils/common.ts";
 
 const router = new Bun.FileSystemRouter({
 	style: "nextjs",
@@ -48,7 +48,8 @@ if (middlewareExists) {
 }
 
 export async function serveRSC(request: Request) {
-	const match = router.match(combineUrl(BUN_RSC_SPECIFIC_KEYWORD, request.url));
+	const ssrRequestUrl = request.url.replace(`${BUN_RSC_SPECIFIC_KEYWORD}/`, "");
+	const match = router.match(ssrRequestUrl);
 	let manifestString = "";
 	let manifest: Array<string> = [];
 	try {
@@ -58,11 +59,12 @@ export async function serveRSC(request: Request) {
 		log.w("No css manifest found");
 	}
 	if (match) {
-		log.i(`Match found for url: ${request.url}`);
+		log.i(`Match found for url: ${ssrRequestUrl}`);
 		const searchParams = new URLSearchParams(match.query);
 		const params = match.params;
 
 		if (middleware) {
+			log.i("Running middleware");
 			const middlewareResponse = await middleware({
 				request,
 				params: match.params,
@@ -73,6 +75,7 @@ export async function serveRSC(request: Request) {
 			}
 		}
 		const serverFilePath = resolveServerFileFromFilePath(match.filePath);
+		console.log(serverFilePath);
 		try {
 			const PageModule = await import(
 				`${serverFilePath}${
@@ -83,7 +86,7 @@ export async function serveRSC(request: Request) {
 						: ""
 				}}`
 			);
-
+			console.log(PageModule);
 			const PageComponent = PageModule.Page;
 			const pageMeta: Meta = PageModule.meta;
 			const searchParamsObject = Object.fromEntries(searchParams);
@@ -93,20 +96,21 @@ export async function serveRSC(request: Request) {
 				searchParams: searchParamsObject,
 				params,
 			};
-
+			console.log(props);
 			// Render the Page component and send the query params as props.
 			const Page = (
 				<Layout meta={pageMeta} cssManifest={manifest}>
 					{createElement(PageComponent, props)}
 				</Layout>
 			);
-
+			console.log(Page);
 			const clientComponentMap = await readMap(rscClientComponentMapUrl);
-
+			console.log(clientComponentMap);
 			const rscStream = ReactServerDomServer.renderToReadableStream(
 				Page,
 				clientComponentMap,
 			);
+			console.log("stream", rscStream);
 			return new Response(rscStream, {
 				// "Content-type" based on https://github.com/facebook/react/blob/main/fixtures/flight/server/global.js#L159
 				headers: {
@@ -117,17 +121,6 @@ export async function serveRSC(request: Request) {
 		} catch (error: unknown) {
 			console.error(error);
 		}
-	}
-	const { pathname } = new URL(request.url);
-
-	if (pathname.startsWith(`/${BUN_RSC_SPECIFIC_KEYWORD}`)) {
-		const filePath = pathname.replace(`/${BUN_RSC_SPECIFIC_KEYWORD}`, "");
-		const contents = Bun.file(resolveDist(filePath));
-		return new Response(contents, {
-			headers: {
-				"Content-Type": contents.type,
-			},
-		});
 	}
 
 	return new Response("404!");

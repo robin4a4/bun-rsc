@@ -86,19 +86,22 @@ export async function serveSSR(request: Request) {
 			);
 
 			const pageMeta = PageModule.meta;
-			const rscUrl = combineUrl(BUN_RSC_SPECIFIC_KEYWORD, match.pathname);
+			const rscUrl = combineUrl(
+				"http://localhost:3001",
+				combineUrl(BUN_RSC_SPECIFIC_KEYWORD, match.pathname),
+			);
 			log.i(`Fetching rsc at : ${rscUrl}`);
-			const rscComponent = fetch(rscUrl);
-
-			function ClientRoot() {
-				// @ts-ignore
-				return use(rscComponent) as ReactNode;
-			}
+			const rscComponent = await fetch(rscUrl);
+			console.log(rscComponent);
+			// function ClientRoot() {
+			// 	// @ts-ignore
+			// 	return use(rscComponent) as ReactNode;
+			// }
 			// Hack retrieved from Marz "this is a temporary hack to only render a single 'frame'"
 			const abortController = new AbortController();
 
 			const ssrStream = await ReactDOMServer.renderToReadableStream(
-				<ClientRoot />,
+				rscComponent,
 				{
 					bootstrapModules: [
 						`/${BUN_RSC_SPECIFIC_KEYWORD_STATICS}/client/bun-rsc/src/router.rsc.js`,
