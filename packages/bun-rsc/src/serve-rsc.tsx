@@ -58,6 +58,7 @@ export async function serveRSC(request: Request) {
 		console.log("No manifest found.");
 	}
 	if (match) {
+		console.log("[BUN RSC]", match);
 		const searchParams = new URLSearchParams(match.query);
 		const params = match.params;
 

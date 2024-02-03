@@ -4,6 +4,7 @@ import { ReactNode, use } from "react";
 import ReactDOMServer from "react-dom/server.edge";
 import {
 	BUN_RSC_SPECIFIC_KEYWORD,
+	BUN_RSC_SPECIFIC_KEYWORD_STATICS,
 	resolveDist,
 	resolveServerFileFromFilePath,
 	resolveSrc,
@@ -84,9 +85,9 @@ export async function serveSSR(request: Request) {
 			);
 
 			const pageMeta = PageModule.meta;
-			const rscComponent = fetch(
-				combineUrl(BUN_RSC_SPECIFIC_KEYWORD, match.pathname),
-			);
+			const rscUrl = combineUrl(BUN_RSC_SPECIFIC_KEYWORD, match.pathname);
+			console.log("[BUN RSC] -> Fetching rsc at ", rscUrl);
+			const rscComponent = fetch(rscUrl);
 
 			function ClientRoot() {
 				// @ts-ignore
@@ -99,7 +100,7 @@ export async function serveSSR(request: Request) {
 				<ClientRoot />,
 				{
 					bootstrapModules: [
-						`/${BUN_RSC_SPECIFIC_KEYWORD}/client/bun-rsc/src/router.rsc.js`,
+						`/${BUN_RSC_SPECIFIC_KEYWORD_STATICS}/client/bun-rsc/src/router.rsc.js`,
 					],
 					bootstrapScriptContent: `global = window;
 					global.__CURRENT_ROUTE__ = "${request.url}";  
@@ -160,8 +161,11 @@ export async function serveSSR(request: Request) {
 	}
 	const { pathname } = new URL(request.url);
 
-	if (pathname.startsWith(`/${BUN_RSC_SPECIFIC_KEYWORD}`)) {
-		const filePath = pathname.replace(`/${BUN_RSC_SPECIFIC_KEYWORD}`, "");
+	if (pathname.startsWith(`/${BUN_RSC_SPECIFIC_KEYWORD_STATICS}`)) {
+		const filePath = pathname.replace(
+			`/${BUN_RSC_SPECIFIC_KEYWORD_STATICS}`,
+			"",
+		);
 		const contents = Bun.file(resolveDist(filePath));
 		return new Response(contents, {
 			headers: {

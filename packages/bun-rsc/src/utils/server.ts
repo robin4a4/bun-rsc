@@ -2,6 +2,7 @@
 import { combineUrl } from "./common";
 
 export const BUN_RSC_SPECIFIC_KEYWORD = "__BUN_RSC";
+export const BUN_RSC_SPECIFIC_KEYWORD_STATICS = "__BUN_RSC_STATICS";
 export const ACTIONS_ROUTE_PREFIX = `/${BUN_RSC_SPECIFIC_KEYWORD}/actions/`;
 export const RSC_CONTENT_TYPE = "text/x-component";
 
