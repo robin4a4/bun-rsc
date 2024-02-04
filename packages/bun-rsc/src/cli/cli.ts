@@ -19,8 +19,6 @@ import { log } from "../utils/common";
 
 const cli = cac("bun-rsc");
 
-const port = 3000;
-
 // Dev server
 // cli.command("dev").action(async () => {
 // 	console.log("[BUN RSC] Starting dev server");
@@ -47,28 +45,28 @@ const port = 3000;
 
 // Build command
 cli.command("build").action(async () => {
-	log.title();
-	log.i("Building your app");
-	await build();
+  log.title();
+  log.i("Building your app");
+  await build();
 });
 
 // Serve command
 cli.command("serve-ssr").action(async () => {
-	log.title();
-	const server = Bun.serve({
-		port: 3000,
-		fetch: serveSSR,
-	});
-	log.i(`SSR server listening on ${server.port}`);
+  log.title();
+  const server = Bun.serve({
+    port: 3000,
+    fetch: serveSSR,
+  });
+  log.i(`SSR server listening on ${server.port}`);
 });
 
 cli.command("serve-rsc").action(async () => {
-	log.title();
-	const server = Bun.serve({
-		port: 3001,
-		fetch: serveRSC,
-	});
-	log.i(`RSC server listening on ${server.port}`);
+  log.title();
+  const server = Bun.serve({
+    port: 3001,
+    fetch: serveRSC,
+  });
+  log.i(`RSC server listening on ${server.port}`);
 });
 
 cli.help();

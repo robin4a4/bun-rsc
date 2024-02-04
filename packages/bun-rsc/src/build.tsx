@@ -1,23 +1,22 @@
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
-import { type BuildArtifact, BuildConfig } from "bun";
+import { type BuildArtifact, BuildConfig, $ } from "bun";
 import postcss from "postcss";
 import recursive from "recursive-readdir";
 import { ClientEntry } from "./types.js";
 import { combineUrl, log } from "./utils/common.js";
 import {
-	BUN_RSC_SPECIFIC_KEYWORD,
 	createClientModuleId,
 	createServerModuleId,
 	dist,
-	resolveClientDist,
+	resolveClientComponentsDist,
 	resolveDist,
 	resolveRoot,
-	resolveServerDist,
+	resolveServerComponentsDist,
+	resolveServerActionsDist,
 	resolveSrc,
 	rscClientComponentMapUrl,
 	serverActionMapUrl,
-	ssrClientComponentMapUrl,
 	writeMap,
 } from "./utils/server.js";
 
@@ -39,7 +38,7 @@ global.__webpack_require__ = __webpack_require__;
 const TSXTranspiler = new Bun.Transpiler({ loader: "tsx" });
 const TSTranspiler = new Bun.Transpiler({ loader: "ts" });
 
-const clientDist = resolveClientDist();
+const clientComponentsDist = resolveClientComponentsDist();
 
 function isClientComponentModule(code: string) {
 	return code.startsWith('"use client"') || code.startsWith("'use client'");
@@ -56,6 +55,7 @@ function isServerActionModule(code: string) {
  * */
 export async function build() {
 	fs.rmSync(dist, { recursive: true });
+	await $`touch dummy.ts`;
 
 	const rscClientComponentMap: Record<string, ClientEntry> = {};
 	const serverActionMap: Record<string, ClientEntry> = {};
@@ -63,9 +63,13 @@ export async function build() {
 	const clientEntryPoints = new Set<string>();
 	const serverActionEntryPoints = new Set<string>();
 	log.i("💿 Building server components");
-	const serverDist = resolveServerDist();
-	if (!fs.existsSync(serverDist)) {
-		await fs.promises.mkdir(serverDist, { recursive: true });
+	const serverComponentsDist = resolveServerComponentsDist();
+	const serverActionsDist = resolveServerActionsDist();
+	if (!fs.existsSync(serverComponentsDist)) {
+		await fs.promises.mkdir(serverComponentsDist, { recursive: true });
+	}
+	if (!fs.existsSync(serverActionsDist)) {
+		await fs.promises.mkdir(serverActionsDist, { recursive: true });
 	}
 
 	/**
@@ -74,15 +78,15 @@ export async function build() {
 	 * "server server-actions", but should be after the building of "client server-actions")
 	 * -------------------------------------------------------------------------------------
 	 * */
-	const serverBuildEntrypoints = await recursive(resolveSrc("pages"));
+	const serverComponentsBuildEntrypoints = await recursive(resolveSrc("pages"));
 
-	const serverBuildResult = await Bun.build({
+	const serverComponentsBuildResult = await Bun.build({
 		target: "bun",
 		sourcemap: "none",
 		splitting: true,
 		format: "esm",
-		entrypoints: serverBuildEntrypoints,
-		outdir: serverDist,
+		entrypoints: serverComponentsBuildEntrypoints,
+		outdir: serverComponentsDist,
 		external: ["bun-rsc"],
 		plugins: [
 			{
@@ -94,7 +98,6 @@ export async function build() {
 						if (isClientComponentModule(code)) {
 							// if it is a client component, return a reference to the client component bundle
 							clientEntryPoints.add(path);
-							console.log(path);
 							const moduleExports = TSXTranspiler.scan(code).exports;
 							const moduleId = createClientModuleId(path);
 							// Here we make the consumer app import the client apis that we expose in the exports folder
@@ -114,8 +117,8 @@ export async function build() {
 									refCode += `export const ${exp} = createClientReference("${id}", "${exp}")`;
 								}
 								const rscChunkId = moduleId
-									.replace(".tsx", ".rsc.js")
-									.replace(".ts", ".rsc.js");
+									.replace(".tsx", ".js")
+									.replace(".ts", ".js");
 								rscClientComponentMap[id] = {
 									id: rscChunkId,
 									chunks: [rscChunkId],
@@ -164,9 +167,9 @@ export async function build() {
 			},
 		],
 	});
-	if (!serverBuildResult.success) {
+	if (!serverComponentsBuildResult.success) {
 		log.e("Server build failed");
-		console.log(serverBuildResult.logs);
+		console.log(serverComponentsBuildResult.logs);
 	}
 
 	/**
@@ -174,8 +177,8 @@ export async function build() {
 	 * Build client components and "server server-actions"
 	 * -------------------------------------------------------------------------------------
 	 * */
-	if (!fs.existsSync(clientDist)) {
-		await fs.promises.mkdir(clientDist, { recursive: true });
+	if (!fs.existsSync(clientComponentsDist)) {
+		await fs.promises.mkdir(clientComponentsDist, { recursive: true });
 	}
 
 	if (serverActionEntryPoints.size > 0) {
@@ -183,11 +186,11 @@ export async function build() {
 
 		const serverActionResults = await Bun.build({
 			format: "esm",
-			entrypoints: [...serverActionEntryPoints],
+			entrypoints: [...serverActionEntryPoints, "dummy.ts"],
 			target: "browser",
 			sourcemap: "none",
 			splitting: true,
-			outdir: serverDist,
+			outdir: serverActionsDist,
 			external: ["react", "react-dom"],
 		});
 		if (!serverActionResults.success) {
@@ -206,7 +209,7 @@ export async function build() {
 		target: "browser",
 		sourcemap: "none",
 		splitting: true,
-		outdir: clientDist,
+		outdir: clientComponentsDist,
 	});
 	if (!routerResults.success) {
 		log.e("Router build failed");
@@ -214,16 +217,15 @@ export async function build() {
 	}
 
 	if (clientEntryPoints.size > 0) {
-		console.log(clientEntryPoints);
 		log.i("🏝 Building client components");
 
 		const clientBuildOptions: BuildConfig = {
 			format: "esm",
-			entrypoints: [...clientEntryPoints],
+			entrypoints: [...clientEntryPoints, "dummy.ts"],
 			target: "browser",
 			sourcemap: "none",
 			splitting: true,
-			outdir: clientDist,
+			outdir: clientComponentsDist,
 			// plugins: [
 			// 	{
 			// 		/* WILL NOT WORK IF THE SERVER ACTIONS ARE STILL MODIFIED IN THE SERVER PAGES BUILD */
@@ -291,6 +293,7 @@ export async function build() {
 			// 	},
 			// ],
 		};
+
 		// Build client components for CSR
 		const csrResults = await Bun.build({
 			...clientBuildOptions,
@@ -344,5 +347,7 @@ export async function build() {
 		}
 	}
 
-	parseCSS(serverBuildResult.outputs);
+	parseCSS(serverComponentsBuildResult.outputs);
+
+	$`rm dummy.ts`.quiet();
 }
