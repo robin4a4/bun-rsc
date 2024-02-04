@@ -65,7 +65,10 @@ export async function readMap(mapUrl: string) {
   return JSON.parse(bundleMap);
 }
 
-export function createModuleId(path: string, type: "client" | "server") {
+export function createModuleId(
+  path: string,
+  type: "client-components" | "server-components"
+) {
   const root = process.cwd();
   const moduleId = combineUrl(
     `/${BUN_RSC_SPECIFIC_KEYWORD}/${type}`,
@@ -74,10 +77,10 @@ export function createModuleId(path: string, type: "client" | "server") {
   return moduleId;
 }
 
-export function createClientModuleId(path: string) {
-  return createModuleId(path, "client");
+export function createClientComponentsModuleId(path: string) {
+  return createModuleId(path, "client-components");
 }
 
-export function createServerModuleId(path: string) {
-  return createModuleId(path, "server");
+export function createServerActionsModuleId(path: string) {
+  return createModuleId(path, "server-components");
 }

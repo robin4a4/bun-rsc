@@ -6,8 +6,8 @@ import recursive from "recursive-readdir";
 import { ClientEntry } from "./types.js";
 import { combineUrl, log } from "./utils/common.js";
 import {
-	createClientModuleId,
-	createServerModuleId,
+	createClientComponentsModuleId,
+	createServerActionsModuleId,
 	dist,
 	resolveClientComponentsDist,
 	resolveDist,
@@ -99,7 +99,7 @@ export async function build() {
 							// if it is a client component, return a reference to the client component bundle
 							clientEntryPoints.add(path);
 							const moduleExports = TSXTranspiler.scan(code).exports;
-							const moduleId = createClientModuleId(path);
+							const moduleId = createClientComponentsModuleId(path);
 							// Here we make the consumer app import the client apis that we expose in the exports folder
 							// A similar approach would have been to just write the object:
 							//
@@ -136,7 +136,7 @@ export async function build() {
 							serverActionEntryPoints.add(path);
 
 							const moduleExports = TSTranspiler.scan(code).exports;
-							const moduleId = createServerModuleId(path);
+							const moduleId = createServerActionsModuleId(path);
 							// here we make the consumer app import the server actions api that we expose in the exports folder
 							let refCode = `import {createServerReferenceServer} from 'bun-rsc'
 
@@ -225,6 +225,7 @@ export async function build() {
 			target: "browser",
 			sourcemap: "none",
 			splitting: true,
+			external: ["react", "react-dom"],
 			outdir: clientComponentsDist,
 			// plugins: [
 			// 	{

@@ -125,9 +125,9 @@ export async function serveSSR(request: Request) {
 		const ssrStream = await ReactDOMServer.renderToReadableStream(
 			<ClientRoot />,
 			{
-				bootstrapModules: [
-					`/${BUN_RSC_SPECIFIC_KEYWORD_STATICS}/client/bun-rsc/src/router.rsc.js`,
-				],
+				// bootstrapModules: [
+				// 	`/${BUN_RSC_SPECIFIC_KEYWORD_STATICS}/client/bun-rsc/src/router.rsc.js`,
+				// ],
 				bootstrapScriptContent: `global = window;
 					global.__CURRENT_ROUTE__ = "${request.url}";  
 					global.__MANIFEST_STRING__ = ${JSON.stringify(manifestString)};
