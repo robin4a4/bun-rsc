@@ -72,11 +72,13 @@ export async function serveRSC(request: Request) {
 				params: match.params,
 				searchParams,
 			});
+
 			if (middlewareResponse) {
 				return middlewareResponse;
 			}
 		}
 		const serverFilePath = resolveServerFileFromFilePath(match.filePath);
+
 		try {
 			const PageModule = await import(
 				`${serverFilePath}${
@@ -90,8 +92,7 @@ export async function serveRSC(request: Request) {
 			const PageComponent = PageModule.Page;
 			const pageMeta: Meta = PageModule.meta;
 			const searchParamsObject = Object.fromEntries(searchParams);
-			// biome-ignore lint/performance/noDelete: <explanation>
-			delete searchParamsObject.ajaxRSC;
+
 			const props = {
 				searchParams: searchParamsObject,
 				params,
