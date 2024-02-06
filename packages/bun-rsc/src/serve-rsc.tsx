@@ -3,18 +3,18 @@ import { createElement } from "react";
 // @ts-ignore
 import * as ReactServerDomServer from "react-server-dom-webpack/server.edge";
 import {
-	BUN_RSC_SPECIFIC_KEYWORD,
-	RSC_CONTENT_TYPE,
 	readMap,
 	resolveDist,
 	resolveServerFileFromFilePath,
 	resolveSrc,
 	rscClientComponentMapUrl,
+	ssrClientComponentMapUrl,
 } from "./utils/server.ts";
 
 import { Layout } from "./components/Layout.tsx";
 import { BootstrapType, Meta, MiddlewareType } from "./types.ts";
-import { log } from "./utils/common.ts";
+import { log } from "./utils/server.ts";
+import { BUN_RSC_SPECIFIC_KEYWORD, RSC_CONTENT_TYPE } from "./utils/common.ts";
 
 const router = new Bun.FileSystemRouter({
 	style: "nextjs",
@@ -48,7 +48,9 @@ if (middlewareExists) {
 }
 
 export async function serveRSC(request: Request) {
-	const ssrRequestUrl = request.url.replace(`${BUN_RSC_SPECIFIC_KEYWORD}/`, "");
+	const ssrRequestUrl = request.url
+		.replace(`${BUN_RSC_SPECIFIC_KEYWORD}/`, "")
+		.replace(`${BUN_RSC_SPECIFIC_KEYWORD}`, "");
 	const match = router.match(ssrRequestUrl);
 	let manifestString = "";
 	let manifest: Array<string> = [];
@@ -100,7 +102,13 @@ export async function serveRSC(request: Request) {
 					{createElement(PageComponent, props)}
 				</Layout>
 			);
-			const clientComponentMap = await readMap(rscClientComponentMapUrl);
+
+			const map =
+				searchParams.get("ssr") === "true"
+					? ssrClientComponentMapUrl
+					: rscClientComponentMapUrl;
+
+			const clientComponentMap = await readMap(map);
 			const rscStream = ReactServerDomServer.renderToReadableStream(
 				Page,
 				clientComponentMap,

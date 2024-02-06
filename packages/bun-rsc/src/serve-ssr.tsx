@@ -5,15 +5,18 @@ import * as ReactServerDomClient from "react-server-dom-webpack/client";
 // @ts-ignore
 import ReactDOMServer from "react-dom/server.edge";
 import {
-	BUN_RSC_SPECIFIC_KEYWORD,
-	BUN_RSC_SPECIFIC_KEYWORD_STATICS,
 	resolveDist,
 	resolveServerFileFromFilePath,
 	resolveSrc,
+	log,
 } from "./utils/server.ts";
 
 import { BootstrapType, MiddlewareType } from "./types.ts";
-import { combineUrl, log } from "./utils/common.ts";
+import {
+	BUN_RSC_SPECIFIC_KEYWORD,
+	BUN_RSC_SPECIFIC_KEYWORD_STATICS,
+	combineUrl,
+} from "./utils/common.ts";
 
 const router = new Bun.FileSystemRouter({
 	style: "nextjs",
@@ -87,10 +90,10 @@ export async function serveSSR(request: Request) {
 		);
 
 		const pageMeta = PageModule.meta;
-		const rscUrl = combineUrl(
+		const rscUrl = `${combineUrl(
 			"http://localhost:3001",
-			combineUrl(BUN_RSC_SPECIFIC_KEYWORD, match.pathname),
-		);
+			combineUrl(BUN_RSC_SPECIFIC_KEYWORD, match.pathname.split("?")[0]),
+		)}?ssr=true&${searchParams.toString()}`;
 		log.i(`Fetching rsc at : ${rscUrl}`);
 
 		const rscStream = await fetch(rscUrl).then((response) => {
@@ -125,9 +128,9 @@ export async function serveSSR(request: Request) {
 		const ssrStream = await ReactDOMServer.renderToReadableStream(
 			<ClientRoot />,
 			{
-				// bootstrapModules: [
-				// 	`/${BUN_RSC_SPECIFIC_KEYWORD_STATICS}/client/bun-rsc/src/router.rsc.js`,
-				// ],
+				bootstrapModules: [
+					`/${BUN_RSC_SPECIFIC_KEYWORD_STATICS}/bun-rsc/src/router.ssr.js`,
+				],
 				bootstrapScriptContent: `global = window;
 					global.__CURRENT_ROUTE__ = "${request.url}";  
 					global.__MANIFEST_STRING__ = ${JSON.stringify(manifestString)};

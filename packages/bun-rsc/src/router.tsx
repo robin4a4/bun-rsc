@@ -8,27 +8,31 @@ import {
 import { hydrateRoot } from "react-dom/client";
 // @ts-expect-error
 import { createFromFetch } from "react-server-dom-webpack/client";
-import { combineUrl } from "./utils/common";
-import { clientLiveReload } from "./ws/client";
+import { BUN_RSC_SPECIFIC_KEYWORD, combineUrl } from "./utils/common";
+// import { clientLiveReload } from "./ws/client";
 
 hydrateRoot(document, <Router />);
 
-clientLiveReload();
+// clientLiveReload();
 
-const queryParam = new URLSearchParams({
-	...Object.fromEntries(new URLSearchParams(window.location.search)),
-	ajaxRSC: "true",
-});
+const queryParam = new URLSearchParams(window.location.search);
+
 function Router() {
-	const [url, setUrl] = useState(
-		`${window.location.origin}?${queryParam.toString()}`,
+	const [rscUrl, setRscUrl] = useState(
+		`${combineUrl(
+			"http://localhost:3001",
+			BUN_RSC_SPECIFIC_KEYWORD,
+		)}?${queryParam.toString()}`,
 	);
 
 	useEffect(() => {
 		function navigate(url: string) {
 			startTransition(() => {
-				setUrl(
-					`${combineUrl(window.location.origin, url)}?${queryParam.toString()}`,
+				setRscUrl(
+					`${combineUrl(
+						"http://localhost:3001",
+						combineUrl(BUN_RSC_SPECIFIC_KEYWORD, url),
+					)}?${queryParam.toString()}`,
 				);
 			});
 		}
@@ -69,7 +73,7 @@ function Router() {
 		};
 	}, []);
 
-	return <ServerOutput url={url} />;
+	return <ServerOutput url={rscUrl} />;
 }
 
 const initialCache = new Map();

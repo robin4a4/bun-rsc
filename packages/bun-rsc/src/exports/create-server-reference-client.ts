@@ -5,7 +5,7 @@ import {
 	// @ts-ignore
 } from "react-server-dom-webpack/client";
 
-import { ACTIONS_ROUTE_PREFIX, RSC_CONTENT_TYPE } from "../utils/server";
+import { ACTIONS_ROUTE_PREFIX, RSC_CONTENT_TYPE } from "../utils/common";
 
 const callServer = async (id: string, args: unknown[]) => {
 	const url = ACTIONS_ROUTE_PREFIX + encodeURIComponent(id);

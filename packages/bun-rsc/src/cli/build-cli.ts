@@ -1,7 +1,7 @@
 import dts from "bun-plugin-dts";
 import fs from "node:fs";
 import * as esbuild from "esbuild";
-import { log } from "../utils/common";
+import { log } from "../utils/server";
 
 log.title();
 log.i("Building Bun RSC");
@@ -25,6 +25,7 @@ const results = await Bun.build({
 	entrypoints: ["./src/cli/cli.ts"],
 	plugins: [dts()],
 	outdir: "./dist/build",
+	external: ["react", "react-dom"],
 	splitting: true,
 });
 
