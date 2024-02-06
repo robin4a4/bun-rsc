@@ -1,10 +1,10 @@
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
-import { type BuildArtifact, BuildConfig, $ } from "bun";
+import { type BuildArtifact, BuildConfig} from "bun";
 import postcss from "postcss";
 import recursive from "recursive-readdir";
 import { ClientEntry } from "./types.js";
-import { combineUrl } from "./utils/common.js";
+import { combineUrl } from "./utils/common";
 import {
 	createClientComponentsModuleId,
 	createServerActionsModuleId,
@@ -20,7 +20,7 @@ import {
 	writeMap,
 	log,
 	ssrClientComponentMapUrl,
-} from "./utils/server.js";
+} from "./utils/server";
 
 const __bun__module_map__ = new Map();
 
@@ -57,7 +57,6 @@ function isServerActionModule(code: string) {
  * */
 export async function build() {
 	fs.rmSync(dist, { recursive: true });
-	await $`touch dummy.ts`;
 
 	const rscClientComponentMap: Record<string, ClientEntry> = {};
 	const ssrClientComponentMap: Record<string, ClientEntry> = {};
@@ -198,7 +197,7 @@ export async function build() {
 
 		const serverActionResults = await Bun.build({
 			format: "esm",
-			entrypoints: [...serverActionEntryPoints, "dummy.ts"],
+			entrypoints: [...serverActionEntryPoints],
 			target: "browser",
 			sourcemap: "none",
 			splitting: true,
@@ -218,7 +217,6 @@ export async function build() {
 		entrypoints: [
 			...clientEntryPoints,
 			fileURLToPath(new URL("../../src/router.tsx", import.meta.url)),
-			"dummy.ts",
 		],
 		target: "browser",
 		sourcemap: "none",
@@ -356,5 +354,4 @@ export async function build() {
 
 	parseCSS(serverComponentsBuildResult.outputs);
 
-	$`rm dummy.ts`.quiet();
 }

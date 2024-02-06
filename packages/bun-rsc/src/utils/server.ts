@@ -66,14 +66,16 @@ export async function readMap(mapUrl: string) {
 	return JSON.parse(bundleMap);
 }
 
-export function createModuleId(
-	path: string,
-	type: "client-components" | "server-components",
-) {
+export function createModuleId(path: string, type: "client-components" | "server-components") {
 	const root = process.cwd();
+	const srcSplit = root.split("/");
+	const currentDirectoryName = combineUrl(
+		srcSplit[srcSplit.length - 1],
+		path.replace(root, ""),
+	);
 	const moduleId = combineUrl(
 		`/${BUN_RSC_SPECIFIC_KEYWORD_STATICS}/${type}`,
-		path.replace(root, ""),
+		currentDirectoryName,
 	);
 	return moduleId;
 }
