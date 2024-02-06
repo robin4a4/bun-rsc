@@ -21,7 +21,7 @@ function Router() {
 	const [rscUrl, setRscUrl] = useState(
 		`${combineUrl(
 			"http://localhost:3001",
-			BUN_RSC_SPECIFIC_KEYWORD,
+			combineUrl(BUN_RSC_SPECIFIC_KEYWORD, window.location.pathname),
 		)}?${queryParam.toString()}`,
 	);
 
