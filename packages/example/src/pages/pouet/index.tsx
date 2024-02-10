@@ -1,4 +1,5 @@
 import { addTodo } from "../../actions.ts";
+import Counter from "../../components/Counter.tsx";
 
 export async function Page() {
 	return (
@@ -11,6 +12,7 @@ export async function Page() {
 				<input type="text" name="text" />
 				<button type="submit">Add</button>
 			</form>
+			<Counter />
 		</>
 	);
 }

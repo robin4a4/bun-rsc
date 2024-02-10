@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
-import { type BuildArtifact, BuildConfig} from "bun";
+import { type BuildArtifact, BuildConfig } from "bun";
 import postcss from "postcss";
 import recursive from "recursive-readdir";
 import { ClientEntry } from "./types.js";
@@ -89,7 +89,7 @@ export async function build() {
 		format: "esm",
 		entrypoints: serverComponentsBuildEntrypoints,
 		outdir: serverComponentsDist,
-		external: ["bun-rsc"],
+		external: ["bun-rsc", "react", "react-dom"],
 		plugins: [
 			{
 				name: "build-client-components-and-server-actions",
@@ -353,5 +353,4 @@ export async function build() {
 	}
 
 	parseCSS(serverComponentsBuildResult.outputs);
-
 }
