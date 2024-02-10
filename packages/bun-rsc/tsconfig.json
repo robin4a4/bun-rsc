@@ -6,7 +6,7 @@
     "moduleResolution": "bundler",
     "moduleDetection": "force",
     "allowImportingTsExtensions": true,
-    "noEmit": true,
+    "emitDeclarationOnly": true,
     "composite": true,
     "strict": true,
     "downlevelIteration": true,

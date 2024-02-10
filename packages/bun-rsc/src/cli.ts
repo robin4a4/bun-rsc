@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
 import fs from "node:fs";
 import { cac } from "cac";
-import packageJson from "../../package.json";
-import { build } from "../build";
-import { createWebSocketServer } from "../ws/server";
+import packageJson from "../package.json";
+import { build } from "./build";
+import { createWebSocketServer } from "./ws/server";
 
 /*
  Huge hack to get around the fact that bun does not support conditions yet
@@ -12,10 +12,10 @@ import { createWebSocketServer } from "../ws/server";
  the serve rsc command with the react-server condition
 */
 // @ts-ignore
-import { serveRSC } from "../../dist/serve/serve-rsc";
+import { serveRSC } from "../dist/serve/serve-rsc";
 
-import { serveSSR } from "../serve-ssr";
-import { log } from "../utils/server";
+import { serveSSR } from "./serve-ssr";
+import { log } from "./utils/server";
 
 const cli = cac("bun-rsc");
 

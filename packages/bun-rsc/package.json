@@ -2,10 +2,10 @@
   "version": "0.0.1",
   "name": "bun-rsc",
   "type": "module",
-  "types": "./dist/index.d.ts",
+  "types": "./dist/serve/exports/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": "./dist/serve/exports/index.d.ts",
       "default": "./dist/serve/exports/index.js"
     },
     "./package.json": "./package.json"
@@ -15,8 +15,7 @@
   },
   "scripts": {
     "lint": "bunx @biomejs/biome check --apply ./src",
-    "dev": "bun --watch run ./src/cli/build-cli.ts",
-    "build": "bun run ./src/cli/build-cli.ts",
+    "build": "bun run ./src/exports/build.ts",
     "release": "bun run build && bunx changeset publish && git push --follow-tags"
   },
   "publishConfig": {
@@ -42,6 +41,7 @@
     "@types/react": "^18.2.21",
     "@types/react-dom": "^18.2.7",
     "@types/web": "^0.0.127",
+    "esbuild-plugin-d.ts": "1.2.3",
     "bun-types": "latest"
   },
   "peerDependencies": {
