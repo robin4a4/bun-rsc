@@ -16,7 +16,7 @@ import {
 	resolveServerActionsDist,
 	resolveSrc,
 	rscClientComponentMapUrl,
-	serverActionMapUrl,
+	serverActionsMapUrl,
 	writeMap,
 	log,
 	ssrClientComponentMapUrl,
@@ -62,7 +62,7 @@ export async function build() {
 
 	const rscClientComponentMap: Record<string, ClientEntry> = {};
 	const ssrClientComponentMap: Record<string, ClientEntry> = {};
-	const serverActionMap: Record<string, ClientEntry> = {};
+	const serverActionsMap: Record<string, ClientEntry> = {};
 
 	const clientEntryPoints = new Set<string>();
 	const serverActionEntryPoints = new Set<string>();
@@ -159,7 +159,7 @@ export async function build() {
 						// 		const id = `${moduleId}#${exp}`;
 						// 		refCode += `if (typeof ${exp} === 'function') createServerReferenceServer(${exp}, "${id}", "${exp}")`;
 						// 		const serverActionChunkId = moduleId.replace(".ts", ".js");
-						// 		serverActionMap[id] = {
+						// 		serverActionsMap[id] = {
 						// 			id: serverActionChunkId,
 						// 			chunks: [serverActionChunkId],
 						// 			name: exp,
@@ -196,26 +196,7 @@ export async function build() {
 		await fs.promises.mkdir(clientComponentsDist, { recursive: true });
 	}
 
-	if (serverActionEntryPoints.size > 0) {
-		log.i("💪 Building server actions");
-
-		const serverActionResults = await Bun.build({
-			format: "esm",
-			entrypoints: [...serverActionEntryPoints],
-			target: "browser",
-			sourcemap: "none",
-			splitting: true,
-			outdir: serverActionsDist,
-			external: ["react", "react-dom"],
-		});
-		if (!serverActionResults.success) {
-			log.e("Server actions build failed");
-			console.log(serverActionResults.logs);
-			throw new Error("Server actions build failed");
-		}
-	}
-
-	log.i("🏝 Building client");
+	log.i("🏝  Building client");
 
 	const clientBuildOptions: BuildConfig = {
 		format: "esm",
@@ -229,7 +210,6 @@ export async function build() {
 		outdir: clientComponentsDist,
 		plugins: [
 			{
-				/* WILL NOT WORK IF THE SERVER ACTIONS ARE STILL MODIFIED IN THE SERVER PAGES BUILD */
 				name: "server-actions",
 				setup(build) {
 					build.onLoad({ filter: /\.(ts|tsx)$/ }, async ({ path }) => {
@@ -255,13 +235,13 @@ export async function build() {
 									.replace(".tsx", ".js")
 									.replace(".ts", ".js");
 
-								serverActionMap[id] = {
+								serverActionsMap[id] = {
 									id: chunkId,
 									chunks: [chunkId],
 									name: exp,
 								};
 							}
-							console.log(refCode, serverActionMap);
+
 							return {
 								contents: refCode,
 								loader: "js",
@@ -299,6 +279,25 @@ export async function build() {
 		console.log(csrResults.logs);
 		throw new Error("SSR build failed");
 	}
+
+	if (serverActionEntryPoints.size > 0) {
+		log.i("💪 Building server actions");
+
+		const serverActionResults = await Bun.build({
+			format: "esm",
+			entrypoints: [...serverActionEntryPoints],
+			target: "browser",
+			sourcemap: "none",
+			splitting: true,
+			outdir: serverActionsDist,
+		});
+		if (!serverActionResults.success) {
+			log.e("Server actions build failed");
+			console.log(serverActionResults.logs);
+			throw new Error("Server actions build failed");
+		}
+	}
+
 	/**
 	 * -------------------------------------------------------------------------------------
 	 * Write module maps used by the server to resolve client components and server actions
@@ -306,7 +305,7 @@ export async function build() {
 	 * */
 	await writeMap(rscClientComponentMapUrl, rscClientComponentMap);
 	await writeMap(ssrClientComponentMapUrl, ssrClientComponentMap);
-	await writeMap(serverActionMapUrl, serverActionMap);
+	await writeMap(serverActionsMapUrl, serverActionsMap);
 
 	/**
 	 * -------------------------------------------------------------------------------------
@@ -314,7 +313,7 @@ export async function build() {
 	 * -------------------------------------------------------------------------------------
 	 * */
 	async function parseCSS(files: BuildArtifact[]) {
-		log.i("🎨 Parsing CSS files with PostCSS", true);
+		log.i("🎨 Parsing CSS files with PostCSS");
 		const cssFiles = files.filter((f) => f.path.endsWith(".css"));
 		const manifest: Array<string> = [];
 		try {

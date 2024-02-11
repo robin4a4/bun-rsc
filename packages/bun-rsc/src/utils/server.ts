@@ -51,7 +51,7 @@ export const ssrClientComponentMapUrl = resolveDist(
 	"clientComponentMap.ssr.json",
 );
 
-export const serverActionMapUrl = resolveDist("serverActionMap.json");
+export const serverActionsMapUrl = resolveDist("serverActionsMap.json");
 export const ssrTranslationMapUrl = resolveDist("ssrTranslationMap.json");
 
 export async function writeMap(
@@ -66,7 +66,7 @@ export async function readMap(mapUrl: string) {
 	return JSON.parse(bundleMap);
 }
 
-export function createModuleId(path: string, type: "client-components" | "server-components") {
+export function createClientComponentsModuleId(path: string) {
 	const root = process.cwd();
 	const srcSplit = root.split("/");
 	const currentDirectoryName = combineUrl(
@@ -74,18 +74,20 @@ export function createModuleId(path: string, type: "client-components" | "server
 		path.replace(root, ""),
 	);
 	const moduleId = combineUrl(
-		`/${BUN_RSC_SPECIFIC_KEYWORD_STATICS}/${type}`,
+		`/${BUN_RSC_SPECIFIC_KEYWORD_STATICS}/client-components`,
 		currentDirectoryName,
 	);
 	return moduleId;
 }
 
-export function createClientComponentsModuleId(path: string) {
-	return createModuleId(path, "client-components");
-}
-
 export function createServerActionsModuleId(path: string) {
-	return createModuleId(path, "server-components");
+	const root = process.cwd();
+	const formattedPath = path.replace(combineUrl(root, "src"), "");
+	const moduleId = combineUrl(
+		`/${BUN_RSC_SPECIFIC_KEYWORD_STATICS}/server-actions`,
+		formattedPath,
+	);
+	return moduleId;
 }
 
 function isUnicodeSupported() {

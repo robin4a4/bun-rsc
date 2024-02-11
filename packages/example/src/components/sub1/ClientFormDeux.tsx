@@ -1,10 +1,10 @@
 "use client";
 
-import { addTodo } from "../actions.ts";
+import { addStuff } from "../../sub2/actions-deux.ts";
 
-export function ClientForm() {
+export function ClientFormDeux() {
 	return (
-		<form action={addTodo}>
+		<form action={addStuff}>
 			<input type="text" name="text" />
 			<button type="submit">Add</button>
 		</form>

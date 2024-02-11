@@ -8,13 +8,19 @@ import {
 	resolveServerFileFromFilePath,
 	resolveSrc,
 	rscClientComponentMapUrl,
+	serverActionsMapUrl,
 	ssrClientComponentMapUrl,
 } from "../utils/server.ts";
 
 import { Layout } from "../components/Layout.tsx";
 import { BootstrapType, Meta, MiddlewareType } from "../types.ts";
 import { log } from "../utils/server.ts";
-import { BUN_RSC_SPECIFIC_KEYWORD, RSC_CONTENT_TYPE } from "../utils/common.ts";
+import {
+	ACTIONS_ROUTE_PREFIX,
+	BUN_RSC_SPECIFIC_KEYWORD,
+	RSC_CONTENT_TYPE,
+	combineUrl,
+} from "../utils/common.ts";
 
 const router = new Bun.FileSystemRouter({
 	style: "nextjs",
@@ -59,6 +65,27 @@ export async function serveRSC(request: Request) {
 		manifest = JSON.parse(manifestString);
 	} catch (e) {
 		log.w("No css manifest found");
+	}
+	const url = new URL(request.url);
+	if (url.pathname.startsWith(ACTIONS_ROUTE_PREFIX)) {
+		const split = url.pathname.split(ACTIONS_ROUTE_PREFIX);
+		const id = decodeURIComponent(split[1]);
+		const serverActionsMap = await readMap(serverActionsMapUrl);
+		const action = serverActionsMap[id];
+		if (action) {
+			const actionModuleUrl = combineUrl(process.cwd(), action.id);
+			const actionModule = await import(actionModuleUrl);
+			const result = await actionModule[action.name](request);
+			return new Response(result, {
+				// "Content-type" based on https://github.com/facebook/react/blob/main/fixtures/flight/server/global.js#L159
+				headers: {
+					"Content-type": RSC_CONTENT_TYPE,
+					"Access-Control-Allow-Origin": "*",
+				},
+			});
+		}
+
+		return new Response("Hello");
 	}
 	if (match) {
 		log.i(`Match found for url: ${ssrRequestUrl}`);

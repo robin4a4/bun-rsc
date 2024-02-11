@@ -46,7 +46,6 @@ const cli = cac("bun-rsc");
 // Build command
 cli.command("build").action(async () => {
 	log.title();
-	log.i("Building your app");
 	await build();
 });
 

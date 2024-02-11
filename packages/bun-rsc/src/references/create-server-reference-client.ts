@@ -5,10 +5,17 @@ import {
 	// @ts-ignore
 } from "react-server-dom-webpack/client";
 
-import { ACTIONS_ROUTE_PREFIX, RSC_CONTENT_TYPE } from "../utils/common";
+import {
+	ACTIONS_ROUTE_PREFIX,
+	RSC_CONTENT_TYPE,
+	combineUrl,
+} from "../utils/common";
 
 const callServer = async (id: string, args: unknown[]) => {
-	const url = ACTIONS_ROUTE_PREFIX + encodeURIComponent(id);
+	const url = combineUrl(
+		"http://localhost:3001",
+		combineUrl(ACTIONS_ROUTE_PREFIX, encodeURIComponent(id)),
+	);
 
 	let requestOpts: Pick<RequestInit, "headers" | "body">;
 	if (!Array.isArray(args) || args.some((a) => a instanceof FormData)) {

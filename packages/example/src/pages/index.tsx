@@ -1,4 +1,6 @@
+import { ClientForm } from "../components/ClientForm";
 import Counter from "../components/Counter";
+import { ClientFormDeux } from "../components/sub1/ClientFormDeux";
 // import Counter2 from "../components/sub1/Counter2";
 // import Counter3 from "../sub2/Counter3";
 import "../global.css";
@@ -20,6 +22,7 @@ export async function Page({ searchParams }: PageProps) {
 			<a href="/salut">Salut</a>
 			<a href="/pouet">pouet</a>
 			<Counter />
+			<ClientFormDeux />
 			{/* <Counter2 />
 			<Counter3 /> */}
 		</>
