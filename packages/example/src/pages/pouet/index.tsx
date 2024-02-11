@@ -1,4 +1,4 @@
-import { addTodo } from "../../actions.ts";
+import { ClientForm } from "../../components/ClientForm.tsx";
 import Counter from "../../components/Counter.tsx";
 
 export async function Page() {
@@ -8,10 +8,7 @@ export async function Page() {
 			<a href="/">Home</a>
 			<a href="/salut">Salut</a>
 			<a href="/pouet">pouet</a>
-			<form action={addTodo}>
-				<input type="text" name="text" />
-				<button type="submit">Add</button>
-			</form>
+			<ClientForm />
 			<Counter />
 		</>
 	);

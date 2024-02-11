@@ -9,14 +9,14 @@ import {
 	resolveServerFileFromFilePath,
 	resolveSrc,
 	log,
-} from "./utils/server.ts";
+} from "../utils/server.ts";
 
-import { BootstrapType, MiddlewareType } from "./types.ts";
+import { BootstrapType, MiddlewareType } from "../types.ts";
 import {
 	BUN_RSC_SPECIFIC_KEYWORD,
 	BUN_RSC_SPECIFIC_KEYWORD_STATICS,
 	combineUrl,
-} from "./utils/common.ts";
+} from "../utils/common.ts";
 
 const router = new Bun.FileSystemRouter({
 	style: "nextjs",
@@ -116,8 +116,15 @@ export async function serveSSR(request: Request) {
 			});
 		});
 
-		const rscComponent =
-			ReactServerDomClient.createFromReadableStream(rscStream);
+		const rscComponent = ReactServerDomClient.createFromReadableStream(
+			rscStream,
+			{
+				ssrManifest: {
+					moduleMap: null,
+					moduleLoading: null,
+				},
+			},
+		);
 		function ClientRoot() {
 			// @ts-ignore
 			return use(rscComponent) as ReactNode;

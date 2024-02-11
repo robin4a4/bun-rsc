@@ -2,12 +2,14 @@
   "version": "0.0.1",
   "name": "bun-rsc",
   "type": "module",
-  "types": "./dist/serve/exports/index.d.ts",
+  "types": "./dist/serve/types.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/serve/exports/index.d.ts",
-      "default": "./dist/serve/exports/index.js"
+      "types": "./dist/serve/types.d.ts",
+      "default": "./dist/serve/types.js"
     },
+    "./client-condition-export": "./dist/serve/client-condition-export.js",
+    "./server-condition-export": "./dist/serve/server-condition-export.js",
     "./package.json": "./package.json"
   },
   "bin": {

@@ -9,12 +9,12 @@ import {
 	resolveSrc,
 	rscClientComponentMapUrl,
 	ssrClientComponentMapUrl,
-} from "./utils/server.ts";
+} from "../utils/server.ts";
 
-import { Layout } from "./components/Layout.tsx";
-import { BootstrapType, Meta, MiddlewareType } from "./types.ts";
-import { log } from "./utils/server.ts";
-import { BUN_RSC_SPECIFIC_KEYWORD, RSC_CONTENT_TYPE } from "./utils/common.ts";
+import { Layout } from "../components/Layout.tsx";
+import { BootstrapType, Meta, MiddlewareType } from "../types.ts";
+import { log } from "../utils/server.ts";
+import { BUN_RSC_SPECIFIC_KEYWORD, RSC_CONTENT_TYPE } from "../utils/common.ts";
 
 const router = new Bun.FileSystemRouter({
 	style: "nextjs",

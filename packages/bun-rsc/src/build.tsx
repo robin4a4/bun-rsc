@@ -56,6 +56,8 @@ function isServerActionModule(code: string) {
  * ========================================================================
  * */
 export async function build() {
+	const start = Date.now();
+
 	fs.rmSync(dist, { recursive: true });
 
 	const rscClientComponentMap: Record<string, ClientEntry> = {};
@@ -109,7 +111,8 @@ export async function build() {
 							// `export default { $$typeof: Symbol.for("react.client.reference"), $$async: false, $$id: "${id}", name: "default" }`
 							//
 							// I just like complicated things (and also using the real apis that react provides instead of forking them)
-							let refCode = "import {createClientReference} from 'bun-rsc'\n";
+							let refCode =
+								"import {createClientReference} from 'bun-rsc/server-condition-export'\n";
 							for (const exp of moduleExports) {
 								let id = null;
 								if (exp === "default") {
@@ -142,31 +145,31 @@ export async function build() {
 							};
 						}
 
-						if (isServerActionModule(code)) {
-							// if it is a server action, return a reference to the server action bundle
-							serverActionEntryPoints.add(path);
+						// if (isServerActionModule(code)) {
+						// 	// if it is a server action, return a reference to the server action bundle
+						// 	serverActionEntryPoints.add(path);
 
-							const moduleExports = TSTranspiler.scan(code).exports;
-							const moduleId = createServerActionsModuleId(path);
-							// here we make the consumer app import the server actions api that we expose in the exports folder
-							let refCode = `import {createServerReferenceServer} from 'bun-rsc'
+						// 	const moduleExports = TSTranspiler.scan(code).exports;
+						// 	const moduleId = createServerActionsModuleId(path);
+						// 	// here we make the consumer app import the server actions api that we expose in the exports folder
+						// 	let refCode = `import {createServerReferenceServer} from 'bun-rsc'
 
-							${code}`;
-							for (const exp of moduleExports) {
-								const id = `${moduleId}#${exp}`;
-								refCode += `if (typeof ${exp} === 'function') createServerReferenceServer(${exp}, "${id}", "${exp}")`;
-								const serverActionChunkId = moduleId.replace(".ts", ".js");
-								serverActionMap[id] = {
-									id: serverActionChunkId,
-									chunks: [serverActionChunkId],
-									name: exp,
-								};
-							}
-							return {
-								contents: refCode,
-								loader: "ts",
-							};
-						}
+						// 	${code}`;
+						// 	for (const exp of moduleExports) {
+						// 		const id = `${moduleId}#${exp}`;
+						// 		refCode += `if (typeof ${exp} === 'function') createServerReferenceServer(${exp}, "${id}", "${exp}")`;
+						// 		const serverActionChunkId = moduleId.replace(".ts", ".js");
+						// 		serverActionMap[id] = {
+						// 			id: serverActionChunkId,
+						// 			chunks: [serverActionChunkId],
+						// 			name: exp,
+						// 		};
+						// 	}
+						// 	return {
+						// 		contents: refCode,
+						// 		loader: "ts",
+						// 	};
+						// }
 
 						// If not a client component, return the original code
 						return {
@@ -181,6 +184,7 @@ export async function build() {
 	if (!serverComponentsBuildResult.success) {
 		log.e("Server build failed");
 		console.log(serverComponentsBuildResult.logs);
+		throw new Error("Server build failed");
 	}
 
 	/**
@@ -207,6 +211,7 @@ export async function build() {
 		if (!serverActionResults.success) {
 			log.e("Server actions build failed");
 			console.log(serverActionResults.logs);
+			throw new Error("Server actions build failed");
 		}
 	}
 
@@ -222,72 +227,56 @@ export async function build() {
 		sourcemap: "none",
 		splitting: true,
 		outdir: clientComponentsDist,
-		// plugins: [
-		// 	{
-		// 		/* WILL NOT WORK IF THE SERVER ACTIONS ARE STILL MODIFIED IN THE SERVER PAGES BUILD */
-		// 		name: "server-actions",
-		// 		setup(build) {
-		// 			build.onLoad({ filter: /\.(ts|tsx)$/ }, async ({ path }) => {
-		// 				const code = await Bun.file(path).text();
-		// 				const root = process.cwd();
-		// 				const srcSplit = root.split("/");
-		// 				const currentDirectoryName = combineUrl(
-		// 					srcSplit[srcSplit.length - 1],
-		// 					path.replace(root, ""),
-		// 				);
+		plugins: [
+			{
+				/* WILL NOT WORK IF THE SERVER ACTIONS ARE STILL MODIFIED IN THE SERVER PAGES BUILD */
+				name: "server-actions",
+				setup(build) {
+					build.onLoad({ filter: /\.(ts|tsx)$/ }, async ({ path }) => {
+						const code = await Bun.file(path).text();
 
-		// 				if (isServerActionModule(code)) {
-		// 					serverActionEntryPoints.add(path);
+						if (isServerActionModule(code)) {
+							serverActionEntryPoints.add(path);
+							const moduleExports = TSXTranspiler.scan(code).exports;
+							const moduleId = createServerActionsModuleId(path);
 
-		// 					const outputKey = combineUrl(
-		// 						`/${BUN_RSC_SPECIFIC_KEYWORD}/server`,
-		// 						currentDirectoryName,
-		// 					);
-		// 					const currentDirectoryNameSplit =
-		// 						currentDirectoryName.split("/");
-		// 					const pathToServerRoot = currentDirectoryNameSplit
-		// 						.map(() => "..")
-		// 						.join("/");
-		// 					console.log(pathToServerRoot);
-		// 					const moduleExports = TSTranspiler.scan(code).exports;
+							let refCode = `import {createServerReferenceClient} from "bun-rsc/client-condition-export"`;
+							for (const exp of moduleExports) {
+								const id =
+									exp === "default"
+										? `${moduleId}#default`
+										: `${moduleId}#${exp}`;
+								refCode += `
+											export${
+												exp === "default" ? " default " : " "
+											}const ${exp} = createServerReferenceClient("${id}")
+											`;
+								const chunkId = moduleId
+									.replace(".tsx", ".js")
+									.replace(".ts", ".js");
 
-		// 					let refCode = `import {createServerReferenceClient} from "bun-rsc"`;
-		// 					for (const exp of moduleExports) {
-		// 						const id =
-		// 							exp === "default"
-		// 								? `${outputKey}#default`
-		// 								: `${outputKey}#${exp}`;
-		// 						refCode += `
-		// 									export${
-		// 										exp === "default" ? " default " : " "
-		// 									}const ${exp} = createServerReferenceClient("${id}")
-		// 									`;
-		// 						const chunkId = outputKey
-		// 							.replace(".tsx", ".js")
-		// 							.replace(".ts", ".js");
+								serverActionMap[id] = {
+									id: chunkId,
+									chunks: [chunkId],
+									name: exp,
+								};
+							}
+							console.log(refCode, serverActionMap);
+							return {
+								contents: refCode,
+								loader: "js",
+							};
+						}
 
-		// 						serverActionMap[id] = {
-		// 							id: chunkId,
-		// 							chunks: [chunkId],
-		// 							name: exp,
-		// 						};
-		// 					}
-		// 					console.log(refCode, serverActionMap);
-		// 					return {
-		// 						contents: refCode,
-		// 						loader: "js",
-		// 					};
-		// 				}
-
-		// 				// If not a client component, return the original code
-		// 				return {
-		// 					contents: code,
-		// 					loader: "tsx",
-		// 				};
-		// 			});
-		// 		},
-		// 	},
-		// ],
+						// If not a server action, return the original code
+						return {
+							contents: code,
+							loader: "tsx",
+						};
+					});
+				},
+			},
+		],
 	};
 
 	// Build client components for CSR
@@ -298,6 +287,7 @@ export async function build() {
 	if (!csrResults.success) {
 		log.e("CSR build failed");
 		console.log(csrResults.logs);
+		throw new Error("CSR build failed");
 	}
 	const ssrResults = await Bun.build({
 		...clientBuildOptions,
@@ -307,6 +297,7 @@ export async function build() {
 	if (!ssrResults.success) {
 		log.e("SSR build failed");
 		console.log(csrResults.logs);
+		throw new Error("SSR build failed");
 	}
 	/**
 	 * -------------------------------------------------------------------------------------
@@ -353,4 +344,6 @@ export async function build() {
 	}
 
 	parseCSS(serverComponentsBuildResult.outputs);
+
+	log.s(`Build success in ${Date.now() - start} ms`, true);
 }
