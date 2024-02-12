@@ -1,12 +1,3 @@
-export type ClientEntry = {
-	id: string;
-	chunks: string[];
-	name: string;
-};
-
-export type SsrTranslationEntry = Record<string, ClientEntry>;
-
-
 export type Params = {
 	[key: string]: string | string[] | undefined;
 };

@@ -1,9 +1,9 @@
 import {
+	type ReactNode,
 	startTransition,
 	use,
 	useEffect,
 	useState,
-	type ReactNode,
 } from "react";
 import { hydrateRoot } from "react-dom/client";
 // @ts-expect-error

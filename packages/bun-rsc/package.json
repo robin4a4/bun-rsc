@@ -5,8 +5,8 @@
   "types": "./dist/serve/types.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/serve/types.d.ts",
-      "default": "./dist/serve/types.js"
+      "types": "./dist/serve/external.d.ts",
+      "default": "./dist/serve/external.js"
     },
     "./client-condition-export": "./dist/serve/client-condition-export.js",
     "./server-condition-export": "./dist/serve/server-condition-export.js",

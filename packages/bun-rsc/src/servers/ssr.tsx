@@ -1,17 +1,17 @@
 // @ts-ignore
 import { use } from "react";
 // @ts-ignore
-import * as ReactServerDomClient from "react-server-dom-webpack/client";
-// @ts-ignore
 import ReactDOMServer from "react-dom/server.edge";
+// @ts-ignore
+import * as ReactServerDomClient from "react-server-dom-webpack/client";
 import {
+	log,
 	resolveDist,
 	resolveServerFileFromFilePath,
 	resolveSrc,
-	log,
 } from "../utils/server.ts";
 
-import { BootstrapType, MiddlewareType } from "../types.ts";
+import { BootstrapType, MiddlewareType } from "../types/external";
 import {
 	BUN_RSC_SPECIFIC_KEYWORD,
 	BUN_RSC_SPECIFIC_KEYWORD_STATICS,

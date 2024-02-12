@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import * as esbuild from "esbuild";
-import { log } from "../utils/server";
 import { dtsPlugin } from "esbuild-plugin-d.ts";
+import { log } from "../utils/server";
 // import dtsPlugin from "bun-plugin-dts";
 const start = Date.now();
 
@@ -24,7 +24,7 @@ await esbuild.build({
 // use esbuild to build the types because the eslint dts plugin is 4x times faster than the bun dts plugin
 log.i("Building the types using esbuild");
 await esbuild.build({
-	entryPoints: ["./src/types.ts"],
+	entryPoints: ["./src/types/external.ts"],
 	bundle: true,
 	format: "esm",
 	outdir: "./dist/serve",

@@ -1,12 +1,13 @@
 /// <reference types="react/experimental" />
+
+// @ts-ignore
+import gradient from "gradient-string";
+import pc from "picocolors";
+import { type RscMap } from "../types/internal.ts";
 import {
-	BUN_RSC_SPECIFIC_KEYWORD,
 	BUN_RSC_SPECIFIC_KEYWORD_STATICS,
 	combineUrl,
 } from "./common";
-import pc from "picocolors";
-// @ts-ignore
-import gradient from "gradient-string";
 
 export const root = process.cwd();
 export const src = `${process.cwd()}/src`;
@@ -54,16 +55,13 @@ export const ssrClientComponentMapUrl = resolveDist(
 export const serverActionsMapUrl = resolveDist("serverActionsMap.json");
 export const ssrTranslationMapUrl = resolveDist("ssrTranslationMap.json");
 
-export async function writeMap(
-	mapUrl: string,
-	bundleMap: Record<string, unknown>,
-) {
+export async function writeMap(mapUrl: string, bundleMap: RscMap) {
 	await Bun.write(mapUrl, JSON.stringify(bundleMap));
 }
 
 export async function readMap(mapUrl: string) {
 	const bundleMap = await Bun.file(mapUrl).text();
-	return JSON.parse(bundleMap);
+	return JSON.parse(bundleMap) as RscMap;
 }
 
 export function createClientComponentsModuleId(path: string) {

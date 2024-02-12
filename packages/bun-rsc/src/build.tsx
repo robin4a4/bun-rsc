@@ -3,23 +3,23 @@ import { fileURLToPath } from "node:url";
 import { type BuildArtifact, BuildConfig } from "bun";
 import postcss from "postcss";
 import recursive from "recursive-readdir";
-import { ClientEntry } from "./types.js";
+import { type RscMap } from "./types/internal";
 import { combineUrl } from "./utils/common";
 import {
 	createClientComponentsModuleId,
 	createServerActionsModuleId,
 	dist,
+	log,
 	resolveClientComponentsDist,
 	resolveDist,
 	resolveRoot,
-	resolveServerComponentsDist,
 	resolveServerActionsDist,
+	resolveServerComponentsDist,
 	resolveSrc,
 	rscClientComponentMapUrl,
 	serverActionsMapUrl,
-	writeMap,
-	log,
 	ssrClientComponentMapUrl,
+	writeMap,
 } from "./utils/server";
 
 const __bun__module_map__ = new Map();
@@ -38,7 +38,6 @@ const __webpack_require__ = (moduleId) => __bun__module_map__.get(moduleId);
 global.__webpack_require__ = __webpack_require__;
 
 const TSXTranspiler = new Bun.Transpiler({ loader: "tsx" });
-const TSTranspiler = new Bun.Transpiler({ loader: "ts" });
 
 const clientComponentsDist = resolveClientComponentsDist();
 
@@ -60,9 +59,9 @@ export async function build() {
 
 	fs.rmSync(dist, { recursive: true });
 
-	const rscClientComponentMap: Record<string, ClientEntry> = {};
-	const ssrClientComponentMap: Record<string, ClientEntry> = {};
-	const serverActionsMap: Record<string, ClientEntry> = {};
+	const rscClientComponentMap: RscMap = {};
+	const ssrClientComponentMap: RscMap = {};
+	const serverActionsMap: RscMap = {};
 
 	const clientEntryPoints = new Set<string>();
 	const serverActionEntryPoints = new Set<string>();

@@ -1,7 +1,7 @@
 import {
 	createFromFetch,
-	encodeReply,
 	createServerReference,
+	encodeReply,
 	// @ts-ignore
 } from "react-server-dom-webpack/client";
 

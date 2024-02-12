@@ -13,14 +13,20 @@ import {
 } from "../utils/server.ts";
 
 import { Layout } from "../components/Layout.tsx";
-import { BootstrapType, Meta, MiddlewareType } from "../types.ts";
-import { log } from "../utils/server.ts";
+import type {
+	BootstrapType,
+	Meta,
+	MiddlewareType,
+	PageProps,
+} from "../types/external";
+import type { ActionModule, PageModule } from "../types/internal.ts";
 import {
 	ACTIONS_ROUTE_PREFIX,
 	BUN_RSC_SPECIFIC_KEYWORD,
 	RSC_CONTENT_TYPE,
 	combineUrl,
 } from "../utils/common.ts";
+import { log } from "../utils/server.ts";
 
 const router = new Bun.FileSystemRouter({
 	style: "nextjs",
@@ -74,7 +80,7 @@ export async function serveRSC(request: Request) {
 		const action = serverActionsMap[id];
 		if (action) {
 			const actionModuleUrl = combineUrl(process.cwd(), action.id);
-			const actionModule = await import(actionModuleUrl);
+			const actionModule = (await import(actionModuleUrl)) as ActionModule;
 			const result = await actionModule[action.name](request);
 			return new Response(result, {
 				// "Content-type" based on https://github.com/facebook/react/blob/main/fixtures/flight/server/global.js#L159
@@ -107,7 +113,7 @@ export async function serveRSC(request: Request) {
 		const serverFilePath = resolveServerFileFromFilePath(match.filePath);
 
 		try {
-			const PageModule = await import(
+			const PageModule = (await import(
 				`${serverFilePath}${
 					// Invalidate cached module on every request in dev mode
 					// WARNING: can cause memory leaks for long-running dev servers!
@@ -115,13 +121,12 @@ export async function serveRSC(request: Request) {
 						? `?invalidate=${Date.now()}`
 						: ""
 				}}`
-			);
+			)) as PageModule;
 			const PageComponent = PageModule.Page;
 			const pageMeta: Meta = PageModule.meta;
-			const searchParamsObject = Object.fromEntries(searchParams);
 
-			const props = {
-				searchParams: searchParamsObject,
+			const props: PageProps = {
+				searchParams,
 				params,
 			};
 			// Render the Page component and send the query params as props.
