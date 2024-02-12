@@ -144,32 +144,6 @@ export async function build() {
 							};
 						}
 
-						// if (isServerActionModule(code)) {
-						// 	// if it is a server action, return a reference to the server action bundle
-						// 	serverActionEntryPoints.add(path);
-
-						// 	const moduleExports = TSTranspiler.scan(code).exports;
-						// 	const moduleId = createServerActionsModuleId(path);
-						// 	// here we make the consumer app import the server actions api that we expose in the exports folder
-						// 	let refCode = `import {createServerReferenceServer} from 'bun-rsc'
-
-						// 	${code}`;
-						// 	for (const exp of moduleExports) {
-						// 		const id = `${moduleId}#${exp}`;
-						// 		refCode += `if (typeof ${exp} === 'function') createServerReferenceServer(${exp}, "${id}", "${exp}")`;
-						// 		const serverActionChunkId = moduleId.replace(".ts", ".js");
-						// 		serverActionsMap[id] = {
-						// 			id: serverActionChunkId,
-						// 			chunks: [serverActionChunkId],
-						// 			name: exp,
-						// 		};
-						// 	}
-						// 	return {
-						// 		contents: refCode,
-						// 		loader: "ts",
-						// 	};
-						// }
-
 						// If not a client component, return the original code
 						return {
 							contents: code,
