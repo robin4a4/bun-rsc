@@ -11,74 +11,33 @@ import {
 	resolveSrc,
 } from "../utils/server.ts";
 
-import { BootstrapType, MiddlewareType } from "../types/external";
 import {
 	BUN_RSC_SPECIFIC_KEYWORD,
 	BUN_RSC_SPECIFIC_KEYWORD_STATICS,
 	combineUrl,
 } from "../utils/common.ts";
+import type {PageModule} from "../types/internal.ts";
 
 const router = new Bun.FileSystemRouter({
 	style: "nextjs",
 	dir: resolveSrc("pages"),
 });
 
-const bootstrapSrcPath = "src/bootstrap.ts";
-const bootstrapFile = Bun.file(bootstrapSrcPath);
-const bootstrapExists = await bootstrapFile.exists();
-
-if (bootstrapExists) {
-	const bootstrapModule = (await import(
-		`${process.cwd()}/${bootstrapSrcPath}`
-	)) as { default: BootstrapType };
-
-	if (bootstrapModule.default && typeof bootstrapModule.default === "function")
-		bootstrapModule.default();
-}
-
-let middleware: MiddlewareType | null = null;
-const middlewareSrcPath = "src/middleware.ts";
-const middlewareFile = Bun.file(middlewareSrcPath);
-const middlewareExists = await middlewareFile.exists();
-
-if (middlewareExists) {
-	const middlewareModule = (await import(
-		`${process.cwd()}/${middlewareSrcPath}`
-	)) as { default: MiddlewareType };
-
-	middleware = middlewareModule.default;
-}
-
 export async function serveSSR(request: Request) {
 	const match = router.match(request.url);
 	let manifestString = "";
-	let manifest: Array<string> = [];
 	try {
 		manifestString = await Bun.file(resolveDist("css-manifest.json")).text();
-		manifest = JSON.parse(manifestString);
 	} catch (e) {
 		log.w("No css manifest found");
 	}
 	if (match) {
 		log.i(`Match found for url: ${request.url}`);
 		const searchParams = new URLSearchParams(match.query);
-		const params = match.params;
-
-		if (middleware) {
-			const middlewareResponse = await middleware({
-				request,
-				params: match.params,
-				searchParams,
-			});
-			if (middlewareResponse) {
-				return middlewareResponse;
-			}
-		}
 		const serverFilePath = resolveServerFileFromFilePath(match.filePath);
 		const serverFileErrorPath = resolveServerFileFromFilePath(
 			`${match.filePath.split(".")[0]}.error.js`,
 		);
-		// try {
 		const PageModule = await import(
 			`${serverFilePath}${
 				// Invalidate cached module on every request in dev mode
@@ -87,7 +46,7 @@ export async function serveSSR(request: Request) {
 					? `?invalidate=${Date.now()}`
 					: ""
 			}}`
-		);
+		) as PageModule;
 
 		const pageMeta = PageModule.meta;
 		const rscUrl = `${combineUrl(
