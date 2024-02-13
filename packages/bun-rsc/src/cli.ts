@@ -20,28 +20,28 @@ import { log } from "./utils/server";
 const cli = cac("bun-rsc");
 
 // Dev server
-// cli.command("dev").action(async () => {
-// 	console.log("[BUN RSC] Starting dev server");
-// 	try {
-// 		const sockets = createWebSocketServer();
-// 		await build();
-// 		const devServerRSC = Bun.serve({ port, fetch: serveRSC });
-// 		const devServerSSR = Bun.serve({ port, fetch: serveSSR });
+cli.command("dev").action(async () => {
+	log.i("Starting dev server");
+	try {
+		const sockets = createWebSocketServer();
+		await build();
+		const devServerRSC = Bun.serve({ port: 3001, fetch: serveRSC });
+		const devServerSSR = Bun.serve({ port: 3000, fetch: serveSSR });
 
-// 		fs.watch("./src", { recursive: true }, async (event, filename) => {
-// 			await build();
-// 			devServerRSC.reload({ fetch: serveRSC });
-// 			devServerSSR.reload({ fetch: serveSSR });
-// 			for (const socket of sockets) {
-// 				socket.send("refresh");
-// 			}
-// 			console.log(`[BUN RSC] - Detected ${event} in ${filename}`);
-// 		});
-// 	} catch (e: unknown) {
-// 		console.log(`error when starting dev server:\n${e}`);
-// 		process.exit(1);
-// 	}
-// });
+		fs.watch("./src", { recursive: true }, async (event, filename) => {
+			await build();
+			devServerRSC.reload({ fetch: serveRSC });
+			devServerSSR.reload({ fetch: serveSSR });
+			for (const socket of sockets) {
+				socket.send("refresh");
+			}
+			log.i(`Detected ${event} in ${filename}`);
+		});
+	} catch (e: unknown) {
+		log.e(`error when starting dev server:\n${e}`);
+		process.exit(1);
+	}
+});
 
 // Build command
 cli.command("build").action(async () => {

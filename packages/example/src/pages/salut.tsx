@@ -10,7 +10,7 @@ export async function Page() {
 	return (
 		<>
 			<h1>SALUT</h1>
-			<a href="/">Home</a>
+			<a href="/">Home de ouf</a>
 			<a href="/salut">Salut</a>
 			<a href="/pouet">pouet</a>
 			<Suspense fallback={<div>Loading...</div>}>
