@@ -9,11 +9,11 @@ import { hydrateRoot } from "react-dom/client";
 // @ts-expect-error
 import { createFromFetch } from "react-server-dom-webpack/client";
 import { BUN_RSC_SPECIFIC_KEYWORD, combineUrl } from "./utils/common";
-// import { clientLiveReload } from "./ws/client";
+import { clientLiveReload } from "./ws/client";
 
 hydrateRoot(document, <Router />);
 
-// clientLiveReload();
+clientLiveReload();
 
 const queryParam = new URLSearchParams(window.location.search);
 
