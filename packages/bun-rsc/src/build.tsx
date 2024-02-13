@@ -170,7 +170,10 @@ export async function build() {
 	}
 
 	log.i("🏝  Building client");
-
+	let namingDir = "[dir]";
+	if (clientEntryPoints.size === 0) {
+		namingDir = "bun-rsc/src/[dir]";
+	}
 	const clientBuildOptions: BuildConfig = {
 		format: "esm",
 		entrypoints: [
@@ -235,7 +238,7 @@ export async function build() {
 	// Build client components for CSR
 	const csrResults = await Bun.build({
 		...clientBuildOptions,
-		naming: "[dir]/[name].rsc.[ext]",
+		naming: `${namingDir}/[name].rsc.[ext]`,
 	});
 	if (!csrResults.success) {
 		log.e("CSR build failed");
@@ -245,7 +248,7 @@ export async function build() {
 	const ssrResults = await Bun.build({
 		...clientBuildOptions,
 		external: ["react", "react-dom"],
-		naming: "[dir]/[name].ssr.[ext]",
+		naming: `${namingDir}/[name].ssr.[ext]`,
 	});
 	if (!ssrResults.success) {
 		log.e("SSR build failed");

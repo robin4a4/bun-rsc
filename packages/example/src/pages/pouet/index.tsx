@@ -1,4 +1,4 @@
-import { ClientForm } from "../../components/ClientForm.tsx";
+// import { ClientForm } from "../../components/ClientForm.tsx";
 import Counter from "../../components/Counter.tsx";
 
 export async function Page() {
@@ -8,7 +8,7 @@ export async function Page() {
 			<a href="/">Home</a>
 			<a href="/salut">Salut</a>
 			<a href="/pouet">pouet</a>
-			<ClientForm />
+			{/*<ClientForm />*/}
 			<Counter />
 		</>
 	);

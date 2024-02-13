@@ -1,4 +1,3 @@
-// import Counter from "../components/Counter";
 import { Todos } from "../components/Todos";
 import { Suspense } from "react";
 
@@ -17,8 +16,6 @@ export async function Page() {
 			<Suspense fallback={<div>Loading...</div>}>
 				<Todos />
 			</Suspense>
-
-			{/* <Counter /> */}
 		</>
 	);
 }

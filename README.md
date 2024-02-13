@@ -10,6 +10,6 @@ Heavily inspired by:
 - [ ] server actions
 - [ ] dev mode
 - [ ] remove localhost hardcoding
-- [ ] fix no client component routing 
+- [x] fix no client component routing 
 - [x] internal typings
 - [x] react typings
