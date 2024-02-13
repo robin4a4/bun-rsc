@@ -11,5 +11,5 @@ Heavily inspired by:
 - [ ] dev mode
 - [ ] remove localhost hardcoding
 - [ ] fix no client component routing 
-- [ ] internal typings
-- [ ] react typings
+- [x] internal typings
+- [x] react typings
