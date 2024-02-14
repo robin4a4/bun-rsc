@@ -9,8 +9,9 @@ Heavily inspired by:
 # TODO:
 - [ ] server actions
 - [ ] dev mode
-- [x] remove localhost hardcoding
+- [ ] remove localhost hardcoding
 - [x] fix no client component routing 
 - [x] internal typings
 - [x] react typings
-- [ ] fix error layout
+- [x] fix error layout
+- [ ] check if middleware and bootstrapping still work

@@ -10,7 +10,7 @@ import {
 	RSC_CONTENT_TYPE,
 	combineUrl,
 } from "../utils/common";
-import { BASE_RSC_SERVER_URL } from "../utils/server";
+import { BASE_RSC_SERVER_URL } from "../utils/common";
 
 const callServer = async (id: string, args: unknown[]) => {
 	const url = combineUrl(
