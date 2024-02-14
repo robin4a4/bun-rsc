@@ -10,6 +10,7 @@ import { hydrateRoot } from "react-dom/client";
 import { createFromFetch } from "react-server-dom-webpack/client";
 import { BUN_RSC_SPECIFIC_KEYWORD, combineUrl } from "./utils/common";
 import { clientLiveReload } from "./ws/client";
+import { BASE_RSC_SERVER_URL } from "./utils/server";
 
 hydrateRoot(document, <Router />);
 
@@ -20,7 +21,7 @@ const queryParam = new URLSearchParams(window.location.search);
 function Router() {
 	const [rscUrl, setRscUrl] = useState(
 		`${combineUrl(
-			"http://localhost:3001",
+			BASE_RSC_SERVER_URL,
 			combineUrl(BUN_RSC_SPECIFIC_KEYWORD, window.location.pathname),
 		)}?${queryParam.toString()}`,
 	);
@@ -30,7 +31,7 @@ function Router() {
 			startTransition(() => {
 				setRscUrl(
 					`${combineUrl(
-						"http://localhost:3001",
+						BASE_RSC_SERVER_URL,
 						combineUrl(BUN_RSC_SPECIFIC_KEYWORD, url),
 					)}?${queryParam.toString()}`,
 				);

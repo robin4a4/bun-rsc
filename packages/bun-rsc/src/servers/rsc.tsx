@@ -1,4 +1,3 @@
-// @ts-ignore
 import { createElement } from "react";
 // @ts-ignore
 import * as ReactServerDomServer from "react-server-dom-webpack/server.edge";

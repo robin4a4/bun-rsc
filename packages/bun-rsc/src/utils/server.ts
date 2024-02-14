@@ -1,6 +1,5 @@
 /// <reference types="react/experimental" />
 
-// @ts-ignore
 import gradient from "gradient-string";
 import pc from "picocolors";
 import { type RscMap } from "../types/internal.ts";
@@ -9,6 +8,12 @@ import { BUN_RSC_SPECIFIC_KEYWORD_STATICS, combineUrl } from "./common";
 export const root = process.cwd();
 export const src = `${process.cwd()}/src`;
 export const dist = `${process.cwd()}/${BUN_RSC_SPECIFIC_KEYWORD_STATICS}`;
+
+export const BASE_SSR_SERVER_URL =
+	process.env.NODE_ENV === "development" ? "http://localhost:3001" : "";
+
+export const BASE_RSC_SERVER_URL =
+	process.env.NODE_ENV === "development" ? "http://localhost:3001" : "";
 
 export function resolveRoot(path: string) {
 	return combineUrl(root, path);

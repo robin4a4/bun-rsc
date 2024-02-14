@@ -10,10 +10,11 @@ import {
 	RSC_CONTENT_TYPE,
 	combineUrl,
 } from "../utils/common";
+import { BASE_RSC_SERVER_URL } from "../utils/server";
 
 const callServer = async (id: string, args: unknown[]) => {
 	const url = combineUrl(
-		"http://localhost:3001",
+		BASE_RSC_SERVER_URL,
 		combineUrl(ACTIONS_ROUTE_PREFIX, encodeURIComponent(id)),
 	);
 

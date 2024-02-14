@@ -1,10 +1,10 @@
-// @ts-ignore
-import { use } from "react";
+import { use, type ReactNode } from "react";
 // @ts-ignore
 import ReactDOMServer from "react-dom/server.edge";
 // @ts-ignore
 import * as ReactServerDomClient from "react-server-dom-webpack/client";
 import {
+	BASE_RSC_SERVER_URL,
 	log,
 	resolveDist,
 	resolveServerFileFromFilePath,
@@ -50,15 +50,16 @@ export async function serveSSR(request: Request) {
 
 		const pageMeta = PageModule.meta;
 		const rscUrl = `${combineUrl(
-			"http://localhost:3001",
+			BASE_RSC_SERVER_URL,
 			combineUrl(BUN_RSC_SPECIFIC_KEYWORD, match.pathname.split("?")[0]),
 		)}?ssr=true&${searchParams.toString()}`;
 		log.i(`Fetching rsc at : ${rscUrl}`);
 
 		const rscStream = await fetch(rscUrl).then((response) => {
-			// @ts-ignore
+			if (!response.body) {
+				throw new Error(`Failed to fetch rsc at ${rscUrl}`);
+			}
 			const reader = response.body.getReader();
-
 			return new ReadableStream({
 				async start(controller) {
 					while (true) {
@@ -85,7 +86,6 @@ export async function serveSSR(request: Request) {
 			},
 		);
 		function ClientRoot() {
-			// @ts-ignore
 			return use(rscComponent) as ReactNode;
 		}
 		// Hack retrieved from Marz "this is a temporary hack to only render a single 'frame'"
