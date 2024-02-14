@@ -11,12 +11,12 @@ import {
 	resolveSrc,
 } from "../utils/server.ts";
 
+import type { PageModule } from "../types/internal.ts";
 import {
 	BUN_RSC_SPECIFIC_KEYWORD,
 	BUN_RSC_SPECIFIC_KEYWORD_STATICS,
 	combineUrl,
 } from "../utils/common.ts";
-import type {PageModule} from "../types/internal.ts";
 
 const router = new Bun.FileSystemRouter({
 	style: "nextjs",
@@ -38,7 +38,7 @@ export async function serveSSR(request: Request) {
 		const serverFileErrorPath = resolveServerFileFromFilePath(
 			`${match.filePath.split(".")[0]}.error.js`,
 		);
-		const PageModule = await import(
+		const PageModule = (await import(
 			`${serverFilePath}${
 				// Invalidate cached module on every request in dev mode
 				// WARNING: can cause memory leaks for long-running dev servers!
@@ -46,7 +46,7 @@ export async function serveSSR(request: Request) {
 					? `?invalidate=${Date.now()}`
 					: ""
 			}}`
-		) as PageModule;
+		)) as PageModule;
 
 		const pageMeta = PageModule.meta;
 		const rscUrl = `${combineUrl(
