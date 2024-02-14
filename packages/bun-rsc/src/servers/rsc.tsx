@@ -82,13 +82,19 @@ export async function serveRSC(request: Request) {
 			const actionModuleUrl = combineUrl(process.cwd(), action.id);
 			const actionModule = (await import(actionModuleUrl)) as ActionModule;
 			const result = await actionModule[action.name](request);
-			return new Response(result, {
-				// "Content-type" based on https://github.com/facebook/react/blob/main/fixtures/flight/server/global.js#L159
-				headers: {
-					"Content-type": RSC_CONTENT_TYPE,
-					"Access-Control-Allow-Origin": "*",
+			return new Response(
+				JSON.stringify({
+					returnValue: result,
+					formState: "success",
+				}),
+				{
+					// "Content-type" based on https://github.com/facebook/react/blob/main/fixtures/flight/server/global.js#L159
+					headers: {
+						"Content-type": RSC_CONTENT_TYPE,
+						"Access-Control-Allow-Origin": "*",
+					},
 				},
-			});
+			);
 		}
 
 		return new Response("Hello");

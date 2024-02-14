@@ -36,7 +36,7 @@ log.i("Building the client condition exports using Bun");
 await Bun.build({
 	entrypoints: ["./src/exports/client-condition-export.ts"],
 	format: "esm",
-	external: ["react", "react-dom"],
+	external: ["react", "react-dom", "react-server-dom-webpack"],
 	outdir: "./dist/serve",
 });
 
