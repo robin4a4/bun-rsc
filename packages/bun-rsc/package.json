@@ -2,7 +2,7 @@
   "version": "0.0.1",
   "name": "bun-rsc",
   "type": "module",
-  "types": "./dist/serve/types.d.ts",
+  "types": "./dist/serve/external.d.ts",
   "exports": {
     ".": {
       "types": "./dist/serve/external.d.ts",
@@ -46,7 +46,8 @@
     "@types/recursive-readdir": "^2.2.4",
     "@types/gradient-string": "^1.1.5",
     "esbuild-plugin-d.ts": "1.2.3",
-    "bun-types": "latest"
+    "bun-types": "latest",
+    "concurrently": "8.2.2"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"

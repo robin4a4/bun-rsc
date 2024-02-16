@@ -55,7 +55,7 @@ function isServerActionModule(code: string) {
  * ========================================================================
  * */
 export async function build() {
-	log.i(`🏞 Env: ${process.env.NODE_ENV}`)
+	log.i(`🏞 Mode ${process.env.MODE}`);
 	const start = Date.now();
 
 	fs.rmSync(dist, { recursive: true });
@@ -186,7 +186,7 @@ export async function build() {
 		splitting: true,
 		outdir: clientComponentsDist,
 		define: {
-			"process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV),
+			"process.env.MODE": JSON.stringify(process.env.MODE),
 		},
 		plugins: [
 			{
@@ -270,8 +270,8 @@ export async function build() {
 			splitting: true,
 			outdir: serverActionsDist,
 			define: {
-				"process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV),
-			}
+				"process.env.MODE": JSON.stringify(process.env.MODE),
+			},
 		});
 		if (!serverActionResults.success) {
 			log.e("Server actions build failed");

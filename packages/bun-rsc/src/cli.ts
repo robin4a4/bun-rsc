@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+import { $ } from "bun";
 import fs from "node:fs";
 import { cac } from "cac";
 import packageJson from "../package.json";
@@ -20,8 +21,10 @@ import { log } from "./utils/server";
 const cli = cac("bun-rsc");
 
 // Dev server
-cli.command("dev").action(async () => {
+cli.command("dev:rsc").action(async () => {
+	log.title();
 	log.i("Starting dev server");
+	process.env.MODE = "development";
 	try {
 		const sockets = createWebSocketServer();
 		await build();
@@ -41,6 +44,21 @@ cli.command("dev").action(async () => {
 		log.e(`error when starting dev server:\n${e}`);
 		process.exit(1);
 	}
+});
+
+cli.command("dev:ssr").action(async () => {
+	process.env.MODE = "development";
+	try {
+		Bun.serve({ port: 3000, fetch: serveSSR });
+	} catch (e: unknown) {
+		log.e(`error when starting dev server:\n${e}`);
+		process.exit(1);
+	}
+});
+
+cli.command("dev").action(async () => {
+	process.env.MODE = "development";
+	$`concurrently "bun-rsc dev:rsc" "bun-rsc dev:ssr"`;
 });
 
 // Build command
