@@ -14,4 +14,4 @@ export type PageModule = {
 	Page: (props: PageProps) => Promise<ReactNode>;
 };
 
-export type ActionModule = Record<string, (props: Request) => Promise<any>>; // TODO: define the action return type
+export type ActionModule = Record<string, (formData: FormData) => Promise<any>>; // TODO: define the action return type

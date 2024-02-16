@@ -6,17 +6,17 @@ import {
 } from "react-server-dom-webpack/client";
 
 import {
-	ACTIONS_ROUTE_PREFIX,
+	BUN_RSC_SPECIFIC_KEYWORD,
 	RSC_CONTENT_TYPE,
 	combineUrl,
 } from "../utils/common";
 import { BASE_RSC_SERVER_URL } from "../utils/common";
 
 const callServer = async (id: string, args: unknown[]) => {
-	const url = combineUrl(
+	const url = `${combineUrl(
 		BASE_RSC_SERVER_URL,
-		combineUrl(ACTIONS_ROUTE_PREFIX, encodeURIComponent(id)),
-	);
+		combineUrl(BUN_RSC_SPECIFIC_KEYWORD, window.location.pathname),
+	)}?actionId=${encodeURIComponent(id)}`;
 
 	let requestOpts: Pick<RequestInit, "headers" | "body">;
 	if (!Array.isArray(args) || args.some((a) => a instanceof FormData)) {

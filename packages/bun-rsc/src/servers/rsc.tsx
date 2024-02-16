@@ -1,6 +1,6 @@
 import { createElement } from "react";
 // @ts-ignore
-import * as ReactServerDomServer from "react-server-dom-webpack/server.edge";
+import * as ReactServerDOMServer from "react-server-dom-webpack/server.edge";
 import {
 	readMap,
 	resolveDist,
@@ -20,7 +20,6 @@ import type {
 } from "../types/external";
 import type { ActionModule, PageModule } from "../types/internal.ts";
 import {
-	ACTIONS_ROUTE_PREFIX,
 	BUN_RSC_SPECIFIC_KEYWORD,
 	RSC_CONTENT_TYPE,
 	combineUrl,
@@ -71,34 +70,22 @@ export async function serveRSC(request: Request) {
 	} catch (e) {
 		log.w("No css manifest found");
 	}
-	const url = new URL(request.url);
-	if (url.pathname.startsWith(ACTIONS_ROUTE_PREFIX)) {
-		const split = url.pathname.split(ACTIONS_ROUTE_PREFIX);
-		const id = decodeURIComponent(split[1]);
-		const serverActionsMap = await readMap(serverActionsMapUrl);
-		const action = serverActionsMap[id];
-		if (action) {
-			const actionModuleUrl = combineUrl(process.cwd(), action.id);
-			const actionModule = (await import(actionModuleUrl)) as ActionModule;
-			const result = await actionModule[action.name](request);
-			return new Response(
-				JSON.stringify({
-					returnValue: result,
-					formState: "success",
-				}),
-				{
-					// "Content-type" based on https://github.com/facebook/react/blob/main/fixtures/flight/server/global.js#L159
-					headers: {
-						"Content-type": RSC_CONTENT_TYPE,
-						"Access-Control-Allow-Origin": "*",
-					},
-				},
-			);
-		}
-
-		return new Response("Hello");
-	}
 	if (match) {
+		if (request.method === "POST") {
+			const formData = await request.formData();
+			const serverActionsMap = await readMap(serverActionsMapUrl);
+			const actionArgs = await ReactServerDOMServer.decodeReply(
+				formData,
+				serverActionsMap,
+			);
+			const actionId = decodeURIComponent(match.query.actionId);
+			const action = serverActionsMap[actionId];
+			if (action) {
+				const actionModuleUrl = combineUrl(process.cwd(), action.id);
+				const actionModule = (await import(actionModuleUrl)) as ActionModule;
+				await actionModule[action.name](actionArgs[0]);
+			}
+		}
 		log.i(`Match found for url: ${ssrRequestUrl}`);
 		const searchParams = new URLSearchParams(match.query);
 		const params = match.params;
@@ -129,7 +116,6 @@ export async function serveRSC(request: Request) {
 			)) as PageModule;
 			const PageComponent = PageModule.Page;
 			const pageMeta: Meta = PageModule.meta;
-
 			const props: PageProps = {
 				searchParams,
 				params,
@@ -147,7 +133,7 @@ export async function serveRSC(request: Request) {
 					: rscClientComponentMapUrl;
 
 			const clientComponentMap = await readMap(map);
-			const rscStream = ReactServerDomServer.renderToReadableStream(
+			const rscStream = ReactServerDOMServer.renderToReadableStream(
 				Page,
 				clientComponentMap,
 			);

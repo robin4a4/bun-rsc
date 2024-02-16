@@ -119,7 +119,10 @@ export async function serveSSR(request: Request) {
 			);
 			abortController.abort();
 			return new Response(ssrStream, {
-				headers: { "Content-type": "text/html" },
+				headers: {
+					"Content-type": "text/html",
+					"Access-Control-Allow-Origin": "*",
+				},
 			});
 		} catch (error: unknown) {
 			const serverFileErrorPath = resolveServerFileFromFilePath(

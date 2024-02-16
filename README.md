@@ -15,3 +15,4 @@ Heavily inspired by:
 - [x] react typings
 - [x] fix error layout
 - [ ] check if middleware and bootstrapping still work
+- [ ] check CORS
