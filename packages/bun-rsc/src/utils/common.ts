@@ -15,6 +15,4 @@ export function combineUrl(path1: string, path2: string) {
 	return `${firstPath}/${secondPath}`;
 }
 
-export const BASE_SSR_SERVER_URL = "http://localhost:3000";
-
-export const BASE_RSC_SERVER_URL = "http://localhost:3001";
+export const BASE_RSC_SERVER_URL = process.env.NODE_ENV === "development" ? "http://localhost:3001" : "";

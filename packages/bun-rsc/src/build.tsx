@@ -55,6 +55,7 @@ function isServerActionModule(code: string) {
  * ========================================================================
  * */
 export async function build() {
+	log.i(`🏞 Env: ${process.env.NODE_ENV}`)
 	const start = Date.now();
 
 	fs.rmSync(dist, { recursive: true });
@@ -169,7 +170,7 @@ export async function build() {
 		await fs.promises.mkdir(clientComponentsDist, { recursive: true });
 	}
 
-	log.i("🏝  Building client");
+	log.i("🏝 Building client");
 	let namingDir = "[dir]";
 	if (clientEntryPoints.size === 0) {
 		namingDir = "bun-rsc/src/[dir]";
@@ -184,6 +185,9 @@ export async function build() {
 		sourcemap: "none",
 		splitting: true,
 		outdir: clientComponentsDist,
+		define: {
+			"process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV),
+		},
 		plugins: [
 			{
 				name: "server-actions",
@@ -258,7 +262,6 @@ export async function build() {
 
 	if (serverActionEntryPoints.size > 0) {
 		log.i("💪 Building server actions");
-
 		const serverActionResults = await Bun.build({
 			format: "esm",
 			entrypoints: [...serverActionEntryPoints],
@@ -266,6 +269,9 @@ export async function build() {
 			sourcemap: "none",
 			splitting: true,
 			outdir: serverActionsDist,
+			define: {
+				"process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV),
+			}
 		});
 		if (!serverActionResults.success) {
 			log.e("Server actions build failed");
