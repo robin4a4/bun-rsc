@@ -4,10 +4,13 @@ import ReactDOMServer from "react-dom/server.edge";
 // @ts-ignore
 import * as ReactServerDomClient from "react-server-dom-webpack/client";
 import {
+	getMiddleware,
+	getServerHeaders,
 	log,
 	resolveDist,
 	resolveServerFileFromFilePath,
 	resolveSrc,
+	runMiddleware,
 } from "../utils/server.ts";
 
 import type { PageModule } from "../types/internal.ts";
@@ -24,6 +27,8 @@ const router = new Bun.FileSystemRouter({
 	dir: resolveSrc("pages"),
 });
 
+const middleware = await getMiddleware();
+
 export async function serveSSR(request: Request) {
 	const match = router.match(request.url);
 	let manifestString = "";
@@ -35,8 +40,22 @@ export async function serveSSR(request: Request) {
 	if (match) {
 		try {
 			log.i(`Match found for url: ${request.url}`);
+
 			const searchParams = new URLSearchParams(match.query);
+			const params = match.params;
 			const serverFilePath = resolveServerFileFromFilePath(match.filePath);
+			if (middleware) {
+				log.i("Running middleware");
+				const middlewareResponse = await middleware({
+					request,
+					params,
+					searchParams,
+				});
+
+				if (middlewareResponse) {
+					return middlewareResponse;
+				}
+			}
 
 			const PageModule = (await import(
 				`${serverFilePath}${
@@ -118,11 +137,9 @@ export async function serveSSR(request: Request) {
 				},
 			);
 			abortController.abort();
+
 			return new Response(ssrStream, {
-				headers: {
-					"Content-type": "text/html",
-					"Access-Control-Allow-Origin": "*",
-				},
+				headers: getServerHeaders(),
 			});
 		} catch (error: unknown) {
 			const serverFileErrorPath = resolveServerFileFromFilePath(

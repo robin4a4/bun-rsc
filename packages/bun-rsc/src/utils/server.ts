@@ -4,6 +4,7 @@ import gradient from "gradient-string";
 import pc from "picocolors";
 import { type RscMap } from "../types/internal.ts";
 import { BUN_RSC_SPECIFIC_KEYWORD_STATICS, combineUrl } from "./common";
+import { BootstrapType, MiddlewareType } from "../types/external.ts";
 
 export const root = process.cwd();
 export const src = `${process.cwd()}/src`;
@@ -156,3 +157,46 @@ export const log = {
 		console.log("\n");
 	},
 };
+
+export function getServerHeaders(contentType = "text/html") {
+	const headers = new Headers();
+	headers.set("Content-Type", contentType);
+	if (process.env.NODE_ENV === "development") {
+		headers.set("Access-Control-Allow-Origin", "*");
+	}
+	return headers;
+}
+
+export async function runBootstrap() {
+	const bootstrapSrcPath = "src/bootstrap.ts";
+	const bootstrapFile = Bun.file(bootstrapSrcPath);
+	const bootstrapExists = await bootstrapFile.exists();
+
+	if (bootstrapExists) {
+		const bootstrapModule = (await import(
+			`${process.cwd()}/${bootstrapSrcPath}`
+		)) as { default: BootstrapType };
+
+		if (
+			bootstrapModule.default &&
+			typeof bootstrapModule.default === "function"
+		)
+			bootstrapModule.default();
+	}
+}
+
+export async function getMiddleware() {
+	let middleware: MiddlewareType | null = null;
+	const middlewareSrcPath = "src/middleware.ts";
+	const middlewareFile = Bun.file(middlewareSrcPath);
+	const middlewareExists = await middlewareFile.exists();
+
+	if (middlewareExists) {
+		const middlewareModule = (await import(
+			`${process.cwd()}/${middlewareSrcPath}`
+		)) as { default: MiddlewareType };
+
+		middleware = middlewareModule.default;
+	}
+	return middleware;
+}

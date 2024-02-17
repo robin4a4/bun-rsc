@@ -11,7 +11,7 @@ export const meta = {
 export async function Page({ searchParams }: PageProps) {
 	return (
 		<>
-			<h1 className="bg-blue-500 border border-green-500">
+			<h1 className="bg-yellow-500 border border-green-500">
 				Home yes tu ne reves pas salut de outf
 			</h1>
 			<a href="/">Home</a>

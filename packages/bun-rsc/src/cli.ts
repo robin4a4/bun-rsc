@@ -16,7 +16,7 @@ import { createWebSocketServer } from "./ws/server";
 import { serveRSC } from "../dist/serve/server-condition-export";
 
 import { serveSSR } from "./servers/ssr";
-import { log } from "./utils/server";
+import { log, runBootstrap } from "./utils/server";
 
 const cli = cac("bun-rsc");
 
@@ -45,7 +45,10 @@ cli.command("dev:rsc").action(async () => {
 cli.command("dev:ssr").action(async () => {
 	log.i("Starting ssr dev server on port 3000");
 	try {
-		Bun.serve({ port: 3000, fetch: serveSSR });
+		const devServerSSR = Bun.serve({ port: 3000, fetch: serveSSR });
+		fs.watch("./src", { recursive: true }, async (event, filename) => {
+			devServerSSR.reload({ fetch: serveSSR });
+		});
 	} catch (e: unknown) {
 		log.e(`error when starting dev server:\n${e}`);
 		process.exit(1);
@@ -54,6 +57,7 @@ cli.command("dev:ssr").action(async () => {
 
 cli.command("dev").action(async () => {
 	log.title();
+	await runBootstrap();
 	await $`concurrently "MODE=development bun-rsc dev:ssr" "MODE=development bun-rsc dev:rsc" --raw --kill-others`;
 });
 
@@ -66,6 +70,7 @@ cli.command("build").action(async () => {
 // Serve command
 cli.command("serve-ssr").action(async () => {
 	log.title();
+	await runBootstrap();
 	const server = Bun.serve({
 		port: 3000,
 		fetch: serveSSR,
