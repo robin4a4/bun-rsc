@@ -22,19 +22,15 @@ const cli = cac("bun-rsc");
 
 // Dev server
 cli.command("dev:rsc").action(async () => {
-	log.title();
-	log.i("Starting dev server");
-	process.env.MODE = "development";
+	log.i("Starting rsc dev server on port 3001");
 	try {
 		const sockets = createWebSocketServer();
 		await build();
 		const devServerRSC = Bun.serve({ port: 3001, fetch: serveRSC });
-		const devServerSSR = Bun.serve({ port: 3000, fetch: serveSSR });
 
 		fs.watch("./src", { recursive: true }, async (event, filename) => {
 			await build();
 			devServerRSC.reload({ fetch: serveRSC });
-			devServerSSR.reload({ fetch: serveSSR });
 			for (const socket of sockets) {
 				socket.send("refresh");
 			}
@@ -47,7 +43,7 @@ cli.command("dev:rsc").action(async () => {
 });
 
 cli.command("dev:ssr").action(async () => {
-	process.env.MODE = "development";
+	log.i("Starting ssr dev server on port 3000");
 	try {
 		Bun.serve({ port: 3000, fetch: serveSSR });
 	} catch (e: unknown) {
@@ -57,8 +53,8 @@ cli.command("dev:ssr").action(async () => {
 });
 
 cli.command("dev").action(async () => {
-	process.env.MODE = "development";
-	$`concurrently "bun-rsc dev:rsc" "bun-rsc dev:ssr"`;
+	log.title();
+	await $`concurrently "MODE=development bun-rsc dev:ssr" "MODE=development bun-rsc dev:rsc" --raw --kill-others`;
 });
 
 // Build command

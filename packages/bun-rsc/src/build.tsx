@@ -55,7 +55,7 @@ function isServerActionModule(code: string) {
  * ========================================================================
  * */
 export async function build() {
-	log.i(`🏞 Mode ${process.env.MODE}`);
+	log.i(`Mode ${process.env.MODE} 🏞`);
 	const start = Date.now();
 
 	fs.rmSync(dist, { recursive: true });
@@ -66,7 +66,7 @@ export async function build() {
 
 	const clientEntryPoints = new Set<string>();
 	const serverActionEntryPoints = new Set<string>();
-	log.i("💿 Building server components");
+	log.i("Building server components 💿");
 	const serverComponentsDist = resolveServerComponentsDist();
 	const serverActionsDist = resolveServerActionsDist();
 	if (!fs.existsSync(serverComponentsDist)) {
@@ -170,7 +170,7 @@ export async function build() {
 		await fs.promises.mkdir(clientComponentsDist, { recursive: true });
 	}
 
-	log.i("🏝 Building client");
+	log.i("Building client 🏝");
 	let namingDir = "[dir]";
 	if (clientEntryPoints.size === 0) {
 		namingDir = "bun-rsc/src/[dir]";
@@ -261,7 +261,7 @@ export async function build() {
 	}
 
 	if (serverActionEntryPoints.size > 0) {
-		log.i("💪 Building server actions");
+		log.i("Building server actions 💪");
 		const serverActionResults = await Bun.build({
 			format: "esm",
 			entrypoints: [...serverActionEntryPoints],
@@ -295,7 +295,7 @@ export async function build() {
 	 * -------------------------------------------------------------------------------------
 	 * */
 	async function parseCSS(files: BuildArtifact[]) {
-		log.i("🎨 Parsing CSS files with PostCSS");
+		log.i("Parsing CSS files with PostCSS 🎨");
 		const cssFiles = files.filter((f) => f.path.endsWith(".css"));
 		const manifest: Array<string> = [];
 		try {
@@ -326,5 +326,8 @@ export async function build() {
 
 	parseCSS(serverComponentsBuildResult.outputs);
 
-	log.s(`Build success in ${Date.now() - start} ms`, true);
+	log.s(
+		`Build success in ${Date.now() - start} ms`,
+		process.env.MODE !== "development",
+	);
 }

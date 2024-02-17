@@ -8,7 +8,7 @@ Heavily inspired by:
 
 # TODO:
 - [ ] server actions
-- [ ] dev mode
+- [x] dev mode
 - [x] remove localhost hardcoding
 - [x] fix no client component routing 
 - [x] internal typings
