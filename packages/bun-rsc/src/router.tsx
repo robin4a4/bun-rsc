@@ -1,29 +1,40 @@
-// @ts-expect-error
-import { startTransition, use, useEffect, useState } from "react";
+import {
+	type ReactNode,
+	startTransition,
+	use,
+	useEffect,
+	useState,
+} from "react";
 import { hydrateRoot } from "react-dom/client";
 // @ts-expect-error
 import { createFromFetch } from "react-server-dom-webpack/client";
-import { Layout } from "./components/Layout";
-import { combineUrl } from "./utils/common-utils";
+import { BUN_RSC_SPECIFIC_KEYWORD, combineUrl } from "./utils/common";
 import { clientLiveReload } from "./ws/client";
+import { BASE_RSC_SERVER_URL } from "./utils/common";
 
 hydrateRoot(document, <Router />);
 
 clientLiveReload();
 
-const queryParam = new URLSearchParams({
-	ajaxRSC: "true",
-});
+const queryParam = new URLSearchParams(window.location.search);
+
 function Router() {
-	const [url, setUrl] = useState(
-		`${window.location.href}?${queryParam.toString()}`,
+	console.log("Router");
+	const [rscUrl, setRscUrl] = useState(
+		`${combineUrl(
+			BASE_RSC_SERVER_URL,
+			combineUrl(BUN_RSC_SPECIFIC_KEYWORD, window.location.pathname),
+		)}?${queryParam.toString()}`,
 	);
 
 	useEffect(() => {
 		function navigate(url: string) {
 			startTransition(() => {
-				setUrl(
-					`${combineUrl(window.location.origin, url)}?${queryParam.toString()}`,
+				setRscUrl(
+					`${combineUrl(
+						BASE_RSC_SERVER_URL,
+						combineUrl(BUN_RSC_SPECIFIC_KEYWORD, url),
+					)}?${queryParam.toString()}`,
 				);
 			});
 		}
@@ -64,16 +75,13 @@ function Router() {
 		};
 	}, []);
 
-	return (
-		<Layout manifest={JSON.parse(window.__MANIFEST_STRING__)}>
-			<ServerOutput url={url} />
-		</Layout>
-	);
+	return <ServerOutput url={rscUrl} />;
 }
 
 const initialCache = new Map();
 
-function ServerOutput({ url }: { url: string }) {
+function ServerOutput({ url }: { url: string }): ReactNode {
+	console.log("ServerOutput", url);
 	const [cache, setCache] = useState(initialCache);
 	if (!cache.has(url)) {
 		cache.set(url, createFromFetch(fetch(url)));

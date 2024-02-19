@@ -1,3 +1,7 @@
+export const BUN_RSC_SPECIFIC_KEYWORD = "__BUN_RSC";
+export const BUN_RSC_SPECIFIC_KEYWORD_STATICS = "__bun_rsc";
+export const RSC_CONTENT_TYPE = "text/x-component";
+
 export function combineUrl(path1: string, path2: string) {
 	let firstPath = path1;
 	let secondPath = path2;
@@ -9,3 +13,6 @@ export function combineUrl(path1: string, path2: string) {
 	}
 	return `${firstPath}/${secondPath}`;
 }
+
+export const BASE_RSC_SERVER_URL =
+	process.env.MODE === "development" ? "http://localhost:3001" : "";

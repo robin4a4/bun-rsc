@@ -2,12 +2,22 @@
   "version": "0.0.1",
   "name": "bun-rsc",
   "type": "module",
+  "types": "./dist/serve/external.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/serve/external.d.ts",
+      "default": "./dist/serve/external.js"
+    },
+    "./client-condition-export": "./dist/serve/client-condition-export.js",
+    "./server-condition-export": "./dist/serve/server-condition-export.js",
+    "./package.json": "./package.json"
+  },
   "bin": {
-    "bun-rsc": "./dist/cli.js"
+    "bun-rsc": "./dist/build/cli.js"
   },
   "scripts": {
     "lint": "bunx @biomejs/biome check --apply ./src",
-    "build": "bun run ./src/cli/build.ts",
+    "build": "bun run ./src/exports/build.ts",
     "release": "bun run build && bunx changeset publish && git push --follow-tags"
   },
   "publishConfig": {
@@ -29,24 +39,30 @@
     "dist/"
   ],
   "devDependencies": {
-    "@biomejs/biome": "1.4.1",
+    "@biomejs/biome": "^1.5.3",
     "@types/react": "^18.2.21",
     "@types/react-dom": "^18.2.7",
     "@types/web": "^0.0.127",
-    "bun-types": "latest"
+    "@types/recursive-readdir": "^2.2.4",
+    "@types/gradient-string": "^1.1.5",
+    "esbuild-plugin-d.ts": "1.2.3",
+    "bun-types": "latest",
+    "concurrently": "8.2.2"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@types/recursive-readdir": "^2.2.4",
     "arg": "^5.0.2",
     "cac": "^6.7.14",
+    "esbuild": "^0.20.0",
     "postcss": "^8.4.33",
-    "react": "18.3.0-canary-41f0e9dae-20230907",
-    "react-dom": "18.3.0-canary-41f0e9dae-20230907",
-    "react-server-dom-webpack": "18.3.0-canary-41f0e9dae-20230907",
+    "react": "18.3.0-canary-03d6f7cf0-20240209",
+    "react-dom": "18.3.0-canary-03d6f7cf0-20240209",
+    "react-server-dom-webpack": "18.3.0-canary-03d6f7cf0-20240209",
     "recursive-readdir": "^2.2.3",
-    "ws": "^8.16.0"
+    "ws": "^8.16.0",
+    "picocolors": "^1.0.0",
+    "gradient-string": "2.0.2"
   }
 }

@@ -6,4 +6,13 @@ Heavily inspired by:
 - https://github.com/bholmesdev/simple-rsc
 - https://github.com/hex2f/marz
 
-Less messy implementation with server actions and typing fixes started here: https://github.com/robin4a4/bun-rsc/pull/4/files
+# TODO:
+- [ ] server actions
+- [x] dev mode
+- [x] remove localhost hardcoding
+- [x] fix no client component routing 
+- [x] internal typings
+- [x] react typings
+- [x] fix error layout
+- [ ] check if middleware and bootstrapping still work
+- [x] check CORS

@@ -1,126 +1,303 @@
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
-import { type BuildArtifact, BuildConfig, type BunPlugin } from "bun";
+import { type BuildArtifact, BuildConfig } from "bun";
 import postcss from "postcss";
 import recursive from "recursive-readdir";
-import { ClientEntry } from "./types.js";
-import { combineUrl } from "./utils/common-utils.js";
+import { type RscMap } from "./types/internal";
+import { combineUrl } from "./utils/common";
 import {
+	createClientComponentsModuleId,
+	createServerActionsModuleId,
+	dist,
+	log,
+	resolveClientComponentsDist,
 	resolveDist,
 	resolveRoot,
+	resolveServerActionsDist,
+	resolveServerComponentsDist,
 	resolveSrc,
 	rscClientComponentMapUrl,
+	serverActionsMapUrl,
 	ssrClientComponentMapUrl,
 	writeMap,
-} from "./utils/server-utils.js";
+} from "./utils/server";
 
-const transpiler = new Bun.Transpiler({ loader: "tsx" });
+const __bun__module_map__ = new Map();
 
-const clientDist = resolveDist("client");
+const __webpack_chunk_load__ = async (moduleId: string) => {
+	const mod = await import(combineUrl(process.cwd(), moduleId));
+	__bun__module_map__.set(moduleId, mod);
+	return mod;
+};
+// @ts-ignore
+global.__webpack_chunk_load__ = __webpack_chunk_load__;
 
-function isClientComponent(code: string) {
+const __webpack_require__ = (moduleId: string) =>
+	__bun__module_map__.get(moduleId);
+// @ts-ignore
+global.__webpack_require__ = __webpack_require__;
+
+const TSXTranspiler = new Bun.Transpiler({ loader: "tsx" });
+
+const clientComponentsDist = resolveClientComponentsDist();
+
+function isClientComponentModule(code: string) {
 	return code.startsWith('"use client"') || code.startsWith("'use client'");
 }
 
+function isServerActionModule(code: string) {
+	return code.startsWith('"use server"') || code.startsWith("'use server'");
+}
+
 /**
+ * ========================================================================
  * Build all server and client components with esbuild
- */
+ * ========================================================================
+ * */
 export async function build() {
-	const rscClientComponentMap: Record<string, ClientEntry> = {};
-	const ssrClientComponentMap: Record<string, ClientEntry> = {};
+	log.i(`Mode ${process.env.MODE} 🏞`);
+	const start = Date.now();
+
+	fs.rmSync(dist, { recursive: true });
+
+	const rscClientComponentMap: RscMap = {};
+	const ssrClientComponentMap: RscMap = {};
+	const serverActionsMap: RscMap = {};
 
 	const clientEntryPoints = new Set<string>();
-
-	console.log("💿 Building server components");
-	const serverDist = resolveDist("server/");
-	if (!fs.existsSync(serverDist)) {
-		await fs.promises.mkdir(serverDist, { recursive: true });
+	const serverActionEntryPoints = new Set<string>();
+	log.i("Building server components 💿");
+	const serverComponentsDist = resolveServerComponentsDist();
+	const serverActionsDist = resolveServerActionsDist();
+	if (!fs.existsSync(serverComponentsDist)) {
+		await fs.promises.mkdir(serverComponentsDist, { recursive: true });
+	}
+	if (!fs.existsSync(serverActionsDist)) {
+		await fs.promises.mkdir(serverActionsDist, { recursive: true });
 	}
 
-	// Build server components
-	const entrypoints = await recursive(resolveSrc("views"));
+	/**
+	 * -------------------------------------------------------------------------------------
+	 * Build server components and scan client components (currently also scans
+	 * "server server-actions", but should be after the building of "client server-actions")
+	 * -------------------------------------------------------------------------------------
+	 * */
+	const serverComponentsBuildEntrypoints = await recursive(resolveSrc("pages"));
 
-	const serverBuildPlugins: BunPlugin[] = [
-		{
-			name: "build-server-components",
-			setup(build) {
-				build.onLoad({ filter: /\.(ts|tsx)$/ }, async ({ path }) => {
-					const code = await Bun.file(path).text();
-					if (!isClientComponent(code)) {
-						// if not a client component, just return the code and let it be bundled
-						return {
-							contents: code,
-							loader: "tsx",
-						};
-					}
-					clientEntryPoints.add(path);
-
-					// if it is a client component, return a reference to the client bundle
-					const root = process.cwd();
-					const srcSplit = root.split("/");
-					const currentDirectoryName = combineUrl(
-						srcSplit[srcSplit.length - 1],
-						path.replace(root, ""),
-					);
-					const outputKey = combineUrl("/dist/client", currentDirectoryName);
-
-					const moduleExports = transpiler.scan(code).exports;
-					let refCode = "";
-					for (const exp of moduleExports) {
-						let id = null;
-						if (exp === "default") {
-							id = `${outputKey}#default`;
-							refCode += `\nexport default { $$typeof: Symbol.for("react.client.reference"), $$async: false, $$id: "${id}", name: "default" }`;
-						} else {
-							id = `${outputKey}#${exp}`;
-							refCode += `\nexport const ${exp} = { $$typeof: Symbol.for("react.client.reference"), $$async: false, $$id: "${id}", name: "${exp}" }`;
-						}
-						const rscChunkId = outputKey
-							.replace(".tsx", ".rsc.js")
-							.replace(".ts", ".rsc.js");
-						rscClientComponentMap[id] = {
-							id: rscChunkId,
-							chunks: [rscChunkId],
-							name: exp,
-						};
-						const ssrChunkId = outputKey
-							.replace(".tsx", ".ssr.js")
-							.replace(".ts", ".ssr.js");
-						ssrClientComponentMap[id] = {
-							id: ssrChunkId,
-							chunks: [ssrChunkId],
-							name: exp,
-						};
-					}
-
-					return {
-						contents: refCode,
-						loader: "js",
-					};
-				});
-			},
-		},
-	];
-
-	const serverBuildResult = await Bun.build({
+	const serverComponentsBuildResult = await Bun.build({
 		target: "bun",
 		sourcemap: "none",
 		splitting: true,
 		format: "esm",
-		entrypoints,
-		outdir: serverDist,
-		plugins: serverBuildPlugins,
+		entrypoints: serverComponentsBuildEntrypoints,
+		outdir: serverComponentsDist,
+		external: ["bun-rsc", "react", "react-dom"],
+		plugins: [
+			{
+				name: "build-client-components-and-server-actions",
+				setup(build) {
+					build.onLoad({ filter: /\.(ts|tsx)$/ }, async ({ path }) => {
+						const code = await Bun.file(path).text();
+
+						if (isClientComponentModule(code)) {
+							// if it is a client component, return a reference to the client component bundle
+							clientEntryPoints.add(path);
+							const moduleExports = TSXTranspiler.scan(code).exports;
+							const moduleId = createClientComponentsModuleId(path);
+
+							// Here we make the consumer app import the client apis that we expose in the exports folder
+							// A similar approach would have been to just write the object:
+							//
+							// `export default { $$typeof: Symbol.for("react.client.reference"), $$async: false, $$id: "${id}", name: "default" }`
+							//
+							// I just like complicated things (and also using the real apis that react provides instead of forking them)
+							let refCode =
+								"import {createClientReference} from 'bun-rsc/server-condition-export'\n";
+							for (const exp of moduleExports) {
+								let id = null;
+								if (exp === "default") {
+									id = `${moduleId}#default`;
+									refCode += `export default createClientReference("${id}", "default")`;
+								} else {
+									id = `${moduleId}#${exp}`;
+									refCode += `export const ${exp} = createClientReference("${id}", "${exp}")`;
+								}
+								const rscChunkId = moduleId
+									.replace(".tsx", ".rsc.js")
+									.replace(".ts", ".rsc.js");
+								rscClientComponentMap[id] = {
+									id: rscChunkId,
+									chunks: [rscChunkId],
+									name: exp,
+								};
+								const ssrChunkId = moduleId
+									.replace(".tsx", ".ssr.js")
+									.replace(".ts", ".ssr.js");
+								ssrClientComponentMap[id] = {
+									id: ssrChunkId,
+									chunks: [ssrChunkId],
+									name: exp,
+								};
+							}
+							return {
+								contents: refCode,
+								loader: "js",
+							};
+						}
+
+						// If not a client component, return the original code
+						return {
+							contents: code,
+							loader: "tsx",
+						};
+					});
+				},
+			},
+		],
 	});
-	if (!serverBuildResult.success) {
-		console.log("[BUN RSC] Server build success: ❌");
-		console.log(serverBuildResult.logs);
+	if (!serverComponentsBuildResult.success) {
+		log.e("Server build failed");
+		console.log(serverComponentsBuildResult.logs);
+		throw new Error("Server build failed");
 	}
 
+	/**
+	 * -------------------------------------------------------------------------------------
+	 * Build client components and "server server-actions"
+	 * -------------------------------------------------------------------------------------
+	 * */
+	if (!fs.existsSync(clientComponentsDist)) {
+		await fs.promises.mkdir(clientComponentsDist, { recursive: true });
+	}
 
+	log.i("Building client 🏝");
+	let namingDir = "[dir]";
+	if (clientEntryPoints.size === 0) {
+		namingDir = "bun-rsc/src/[dir]";
+	}
+	const clientBuildOptions: BuildConfig = {
+		format: "esm",
+		entrypoints: [
+			...clientEntryPoints,
+			fileURLToPath(new URL("../../src/router.tsx", import.meta.url)),
+		],
+		target: "browser",
+		sourcemap: "none",
+		splitting: true,
+		outdir: clientComponentsDist,
+		define: {
+			"process.env.MODE": JSON.stringify(process.env.MODE),
+		},
+		plugins: [
+			{
+				name: "server-actions",
+				setup(build) {
+					build.onLoad({ filter: /\.(ts|tsx)$/ }, async ({ path }) => {
+						const code = await Bun.file(path).text();
 
+						if (isServerActionModule(code)) {
+							serverActionEntryPoints.add(path);
+							const moduleExports = TSXTranspiler.scan(code).exports;
+							const moduleId = createServerActionsModuleId(path);
+
+							let refCode = `import {createServerReferenceClient} from "bun-rsc/client-condition-export"`;
+							for (const exp of moduleExports) {
+								const id =
+									exp === "default"
+										? `${moduleId}#default`
+										: `${moduleId}#${exp}`;
+								refCode += `
+											export${
+												exp === "default" ? " default " : " "
+											}const ${exp} = createServerReferenceClient("${id}")
+											`;
+								const chunkId = moduleId
+									.replace(".tsx", ".js")
+									.replace(".ts", ".js");
+
+								serverActionsMap[id] = {
+									id: chunkId,
+									chunks: [chunkId],
+									name: exp,
+								};
+							}
+
+							return {
+								contents: refCode,
+								loader: "js",
+							};
+						}
+
+						// If not a server action, return the original code
+						return {
+							contents: code,
+							loader: "tsx",
+						};
+					});
+				},
+			},
+		],
+	};
+
+	// Build client components for CSR
+	const csrResults = await Bun.build({
+		...clientBuildOptions,
+		naming: `${namingDir}/[name].rsc.[ext]`,
+	});
+	if (!csrResults.success) {
+		log.e("CSR build failed");
+		console.log(csrResults.logs);
+		throw new Error("CSR build failed");
+	}
+	const ssrResults = await Bun.build({
+		...clientBuildOptions,
+		external: ["react", "react-dom"],
+		naming: `${namingDir}/[name].ssr.[ext]`,
+	});
+	if (!ssrResults.success) {
+		log.e("SSR build failed");
+		console.log(csrResults.logs);
+		throw new Error("SSR build failed");
+	}
+
+	if (serverActionEntryPoints.size > 0) {
+		log.i("Building server actions 💪");
+		const serverActionResults = await Bun.build({
+			format: "esm",
+			entrypoints: [...serverActionEntryPoints],
+			target: "browser",
+			sourcemap: "none",
+			splitting: true,
+			outdir: serverActionsDist,
+			define: {
+				"process.env.MODE": JSON.stringify(process.env.MODE),
+			},
+		});
+		if (!serverActionResults.success) {
+			log.e("Server actions build failed");
+			console.log(serverActionResults.logs);
+			throw new Error("Server actions build failed");
+		}
+	}
+
+	/**
+	 * -------------------------------------------------------------------------------------
+	 * Write module maps used by the server to resolve client components and server actions
+	 * -------------------------------------------------------------------------------------
+	 * */
+	await writeMap(rscClientComponentMapUrl, rscClientComponentMap);
+	await writeMap(ssrClientComponentMapUrl, ssrClientComponentMap);
+	await writeMap(serverActionsMapUrl, serverActionsMap);
+
+	/**
+	 * -------------------------------------------------------------------------------------
+	 * Parse built CSS files with PostCSS
+	 * -------------------------------------------------------------------------------------
+	 * */
 	async function parseCSS(files: BuildArtifact[]) {
+		log.i("Parsing CSS files with PostCSS 🎨");
 		const cssFiles = files.filter((f) => f.path.endsWith(".css"));
-		const manifest: Array<String> = []
+		const manifest: Array<string> = [];
 		try {
 			const postcssConfig = await import(resolveRoot("postcss.config.js"));
 			const postcssConfigPlugins = Object.entries(postcssConfig.plugins).map(
@@ -134,63 +311,23 @@ export async function build() {
 				const result = await postcss(postcssConfigPlugins).process(rawCSS, {
 					from: f.path,
 				});
-				await Bun.write(f.path, result.css)
-				const fileName = f.path.replace(resolveRoot(""), "/")
-				manifest.push(fileName)
+				await Bun.write(f.path, result.css);
+				const fileName = f.path.replace(resolveRoot(""), "/");
+				manifest.push(fileName);
 			}
-			await Bun.write(resolveDist("manifest.json"), JSON.stringify(manifest))
+			await Bun.write(
+				resolveDist("css-manifest.json"),
+				JSON.stringify(manifest),
+			);
 		} catch (e) {
 			console.log(e);
 		}
 	}
 
-	/**
-	 * Parse CSS files with postcss
-	 */
-	parseCSS(serverBuildResult.outputs)
+	parseCSS(serverComponentsBuildResult.outputs);
 
-	if (!fs.existsSync(clientDist)) {
-		await fs.promises.mkdir(clientDist, { recursive: true });
-	}
-
-	if (clientEntryPoints.size > 0) {
-		console.log("🏝 Building client components");
-	}
-
-	const clientBuildOptions: BuildConfig = {
-		format: "esm",
-		entrypoints: [
-			...clientEntryPoints,
-			fileURLToPath(new URL("../src/router.tsx", import.meta.url)),
-		],
-		target: "browser",
-		sourcemap: "none",
-		splitting: true,
-		outdir: clientDist,
-	};
-
-	// Build client components for CSR
-	const csrResults = await Bun.build({
-		...clientBuildOptions,
-		naming: "[dir]/[name].rsc.[ext]",
-	});
-	if (!csrResults.success) {
-		console.log("[BUN RSC] CSR build success: ❌");
-		console.log(csrResults.logs);
-	}
-
-	// Build client components for SSR. React is externalized to avoid duplication and hooks errors at stream generation time.
-	const ssrResults = await Bun.build({
-		...clientBuildOptions,
-		naming: "[dir]/[name].ssr.[ext]",
-		external: ["react", "react-dom"],
-	});
-	if (!ssrResults.success) {
-		console.log("[BUN RSC] SSR build success: ❌");
-		console.log(ssrResults.logs);
-	}
-
-	// Write the client component maps
-	await writeMap(rscClientComponentMapUrl, rscClientComponentMap);
-	await writeMap(ssrClientComponentMapUrl, ssrClientComponentMap);
+	log.s(
+		`Build success in ${Date.now() - start} ms`,
+		process.env.MODE !== "development",
+	);
 }
