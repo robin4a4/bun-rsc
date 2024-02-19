@@ -2,10 +2,12 @@
   "name": "example",
   "module": "index.ts",
   "type": "module",
+  "private": true,
   "scripts": {
     "dev": "bun-rsc dev",
     "serve-rsc": "bun-rsc serve-rsc",
     "serve-ssr": "bun-rsc serve-ssr",
+    "lint": "bunx @biomejs/biome check --apply ./src",
     "build": "bun-rsc build"
   },
   "devDependencies": {

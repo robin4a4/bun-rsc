@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
-import { $ } from "bun";
 import fs from "node:fs";
+import { $ } from "bun";
 import { cac } from "cac";
 import packageJson from "../package.json";
 import { build } from "./build";
