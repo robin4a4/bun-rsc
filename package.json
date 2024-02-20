@@ -3,6 +3,9 @@
   "workspaces": [
     "packages/*"
   ],
+  "scripts": {
+    "release": "cd packages/bun-rsc; bun run build; cd ../..; bunx changeset publish && git push --follow-tags"
+  },
   "dependencies": {
     "@changesets/cli": "^2.27.1"
   }

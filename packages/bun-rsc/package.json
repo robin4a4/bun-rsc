@@ -18,7 +18,6 @@
   "scripts": {
     "lint": "bunx @biomejs/biome check --apply ./src",
     "build": "bun run ./src/exports/build.ts",
-    "release": "bun run build && bunx changeset publish && git push --follow-tags"
   },
   "publishConfig": {
     "access": "public"

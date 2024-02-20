@@ -55,4 +55,4 @@ Actions in server components are not yet supported.
 
 ## SSR limitations
 
-The framework support ssr but the hydration is done by refetching the rsc form the client, which is far from optimal. Ideally we should send the jsx to the client and hydrate it there. This is not yet supported.
+The framework support ssr but the hydration is done by refetching the rsc form the client, which is far from optimal. We should use https://github.com/devongovett/rsc-html-stream
