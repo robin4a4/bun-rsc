@@ -1,4 +1,4 @@
-import { use, type ReactNode } from "react";
+import { type ReactNode, use } from "react";
 // @ts-ignore
 import ReactDOMServer from "react-dom/server.edge";
 // @ts-ignore
@@ -13,14 +13,14 @@ import {
 	runMiddleware,
 } from "../utils/server.ts";
 
+import { Layout } from "../components/Layout.tsx";
 import type { PageModule } from "../types/internal.ts";
 import {
+	BASE_RSC_SERVER_URL,
 	BUN_RSC_SPECIFIC_KEYWORD,
 	BUN_RSC_SPECIFIC_KEYWORD_STATICS,
-	BASE_RSC_SERVER_URL,
 	combineUrl,
 } from "../utils/common.ts";
-import { Layout } from "../components/Layout.tsx";
 
 const router = new Bun.FileSystemRouter({
 	style: "nextjs",

@@ -1,6 +1,9 @@
 {
-  "name": "bun-rsc",
+  "name": "bun-rsc-monorepo",
   "workspaces": [
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "@changesets/cli": "^2.27.1"
+  }
 }
