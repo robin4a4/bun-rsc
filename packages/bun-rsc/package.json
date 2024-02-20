@@ -17,7 +17,7 @@
   },
   "scripts": {
     "lint": "bunx @biomejs/biome check --apply ./src",
-    "build": "bun run ./src/exports/build.ts",
+    "build": "bun run ./src/exports/build.ts"
   },
   "publishConfig": {
     "access": "public"
