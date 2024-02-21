@@ -7,6 +7,7 @@ export const meta = {
 };
 
 export async function Page() {
+
 	return (
 		<>
 			<h1>SALUT</h1>

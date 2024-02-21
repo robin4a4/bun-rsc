@@ -81,8 +81,16 @@ export default () => {
 ```
 ## Current limitations
 
+### Typing
+
+To get the correct types for the new react features you must create a global declaration file in which you put:
+
+```
+/// <reference types="react/experimental" />
+```
+
 ### Server actions limitations
-the "use server" directive is only supported at the top level of the module and the module is only importable in a client component:
+The "use server" directive is only supported at the top level of the module and the module is only importable in a client component:
 
 ```typescript
 // addTodo.ts

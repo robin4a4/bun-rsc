@@ -142,6 +142,7 @@ export async function serveSSR(request: Request) {
 				headers: getServerHeaders(),
 			});
 		} catch (error: unknown) {
+			log.e(String(error));
 			const serverFileErrorPath = resolveServerFileFromFilePath(
 				`${match.filePath.split(".")[0]}.error.js`,
 			);

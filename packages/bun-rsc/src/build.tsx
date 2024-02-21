@@ -295,11 +295,18 @@ export async function build() {
 	 * -------------------------------------------------------------------------------------
 	 * */
 	async function parseCSS(files: BuildArtifact[]) {
-		log.i("Parsing CSS files with PostCSS 🎨");
 		const cssFiles = files.filter((f) => f.path.endsWith(".css"));
 		const manifest: Array<string> = [];
+		let postcssConfig = null
 		try {
-			const postcssConfig = await import(resolveRoot("postcss.config.js"));
+			postcssConfig = await import(resolveRoot("postcss.config.js"));
+		} catch (e) {
+			log.i("No postcss.config.js found, continuing without PostCSS parsing");
+		}
+		if (!postcssConfig) return;
+
+		log.i("Parsing CSS files with PostCSS 🎨");
+		try {
 			const postcssConfigPlugins = Object.entries(postcssConfig.plugins).map(
 				([name, options]) => {
 					const plugin = require(name);
@@ -324,7 +331,7 @@ export async function build() {
 		}
 	}
 
-	parseCSS(serverComponentsBuildResult.outputs);
+	await parseCSS(serverComponentsBuildResult.outputs);
 
 	log.s(
 		`Build success in ${Date.now() - start} ms`,
