@@ -8,10 +8,8 @@ import {
 	resolveDist,
 	resolveServerFileFromFilePath,
 	resolveSrc,
-	rscClientComponentMapUrl,
-	runMiddleware,
+	clientComponentMapUrl,
 	serverActionsMapUrl,
-	ssrClientComponentMapUrl,
 } from "../utils/server.ts";
 
 import { Layout } from "../components/Layout.tsx";
@@ -100,12 +98,13 @@ export async function serveRSC(request: Request) {
 				</Layout>
 			);
 
-			const map =
-				searchParams.get("ssr") === "true"
-					? ssrClientComponentMapUrl
-					: rscClientComponentMapUrl;
+			// searchParams.get("ssr") === "true"
+			// 	? ssrClientComponentMapUrl
+			// 	: rscClientComponentMapUrl;
 
-			const clientComponentMap = await readMap(map);
+			const map = await readMap(clientComponentMapUrl);
+			const clientComponentMap =
+				searchParams.get("ssr") === "true" ? map.ssr : map.rsc;
 			const rscStream = ReactServerDOMServer.renderToReadableStream(
 				Page,
 				clientComponentMap,

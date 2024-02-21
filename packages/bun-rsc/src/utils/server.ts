@@ -3,7 +3,7 @@
 import gradient from "gradient-string";
 import pc from "picocolors";
 import { BootstrapType, MiddlewareType } from "../types/external.ts";
-import { type RscMap } from "../types/internal.ts";
+import { ClientRscMap, type RscMap } from "../types/internal.ts";
 import { BUN_RSC_SPECIFIC_KEYWORD_STATICS, combineUrl } from "./common";
 
 export const root = process.cwd();
@@ -42,17 +42,14 @@ export function resolveServerFileFromFilePath(filePath: string) {
 	return resolveServerComponentsDist(filePathAfterSrc);
 }
 
-export const rscClientComponentMapUrl = resolveDist(
-	"clientComponentMap.rsc.json",
-);
-export const ssrClientComponentMapUrl = resolveDist(
-	"clientComponentMap.ssr.json",
-);
+export const clientComponentMapUrl = resolveDist("clientComponentMap.json");
 
 export const serverActionsMapUrl = resolveDist("serverActionsMap.json");
-export const ssrTranslationMapUrl = resolveDist("ssrTranslationMap.json");
 
-export async function writeMap(mapUrl: string, bundleMap: RscMap) {
+export async function writeMap(
+	mapUrl: string,
+	bundleMap: RscMap | ClientRscMap,
+) {
 	await Bun.write(mapUrl, JSON.stringify(bundleMap));
 }
 
@@ -68,6 +65,7 @@ export function createClientComponentsModuleId(path: string) {
 		srcSplit[srcSplit.length - 1],
 		path.replace(root, ""),
 	);
+	console.log(root, path, srcSplit, currentDirectoryName);
 	const moduleId = combineUrl(
 		`/${BUN_RSC_SPECIFIC_KEYWORD_STATICS}/client-components`,
 		currentDirectoryName,

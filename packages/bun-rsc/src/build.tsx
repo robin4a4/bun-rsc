@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import { type BuildArtifact, BuildConfig } from "bun";
 import postcss from "postcss";
 import recursive from "recursive-readdir";
-import { type RscMap } from "./types/internal";
+import { ClientRscMap, type RscMap } from "./types/internal";
 import { combineUrl } from "./utils/common";
 import {
 	createClientComponentsModuleId,
@@ -16,9 +16,8 @@ import {
 	resolveServerActionsDist,
 	resolveServerComponentsDist,
 	resolveSrc,
-	rscClientComponentMapUrl,
+	clientComponentMapUrl,
 	serverActionsMapUrl,
-	ssrClientComponentMapUrl,
 	writeMap,
 } from "./utils/server";
 
@@ -60,8 +59,7 @@ export async function build() {
 
 	fs.rmSync(dist, { recursive: true });
 
-	const rscClientComponentMap: RscMap = {};
-	const ssrClientComponentMap: RscMap = {};
+	const clientComponentMap: ClientRscMap = { ssr: {}, rsc: {} };
 	const serverActionsMap: RscMap = {};
 
 	const clientEntryPoints = new Set<string>();
@@ -125,7 +123,7 @@ export async function build() {
 								const rscChunkId = moduleId
 									.replace(".tsx", ".rsc.js")
 									.replace(".ts", ".rsc.js");
-								rscClientComponentMap[id] = {
+								clientComponentMap.rsc[id] = {
 									id: rscChunkId,
 									chunks: [rscChunkId],
 									name: exp,
@@ -133,7 +131,7 @@ export async function build() {
 								const ssrChunkId = moduleId
 									.replace(".tsx", ".ssr.js")
 									.replace(".ts", ".ssr.js");
-								ssrClientComponentMap[id] = {
+								clientComponentMap.ssr[id] = {
 									id: ssrChunkId,
 									chunks: [ssrChunkId],
 									name: exp,
@@ -285,8 +283,7 @@ export async function build() {
 	 * Write module maps used by the server to resolve client components and server actions
 	 * -------------------------------------------------------------------------------------
 	 * */
-	await writeMap(rscClientComponentMapUrl, rscClientComponentMap);
-	await writeMap(ssrClientComponentMapUrl, ssrClientComponentMap);
+	await writeMap(clientComponentMapUrl, clientComponentMap);
 	await writeMap(serverActionsMapUrl, serverActionsMap);
 
 	/**
@@ -297,7 +294,7 @@ export async function build() {
 	async function parseCSS(files: BuildArtifact[]) {
 		const cssFiles = files.filter((f) => f.path.endsWith(".css"));
 		const manifest: Array<string> = [];
-		let postcssConfig = null
+		let postcssConfig = null;
 		try {
 			postcssConfig = await import(resolveRoot("postcss.config.js"));
 		} catch (e) {

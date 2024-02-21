@@ -10,7 +10,6 @@ import {
 	resolveDist,
 	resolveServerFileFromFilePath,
 	resolveSrc,
-	runMiddleware,
 } from "../utils/server.ts";
 
 import { Layout } from "../components/Layout.tsx";
