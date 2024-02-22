@@ -1,6 +1,6 @@
 import fs from "node:fs";
-import { fileURLToPath } from "node:url";
-import { type BuildArtifact, BuildConfig } from "bun";
+import { build as esbuild, BuildOptions } from "esbuild";
+import { type BuildArtifact, BuildConfig, $ } from "bun";
 import postcss from "postcss";
 import recursive from "recursive-readdir";
 import { ClientRscMap, type RscMap } from "./types/internal";
@@ -40,7 +40,6 @@ global.__webpack_require__ = __webpack_require__;
 const TSXTranspiler = new Bun.Transpiler({ loader: "tsx" });
 
 const clientComponentsDist = resolveClientComponentsDist();
-const routerDist = resolveRouterDist();
 
 function isClientComponentModule(code: string) {
 	return code.startsWith('"use client"') || code.startsWith("'use client'");
@@ -163,35 +162,6 @@ export async function build() {
 
 	/**
 	 * -------------------------------------------------------------------------------------
-	 * Build router
-	 * -------------------------------------------------------------------------------------
-	 * */
-	if (!fs.existsSync(routerDist)) {
-		await fs.promises.mkdir(routerDist, { recursive: true });
-	}
-	console.log(fileURLToPath(new URL("../../src/router.tsx", import.meta.url)));
-	log.i("Building router 🚦");
-	const routerResults = await Bun.build({
-		format: "esm",
-		entrypoints: [
-			fileURLToPath(new URL("../../src/router.tsx", import.meta.url)),
-		],
-		target: "browser",
-		sourcemap: "none",
-		splitting: true,
-		outdir: routerDist,
-		define: {
-			"process.env.MODE": JSON.stringify(process.env.MODE),
-		},
-	});
-	if (!routerResults.success) {
-		log.e("Server actions build failed");
-		console.log(routerResults.logs);
-		throw new Error("Server actions build failed");
-	}
-
-	/**
-	 * -------------------------------------------------------------------------------------
 	 * Build client components and "server server-actions"
 	 * -------------------------------------------------------------------------------------
 	 * */
@@ -200,17 +170,22 @@ export async function build() {
 	}
 
 	log.i("Building client 🏝");
-	const clientBuildOptions: BuildConfig = {
+
+	// Create router.tsx file to be build along the client components
+	// It will allow every client stuff to share the same version of react
+	await $`echo "import 'bun-rsc/router'" > ${combineUrl(
+		process.cwd(),
+		"src/router.tsx",
+	)}`;
+	const clientBuildOptions: BuildOptions = {
 		format: "esm",
-		entrypoints: [...clientEntryPoints],
-		target: "browser",
-		sourcemap: "none",
 		splitting: true,
+		bundle: true,
 		outdir: clientComponentsDist,
 		define: {
 			"process.env.MODE": JSON.stringify(process.env.MODE),
 		},
-		root: getBuildRoot(),
+		jsx: "preserve",
 		plugins: [
 			{
 				name: "server-actions",
@@ -263,23 +238,25 @@ export async function build() {
 	};
 
 	// Build client components for CSR
-	const csrResults = await Bun.build({
+	const csrResults = await esbuild({
 		...clientBuildOptions,
-		naming: "[dir]/[name].rsc.[ext]",
+		entryPoints: [...clientEntryPoints, resolveSrc("router.tsx")],
+		entryNames: "[dir]/[name].rsc",
 	});
-	if (!csrResults.success) {
+	if (csrResults.errors.length > 0) {
 		log.e("CSR build failed");
-		console.log(csrResults.logs);
+		console.log(csrResults.errors);
 		throw new Error("CSR build failed");
 	}
-	const ssrResults = await Bun.build({
+	const ssrResults = await esbuild({
 		...clientBuildOptions,
+		entryPoints: [...clientEntryPoints],
 		external: ["react", "react-dom"],
-		naming: "[dir]/[name].ssr.[ext]",
+		entryNames: "[dir]/[name].ssr",
 	});
-	if (!ssrResults.success) {
+	if (ssrResults.errors.length > 0) {
 		log.e("SSR build failed");
-		console.log(csrResults.logs);
+		console.log(ssrResults.errors);
 		throw new Error("SSR build failed");
 	}
 
@@ -288,7 +265,6 @@ export async function build() {
 		const serverActionResults = await Bun.build({
 			format: "esm",
 			entrypoints: [...serverActionEntryPoints],
-			target: "browser",
 			sourcemap: "none",
 			splitting: true,
 			outdir: serverActionsDist,

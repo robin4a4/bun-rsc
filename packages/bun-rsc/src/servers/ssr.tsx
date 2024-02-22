@@ -113,7 +113,7 @@ export async function serveSSR(request: Request) {
 				<ClientRoot />,
 				{
 					bootstrapModules: [
-						`/${BUN_RSC_SPECIFIC_KEYWORD_STATICS}/client-components/bun-rsc/router/router.js`,
+						`/${BUN_RSC_SPECIFIC_KEYWORD_STATICS}/router.rsc.js`,
 					],
 					bootstrapScriptContent: `global = window;
 					global.__CURRENT_ROUTE__ = "${request.url}";  

@@ -98,10 +98,6 @@ export async function serveRSC(request: Request) {
 				</Layout>
 			);
 
-			// searchParams.get("ssr") === "true"
-			// 	? ssrClientComponentMapUrl
-			// 	: rscClientComponentMapUrl;
-
 			const map = await readMap(clientComponentMapUrl);
 			const clientComponentMap =
 				searchParams.get("ssr") === "true" ? map.ssr : map.rsc;

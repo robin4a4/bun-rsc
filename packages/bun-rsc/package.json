@@ -8,6 +8,7 @@
       "types": "./dist/serve/external.d.ts",
       "default": "./dist/serve/external.js"
     },
+    "./router": "./dist/router/router.js",
     "./client-condition-export": "./dist/serve/client-condition-export.js",
     "./server-condition-export": "./dist/serve/server-condition-export.js",
     "./package.json": "./package.json"

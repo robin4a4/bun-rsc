@@ -1,13 +1,11 @@
-import {Suspense} from "react";
+import { Suspense } from "react";
 import { type PageProps } from "bun-rsc";
 
-import Counter2 from "../components/test/Counter";
-import {ClientForm2} from "../components/test/ClientForm.tsx";
 import Counter from "../components/Counter";
-import {ClientForm} from "../components/ClientForm.tsx";
+// import { ClientForm } from "../components/ClientForm.tsx";
 // import Counter3 from "../test-root/Counter";
 // import {ClientForm3} from "../test-root/ClientForm.tsx";
-import {Data} from "../components/Data.tsx";
+import { Data } from "../components/Data.tsx";
 
 export const meta = {
 	title: "Home",
@@ -17,19 +15,15 @@ export const meta = {
 export async function Page({ searchParams }: PageProps) {
 	return (
 		<>
-			<h1 className="bg-yellow-500 border border-green-500">
-				Hello, world!
-			</h1>
+			<h1 className="bg-yellow-500 border border-green-500">Hello, world!</h1>
 			<section>
 				Counter:
 				<Counter />
-				<Counter2 />
 				{/*<Counter3 />*/}
 			</section>
 			<section>
 				Form:
-				<ClientForm/>
-				<ClientForm2/>
+				{/* <ClientForm /> */}
 				{/*<ClientForm3/>*/}
 			</section>
 			<section>
