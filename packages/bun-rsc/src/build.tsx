@@ -185,7 +185,6 @@ export async function build() {
 		define: {
 			"process.env.MODE": JSON.stringify(process.env.MODE),
 		},
-		jsx: "preserve",
 		plugins: [
 			{
 				name: "server-actions",
@@ -250,7 +249,7 @@ export async function build() {
 	}
 	const ssrResults = await esbuild({
 		...clientBuildOptions,
-		entryPoints: [...clientEntryPoints],
+		entryPoints: [...clientEntryPoints, resolveSrc("router.tsx")],
 		external: ["react", "react-dom"],
 		entryNames: "[dir]/[name].ssr",
 	});
