@@ -2,13 +2,13 @@ import { createElement } from "react";
 // @ts-ignore
 import * as ReactServerDOMServer from "react-server-dom-webpack/server.edge";
 import {
+	clientComponentMapUrl,
 	getMiddleware,
 	getServerHeaders,
 	readMap,
 	resolveDist,
 	resolveServerFileFromFilePath,
 	resolveSrc,
-	clientComponentMapUrl,
 	serverActionsMapUrl,
 } from "../utils/server.ts";
 

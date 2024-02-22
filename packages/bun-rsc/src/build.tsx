@@ -6,17 +6,18 @@ import recursive from "recursive-readdir";
 import { ClientRscMap, type RscMap } from "./types/internal";
 import { combineUrl } from "./utils/common";
 import {
-	createClientComponentsModuleId,
-	createServerActionsModuleId,
+	clientComponentMapUrl,
+	createModuleId,
 	dist,
+	getBuildRoot,
 	log,
 	resolveClientComponentsDist,
 	resolveDist,
 	resolveRoot,
+	resolveRouterDist,
 	resolveServerActionsDist,
 	resolveServerComponentsDist,
 	resolveSrc,
-	clientComponentMapUrl,
 	serverActionsMapUrl,
 	writeMap,
 } from "./utils/server";
@@ -39,6 +40,7 @@ global.__webpack_require__ = __webpack_require__;
 const TSXTranspiler = new Bun.Transpiler({ loader: "tsx" });
 
 const clientComponentsDist = resolveClientComponentsDist();
+const routerDist = resolveRouterDist();
 
 function isClientComponentModule(code: string) {
 	return code.startsWith('"use client"') || code.startsWith("'use client'");
@@ -101,7 +103,7 @@ export async function build() {
 							// if it is a client component, return a reference to the client component bundle
 							clientEntryPoints.add(path);
 							const moduleExports = TSXTranspiler.scan(code).exports;
-							const moduleId = createClientComponentsModuleId(path);
+							const moduleId = createModuleId(path, "client");
 
 							// Here we make the consumer app import the client apis that we expose in the exports folder
 							// A similar approach would have been to just write the object:
@@ -161,6 +163,35 @@ export async function build() {
 
 	/**
 	 * -------------------------------------------------------------------------------------
+	 * Build router
+	 * -------------------------------------------------------------------------------------
+	 * */
+	if (!fs.existsSync(routerDist)) {
+		await fs.promises.mkdir(routerDist, { recursive: true });
+	}
+	console.log(fileURLToPath(new URL("../../src/router.tsx", import.meta.url)));
+	log.i("Building router 🚦");
+	const routerResults = await Bun.build({
+		format: "esm",
+		entrypoints: [
+			fileURLToPath(new URL("../../src/router.tsx", import.meta.url)),
+		],
+		target: "browser",
+		sourcemap: "none",
+		splitting: true,
+		outdir: routerDist,
+		define: {
+			"process.env.MODE": JSON.stringify(process.env.MODE),
+		},
+	});
+	if (!routerResults.success) {
+		log.e("Server actions build failed");
+		console.log(routerResults.logs);
+		throw new Error("Server actions build failed");
+	}
+
+	/**
+	 * -------------------------------------------------------------------------------------
 	 * Build client components and "server server-actions"
 	 * -------------------------------------------------------------------------------------
 	 * */
@@ -169,16 +200,9 @@ export async function build() {
 	}
 
 	log.i("Building client 🏝");
-	let namingDir = "[dir]";
-	if (clientEntryPoints.size === 0) {
-		namingDir = "bun-rsc/src/[dir]";
-	}
 	const clientBuildOptions: BuildConfig = {
 		format: "esm",
-		entrypoints: [
-			...clientEntryPoints,
-			fileURLToPath(new URL("../../src/router.tsx", import.meta.url)),
-		],
+		entrypoints: [...clientEntryPoints],
 		target: "browser",
 		sourcemap: "none",
 		splitting: true,
@@ -186,6 +210,7 @@ export async function build() {
 		define: {
 			"process.env.MODE": JSON.stringify(process.env.MODE),
 		},
+		root: getBuildRoot(),
 		plugins: [
 			{
 				name: "server-actions",
@@ -196,7 +221,7 @@ export async function build() {
 						if (isServerActionModule(code)) {
 							serverActionEntryPoints.add(path);
 							const moduleExports = TSXTranspiler.scan(code).exports;
-							const moduleId = createServerActionsModuleId(path);
+							const moduleId = createModuleId(path, "server");
 
 							let refCode = `import {createServerReferenceClient} from "bun-rsc/client-condition-export"`;
 							for (const exp of moduleExports) {
@@ -240,7 +265,7 @@ export async function build() {
 	// Build client components for CSR
 	const csrResults = await Bun.build({
 		...clientBuildOptions,
-		naming: `${namingDir}/[name].rsc.[ext]`,
+		naming: "[dir]/[name].rsc.[ext]",
 	});
 	if (!csrResults.success) {
 		log.e("CSR build failed");
@@ -250,7 +275,7 @@ export async function build() {
 	const ssrResults = await Bun.build({
 		...clientBuildOptions,
 		external: ["react", "react-dom"],
-		naming: `${namingDir}/[name].ssr.[ext]`,
+		naming: "[dir]/[name].ssr.[ext]",
 	});
 	if (!ssrResults.success) {
 		log.e("SSR build failed");

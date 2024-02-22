@@ -1,8 +1,12 @@
 import {Suspense} from "react";
 import { type PageProps } from "bun-rsc";
 
+import Counter2 from "../components/test/Counter";
+import {ClientForm2} from "../components/test/ClientForm.tsx";
 import Counter from "../components/Counter";
 import {ClientForm} from "../components/ClientForm.tsx";
+// import Counter3 from "../test-root/Counter";
+// import {ClientForm3} from "../test-root/ClientForm.tsx";
 import {Data} from "../components/Data.tsx";
 
 export const meta = {
@@ -19,10 +23,14 @@ export async function Page({ searchParams }: PageProps) {
 			<section>
 				Counter:
 				<Counter />
+				<Counter2 />
+				{/*<Counter3 />*/}
 			</section>
 			<section>
 				Form:
 				<ClientForm/>
+				<ClientForm2/>
+				{/*<ClientForm3/>*/}
 			</section>
 			<section>
 				Data:

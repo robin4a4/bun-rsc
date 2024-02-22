@@ -26,6 +26,10 @@ export function resolveClientComponentsDist(path?: string) {
 	return combineUrl(resolveDist("client-components/"), path ?? "");
 }
 
+export function resolveRouterDist(path?: string) {
+	return combineUrl(resolveDist("router/"), path ?? "");
+}
+
 export function resolveServerComponentsDist(path?: string) {
 	return combineUrl(resolveDist("server-components/"), path ?? "");
 }
@@ -58,26 +62,18 @@ export async function readMap(mapUrl: string) {
 	return JSON.parse(bundleMap) as RscMap;
 }
 
-export function createClientComponentsModuleId(path: string) {
+export function getBuildRoot() {
 	const root = process.cwd();
-	const srcSplit = root.split("/");
-	const currentDirectoryName = combineUrl(
-		srcSplit[srcSplit.length - 1],
-		path.replace(root, ""),
-	);
-	console.log(root, path, srcSplit, currentDirectoryName);
-	const moduleId = combineUrl(
-		`/${BUN_RSC_SPECIFIC_KEYWORD_STATICS}/client-components`,
-		currentDirectoryName,
-	);
-	return moduleId;
+	return combineUrl(root, "src");
 }
 
-export function createServerActionsModuleId(path: string) {
+export function createModuleId(path: string, type: "client" | "server") {
 	const root = process.cwd();
 	const formattedPath = path.replace(combineUrl(root, "src"), "");
 	const moduleId = combineUrl(
-		`/${BUN_RSC_SPECIFIC_KEYWORD_STATICS}/server-actions`,
+		`/${BUN_RSC_SPECIFIC_KEYWORD_STATICS}/${
+			type === "client" ? "client-components" : "server-actions"
+		}`,
 		formattedPath,
 	);
 	return moduleId;
