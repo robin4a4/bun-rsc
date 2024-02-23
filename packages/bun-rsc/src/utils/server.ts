@@ -62,14 +62,9 @@ export async function readMap(mapUrl: string) {
 	return JSON.parse(bundleMap) as RscMap;
 }
 
-export function getBuildRoot() {
-	const root = process.cwd();
-	return combineUrl(root, "src");
-}
-
 export function createModuleId(path: string, type: "client" | "server") {
 	const root = process.cwd();
-	const formattedPath = path.replace(combineUrl(root, "src"), "");
+	const formattedPath = path.replace(root,  "");
 	const moduleId = combineUrl(
 		`/${BUN_RSC_SPECIFIC_KEYWORD_STATICS}/${
 			type === "client" ? "client-components" : "server-actions"

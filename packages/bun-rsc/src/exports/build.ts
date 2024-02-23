@@ -2,7 +2,6 @@ import fs from "node:fs";
 import * as esbuild from "esbuild";
 import { dtsPlugin } from "esbuild-plugin-d.ts";
 import { log } from "../utils/server";
-// import dtsPlugin from "bun-plugin-dts";
 const start = Date.now();
 
 log.title();
@@ -44,7 +43,7 @@ log.i("Building the router export using Bun");
 await Bun.build({
 	entrypoints: ["./src/exports/router.tsx"],
 	format: "esm",
-	external: ["react", "react-dom"],
+	external: ["react", "react-dom", "react-server-dom-webpack"],
 	outdir: "./dist/router",
 });
 

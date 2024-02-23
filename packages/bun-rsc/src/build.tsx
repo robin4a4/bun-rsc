@@ -1,5 +1,4 @@
 import fs from "node:fs";
-import { build as esbuild, BuildOptions } from "esbuild";
 import { type BuildArtifact, BuildConfig, $ } from "bun";
 import postcss from "postcss";
 import recursive from "recursive-readdir";
@@ -9,12 +8,10 @@ import {
 	clientComponentMapUrl,
 	createModuleId,
 	dist,
-	getBuildRoot,
 	log,
 	resolveClientComponentsDist,
 	resolveDist,
 	resolveRoot,
-	resolveRouterDist,
 	resolveServerActionsDist,
 	resolveServerComponentsDist,
 	resolveSrc,
@@ -177,10 +174,9 @@ export async function build() {
 		process.cwd(),
 		"src/router.tsx",
 	)}`;
-	const clientBuildOptions: BuildOptions = {
-		format: "esm",
+	const clientBuildOptions: BuildConfig = {
+		entrypoints: [...clientEntryPoints, "./src/router.tsx"],
 		splitting: true,
-		bundle: true,
 		outdir: clientComponentsDist,
 		define: {
 			"process.env.MODE": JSON.stringify(process.env.MODE),
@@ -237,27 +233,30 @@ export async function build() {
 	};
 
 	// Build client components for CSR
-	const csrResults = await esbuild({
+	const csrResults = await Bun.build({
 		...clientBuildOptions,
-		entryPoints: [...clientEntryPoints, resolveSrc("router.tsx")],
-		entryNames: "[dir]/[name].rsc",
+		naming: "[dir]/[name].rsc.[ext]",
 	});
-	if (csrResults.errors.length > 0) {
+	if (!csrResults.success) {
 		log.e("CSR build failed");
-		console.log(csrResults.errors);
+		console.log(csrResults.logs);
 		throw new Error("CSR build failed");
 	}
-	const ssrResults = await esbuild({
+	const ssrResults = await Bun.build({
 		...clientBuildOptions,
-		entryPoints: [...clientEntryPoints, resolveSrc("router.tsx")],
 		external: ["react", "react-dom"],
-		entryNames: "[dir]/[name].ssr",
+		naming: "[dir]/[name].ssr.[ext]",
 	});
-	if (ssrResults.errors.length > 0) {
+	if (!ssrResults.success) {
 		log.e("SSR build failed");
-		console.log(ssrResults.errors);
+		console.log(csrResults.logs);
 		throw new Error("SSR build failed");
 	}
+
+	await $`rm ${combineUrl(
+		process.cwd(),
+		"src/router.tsx",
+	)}`;
 
 	if (serverActionEntryPoints.size > 0) {
 		log.i("Building server actions 💪");
