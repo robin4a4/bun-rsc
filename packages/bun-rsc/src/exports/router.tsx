@@ -14,12 +14,13 @@ import { clientLiveReload } from "../ws/client";
 
 hydrateRoot(document, <Router />);
 
-clientLiveReload();
+if (process.env.MODE === "development")
+	clientLiveReload();
+
 
 const queryParam = new URLSearchParams(window.location.search);
 
 function Router() {
-	console.log("Router");
 	const [rscUrl, setRscUrl] = useState(
 		`${combineUrl(
 			BASE_RSC_SERVER_URL,
@@ -81,7 +82,6 @@ function Router() {
 const initialCache = new Map();
 
 function ServerOutput({ url }: { url: string }): ReactNode {
-	console.log("ServerOutput", url);
 	const [cache, setCache] = useState(initialCache);
 	if (!cache.has(url)) {
 		cache.set(url, createFromFetch(fetch(url)));

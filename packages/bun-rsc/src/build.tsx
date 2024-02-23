@@ -179,8 +179,9 @@ export async function build() {
 		splitting: true,
 		outdir: clientComponentsDist,
 		define: {
-			"process.env.MODE": JSON.stringify(process.env.MODE),
+			"process.env.MODE": JSON.stringify(process.env.MODE ?? "development"),
 		},
+		minify: process.env.MODE === "production",
 		plugins: [
 			{
 				name: "server-actions",
@@ -252,11 +253,6 @@ export async function build() {
 		console.log(csrResults.logs);
 		throw new Error("SSR build failed");
 	}
-
-	await $`rm ${combineUrl(
-		process.cwd(),
-		"src/router.tsx",
-	)}`;
 
 	if (serverActionEntryPoints.size > 0) {
 		log.i("Building server actions 💪");
@@ -333,4 +329,8 @@ export async function build() {
 		`Build success in ${Date.now() - start} ms`,
 		process.env.MODE !== "development",
 	);
+	await $`rm ${combineUrl(
+		process.cwd(),
+		"src/router.tsx",
+	)}`.quiet();
 }

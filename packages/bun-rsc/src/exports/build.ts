@@ -17,6 +17,7 @@ await esbuild.build({
 	format: "esm",
 	outdir: "./dist/serve",
 	jsx: "preserve",
+	external: ["gradient-string", "picocolors"],
 	conditions: ["react-server"],
 });
 
@@ -51,7 +52,7 @@ log.i("Building the cli using Bun");
 const results = await Bun.build({
 	entrypoints: ["./src/cli.ts"],
 	outdir: "./dist/build",
-	external: ["react", "react-dom"],
+	external: ["react", "react-dom", "react-server-dom-webpack", "gradient-string", "picocolors"],
 	splitting: true,
 });
 
