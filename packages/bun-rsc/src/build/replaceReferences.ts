@@ -57,7 +57,7 @@ export function replaceServerCodeWithServerReferences(
   const moduleExports = TSTranspiler.scan(code).exports;
   const moduleId = createModuleId(path, "server");
   // here we make the consumer app import the server actions api that we expose in the exports folder
-  let refCode = `import {createServerReferenceServer} from 'bun-rsc'
+  let refCode = `import {createServerReferenceServer} from 'bun-rsc/server-condition-export'
 
     ${code}`;
   for (const exp of moduleExports) {

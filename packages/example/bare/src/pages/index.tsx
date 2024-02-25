@@ -2,8 +2,8 @@ import { Suspense } from "react";
 import { type PageProps } from "bun-rsc";
 
 import Counter from "../components/Counter";
-// import { ClientForm } from "../components/ClientForm.tsx";
 import { Data } from "../components/Data.tsx";
+import { addTodo } from "../actions.ts";
 
 export const meta = {
 	title: "Home",
@@ -20,7 +20,10 @@ export async function Page({ searchParams }: PageProps) {
 			</section>
 			<section>
 				Form:
-				{/* <ClientForm /> */}
+				<form action={addTodo}>
+					<input type="text" name="text" />
+					<button type="submit">Add</button>
+				</form>
 			</section>
 			<section>
 				Data:
