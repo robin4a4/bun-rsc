@@ -11,12 +11,11 @@ import { createFromFetch } from "react-server-dom-webpack/client";
 import { BUN_RSC_SPECIFIC_KEYWORD, combineUrl } from "../utils/common";
 import { BASE_RSC_SERVER_URL } from "../utils/common";
 import { clientLiveReload } from "../ws/client";
+import { callServer } from "../references/create-server-reference-client";
 
 hydrateRoot(document, <Router />);
 
-if (process.env.MODE === "development")
-	clientLiveReload();
-
+if (process.env.MODE === "development") clientLiveReload();
 
 const queryParam = new URLSearchParams(window.location.search);
 
@@ -84,7 +83,7 @@ const initialCache = new Map();
 function ServerOutput({ url }: { url: string }): ReactNode {
 	const [cache, setCache] = useState(initialCache);
 	if (!cache.has(url)) {
-		cache.set(url, createFromFetch(fetch(url)));
+		cache.set(url, createFromFetch(fetch(url), { callServer })); // TODO the callserver breaks suspsense
 	}
 	const lazyJsx = cache.get(url);
 	return use(lazyJsx);
