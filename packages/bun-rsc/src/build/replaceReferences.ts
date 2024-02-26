@@ -61,10 +61,9 @@ export function replaceServerCodeWithServerReferences(
 
     ${code}`;
   for (const exp of moduleExports) {
-    const id = `${moduleId}#${exp}`;
-    refCode += `if (typeof ${exp} === 'function') createServerReferenceServer(${exp}, "${id}", "${exp}")`;
+    refCode += `if (typeof ${exp} === 'function') createServerReferenceServer(${exp}, "${moduleId}", "${exp}")`;
     const serverActionChunkId = moduleId.replace(".ts", ".js");
-    serverActionMap[id] = {
+    serverActionMap[`${moduleId}#${exp}`] = {
       id: serverActionChunkId,
       chunks: [serverActionChunkId],
       name: exp,

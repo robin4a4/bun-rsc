@@ -38,9 +38,9 @@ const __webpack_require__ = (moduleId: string) =>
 // @ts-ignore
 global.__webpack_require__ = __webpack_require__;
 
-const TSXTranspiler = new Bun.Transpiler({ loader: "tsx" });
-
 const clientComponentsDist = resolveClientComponentsDist();
+const serverComponentsDist = resolveServerComponentsDist();
+const serverActionsDist = resolveServerActionsDist("src");
 
 function isClientComponentModule(code: string) {
   return code.startsWith('"use client"') || code.startsWith("'use client'");
@@ -67,8 +67,6 @@ export async function build() {
   const clientEntryPoints = new Set<string>();
   const serverActionEntryPoints = new Set<string>();
   log.i("Building server components 💿");
-  const serverComponentsDist = resolveServerComponentsDist();
-  const serverActionsDist = resolveServerActionsDist();
   if (!fs.existsSync(serverComponentsDist)) {
     await fs.promises.mkdir(serverComponentsDist, { recursive: true });
   }
