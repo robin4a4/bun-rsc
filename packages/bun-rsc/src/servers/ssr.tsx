@@ -3,6 +3,7 @@ import { type ReactNode, use } from "react";
 import ReactDOMServer from "react-dom/server.edge";
 // @ts-ignore
 import * as ReactServerDomClient from "react-server-dom-webpack/client";
+import { injectRSCPayload } from "rsc-html-stream/server";
 import {
 	getMiddleware,
 	getServerHeaders,
@@ -93,16 +94,15 @@ export async function serveSSR(request: Request) {
 					},
 				});
 			});
+			// Fork the stream
+			const [s1, s2] = rscStream.tee();
 
-			const rscComponent = ReactServerDomClient.createFromReadableStream(
-				rscStream,
-				{
-					ssrManifest: {
-						moduleMap: null,
-						moduleLoading: null,
-					},
+			const rscComponent = ReactServerDomClient.createFromReadableStream(s1, {
+				ssrManifest: {
+					moduleMap: null,
+					moduleLoading: null,
 				},
-			);
+			});
 			function ClientRoot() {
 				return use(rscComponent) as ReactNode;
 			}
@@ -113,7 +113,7 @@ export async function serveSSR(request: Request) {
 				<ClientRoot />,
 				{
 					bootstrapModules: [
-						`/${BUN_RSC_SPECIFIC_KEYWORD_STATICS}/client-components/src/router.rsc.js`,
+						`/${BUN_RSC_SPECIFIC_KEYWORD_STATICS}/client-components/src/router.ssr.js`,
 					],
 					bootstrapScriptContent: `global = window;
 					global.__CURRENT_ROUTE__ = "${request.url}";  
@@ -135,9 +135,10 @@ export async function serveSSR(request: Request) {
 					onError() {},
 				},
 			);
+
 			abortController.abort();
 
-			return new Response(ssrStream, {
+			return new Response(ssrStream.pipeThrough(injectRSCPayload(s2)), {
 				headers: getServerHeaders(),
 			});
 		} catch (error: unknown) {

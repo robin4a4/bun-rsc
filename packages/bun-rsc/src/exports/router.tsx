@@ -6,12 +6,18 @@ import {
 	useState,
 } from "react";
 import { hydrateRoot } from "react-dom/client";
-// @ts-expect-error
-import { createFromFetch } from "react-server-dom-webpack/client";
+import {
+	createFromFetch,
+	createFromReadableStream,
+	// @ts-expect-error
+} from "react-server-dom-webpack/client";
 import { BUN_RSC_SPECIFIC_KEYWORD, combineUrl } from "../utils/common";
 import { BASE_RSC_SERVER_URL } from "../utils/common";
 import { clientLiveReload } from "../ws/client";
 import { callServer } from "../references/create-server-reference-client";
+import { rscStream } from "rsc-html-stream/client";
+
+let data;
 
 hydrateRoot(document, <Router />);
 
@@ -20,12 +26,7 @@ if (process.env.MODE === "development") clientLiveReload();
 const queryParam = new URLSearchParams(window.location.search);
 
 function Router() {
-	const [rscUrl, setRscUrl] = useState(
-		`${combineUrl(
-			BASE_RSC_SERVER_URL,
-			combineUrl(BUN_RSC_SPECIFIC_KEYWORD, window.location.pathname),
-		)}?${queryParam.toString()}`,
-	);
+	const [rscUrl, setRscUrl] = useState<string | null>(null);
 
 	useEffect(() => {
 		function navigate(url: string) {
@@ -80,10 +81,13 @@ function Router() {
 
 const initialCache = new Map();
 
-function ServerOutput({ url }: { url: string }): ReactNode {
+function ServerOutput({ url }: { url: string | null }): ReactNode {
 	const [cache, setCache] = useState(initialCache);
 	if (!cache.has(url)) {
-		cache.set(url, createFromFetch(fetch(url), { callServer })); // TODO the callserver breaks suspsense
+		data = url
+			? createFromFetch(fetch(url), { callServer })
+			: createFromReadableStream(rscStream);
+		cache.set(url, data); // TODO the callserver breaks suspsense
 	}
 	const lazyJsx = cache.get(url);
 	return use(lazyJsx);
