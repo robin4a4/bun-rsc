@@ -15,7 +15,7 @@ import { BUN_RSC_SPECIFIC_KEYWORD, combineUrl } from "../utils/common";
 import { BASE_RSC_SERVER_URL } from "../utils/common";
 import { clientLiveReload } from "../ws/client";
 import { callServer } from "../references/create-server-reference-client";
-import { rscStream } from "rsc-html-stream/client";
+import { rscStream } from "../html-stream/client";
 
 let data;
 

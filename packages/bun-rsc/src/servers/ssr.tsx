@@ -3,7 +3,7 @@ import { type ReactNode, use } from "react";
 import ReactDOMServer from "react-dom/server.edge";
 // @ts-ignore
 import * as ReactServerDomClient from "react-server-dom-webpack/client";
-import { injectRSCPayload } from "rsc-html-stream/server";
+import { injectRSCPayload } from "../html-stream/server";
 import {
 	getMiddleware,
 	getServerHeaders,
@@ -106,14 +106,12 @@ export async function serveSSR(request: Request) {
 			function ClientRoot() {
 				return use(rscComponent) as ReactNode;
 			}
-			// Hack retrieved from Marz "this is a temporary hack to only render a single 'frame'"
-			const abortController = new AbortController();
 
 			const ssrStream = await ReactDOMServer.renderToReadableStream(
 				<ClientRoot />,
 				{
 					bootstrapModules: [
-						`/${BUN_RSC_SPECIFIC_KEYWORD_STATICS}/client-components/src/router.ssr.js`,
+						`/${BUN_RSC_SPECIFIC_KEYWORD_STATICS}/client-components/src/router.rsc.js`,
 					],
 					bootstrapScriptContent: `global = window;
 					global.__CURRENT_ROUTE__ = "${request.url}";  
@@ -131,12 +129,8 @@ export async function serveSSR(request: Request) {
 				  global.__webpack_require__ = function(moduleId) {
 					  return __bun__module_map__.get(moduleId);
 				  };`,
-					signal: abortController.signal,
-					onError() {},
 				},
 			);
-
-			abortController.abort();
 
 			return new Response(ssrStream.pipeThrough(injectRSCPayload(s2)), {
 				headers: getServerHeaders(),

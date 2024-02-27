@@ -66,6 +66,7 @@ export async function serveRSC(request: Request) {
 			);
 			const actionId = decodeURIComponent(match.query.actionId);
 			const action = serverActionsMap[actionId];
+			console.log("ACTION", action);
 			if (action) {
 				const actionModuleUrl = combineUrl(process.cwd(), action.id);
 				const actionModule = (await import(actionModuleUrl)) as ActionModule;
