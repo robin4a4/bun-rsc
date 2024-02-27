@@ -86,7 +86,7 @@ function ServerOutput({ url }: { url: string | null }): ReactNode {
 	if (!cache.has(url)) {
 		data = url
 			? createFromFetch(fetch(url), { callServer })
-			: createFromReadableStream(rscStream);
+			: createFromReadableStream(rscStream, { callServer });
 		cache.set(url, data); // TODO the callserver breaks suspsense
 	}
 	const lazyJsx = cache.get(url);
