@@ -34,7 +34,7 @@ await esbuild.build({
 // Use bun to build the rest of the files
 log.i("Building the router export using Bun");
 await Bun.build({
-  entrypoints: ["./src/exports/router.tsx"],
+  entrypoints: ["./src/client/router.tsx"],
   format: "esm",
   external: ["react", "react-dom", "react-server-dom-webpack"],
   outdir: "./dist/router",

@@ -1,8 +1,6 @@
 import { Suspense } from "react";
-import { type PageProps } from "bun-rsc";
 
 import Counter from "../components/Counter";
-import { Data } from "../components/Data.tsx";
 import { addTodo } from "../actions.ts";
 
 export const meta = {
@@ -10,27 +8,44 @@ export const meta = {
 	description: "My app description",
 };
 
-export async function Page({ searchParams }: PageProps) {
+export async function Page() {
+	const currentTodosFile = Bun.file(`${process.cwd()}/todos.txt`);
+	let currentTodos = "No todos yet";
+	if (await currentTodosFile.exists()) {
+		currentTodos = await currentTodosFile.text();
+	}
 	return (
-		<>
-			<h1 className="bg-yellow-500 border border-green-500">Hello, world!</h1>
+		<main>
+			<h1>Hello, world!</h1>
 			<section>
-				Counter:
+				<h2>Counter:</h2>
 				<Counter />
 			</section>
 			<section>
-				Form:
+				<h2>Form:</h2>
+				<p>{currentTodos}</p>
 				<form action={addTodo}>
-					<input type="text" name="text" />
+					<input type="text" name="todo" />
 					<button type="submit">Add</button>
 				</form>
 			</section>
 			<section>
-				Data:
+				<h2>Data:</h2>
 				<Suspense fallback={<div>Loading...</div>}>
 					<Data />
 				</Suspense>
 			</section>
-		</>
+		</main>
 	);
+}
+
+export async function Data() {
+	const sleep = (ms: number) =>
+		new Promise((resolve) => setTimeout(resolve, ms));
+	await sleep(1000);
+	return "test";
+	const data = await fetch("https://jsonplaceholder.typicode.com/todos/1").then(
+		(res) => res.json(),
+	);
+	return <p>{data.title}</p>;
 }

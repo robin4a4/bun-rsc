@@ -15,7 +15,7 @@ import { createWebSocketServer } from "../ws/server";
 // @ts-ignore
 import { serveRSC } from "../../dist/serve/server-condition-export";
 
-import { serveSSR } from "../servers/ssr";
+import { serveSSR } from "../server/ssr";
 import { log, runBootstrap } from "../utils/server";
 
 const cli = cac("bun-rsc");

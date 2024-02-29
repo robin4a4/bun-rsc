@@ -3,7 +3,7 @@ import { type ReactNode, use } from "react";
 import ReactDOMServer from "react-dom/server.edge";
 // @ts-ignore
 import * as ReactServerDomClient from "react-server-dom-webpack/client";
-import { injectRSCPayload } from "../html-stream/server";
+import { injectRSCPayload } from "../html-stream/server.ts";
 import {
 	getMiddleware,
 	getServerHeaders,
