@@ -213,7 +213,7 @@ export async function build() {
   });
   if (!ssrResults.success) {
     log.e("SSR build failed");
-    console.log(csrResults.logs);
+    console.log(ssrResults.logs);
     throw new Error("SSR build failed");
   }
 
@@ -292,5 +292,5 @@ export async function build() {
     `Build success in ${Date.now() - start} ms`,
     process.env.MODE !== "development"
   );
-  await $`rm ${combineUrl(process.cwd(), "src/router.tsx")}`.quiet();
+  await fs.unlinkSync(combineUrl(process.cwd(), "src/router.tsx"));
 }

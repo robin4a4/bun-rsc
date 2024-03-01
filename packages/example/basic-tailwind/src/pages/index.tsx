@@ -1,23 +1,53 @@
-// import Counter from "../components/Counter";
-import "../global.css";
+import { Suspense } from "react";
 
-import { PageProps } from "bun-rsc";
+import "../global.css";
+import Counter from "../components/Counter.tsx";
+import { Form } from "../components/Form.tsx";
 
 export const meta = {
-	title: "HOME",
+	title: "Home",
 	description: "My app description",
 };
 
-export async function Page({ searchParams }: PageProps) {
+export async function Page() {
+	const currentTodosFile = Bun.file(`${process.cwd()}/todos.txt`);
+	let currentTodos = "No todos yet";
+	if (await currentTodosFile.exists()) {
+		currentTodos = await currentTodosFile.text();
+	}
 	return (
-		<>
-			<h1 className="bg-yellow-500 border border-green-500">
-				Home yes tu ne reves pas salut de outf
-			</h1>
-			<a href="/">Home</a>
-			<a href="/salut">Salut</a>
-			<a href="/pouet">pouet</a>
-			{/*<Counter />*/}
-		</>
+		<main className="pt-8 bg-slate-100">
+			<section className="container mx-auto flex flex-col gap-4">
+				<h1 className="text-xl font-bold">Hello, world!</h1>
+				<section className="bg-white rounded-lg shadow-lg p-4 flex flex-col gap-4">
+					<h2>Counter:</h2>
+					<Counter />
+				</section>
+				<section className="bg-white rounded-lg shadow-lg p-4 flex flex-col gap-4">
+					<h2>Form:</h2>
+					<p>{currentTodos}</p>
+					<Form />
+				</section>
+				<section className="bg-white rounded-lg shadow-lg p-4 flex flex-col gap-4">
+					<h2>Data:</h2>
+					<Suspense fallback={<div>Loading...</div>}>
+						<Data />
+					</Suspense>
+				</section>
+			</section>
+		</main>
 	);
+}
+
+async function Data() {
+	// fake latency
+	await new Promise((resolve) => setTimeout(resolve, 1000));
+
+	// const data = await fetch("https://jsonplaceholder.typicode.com/todos/1").then(
+	// 	(res) => res.json(),
+	// );
+	const data = {
+		title: "Data",
+	};
+	return <p>{data.title}</p>;
 }

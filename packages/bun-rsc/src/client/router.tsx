@@ -28,7 +28,6 @@ if (process.env.MODE === "development") clientLiveReload();
 const queryParam = new URLSearchParams(window.location.search);
 
 function Router() {
-	console.log("render");
 	const [rscUrl, setRscUrl] = useState(window.location.href);
 	const routerState = useRouterState();
 	useEffect(() => {
@@ -95,7 +94,6 @@ function ServerOutput({
 				: createFromFetch(fetch(url), { callServer });
 		globalCache.set(url, data);
 	}
-	console.log("cache", globalCache.get(url), typeof globalCache.get(url));
 	const lazyJsx = globalCache.get(url);
 	return use(lazyJsx);
 }

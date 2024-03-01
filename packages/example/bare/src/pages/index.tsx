@@ -39,13 +39,9 @@ export async function Page() {
 	);
 }
 
-export async function Data() {
-	const sleep = (ms: number) =>
-		new Promise((resolve) => setTimeout(resolve, ms));
-	await sleep(1000);
-	return "test";
-	const data = await fetch("https://jsonplaceholder.typicode.com/todos/1").then(
-		(res) => res.json(),
-	);
-	return <p>{data.title}</p>;
+async function Data() {
+	// fake latency
+	await new Promise((resolve) => setTimeout(resolve, 1000));
+
+	return "Data from server";
 }

@@ -6,5 +6,5 @@ export async function addTodo(formData: FormData) {
   if (await currentTodosFile.exists()) {
     currentTodos = await currentTodosFile.text();
   }
-  await Bun.write("todos.txt", `${currentTodos}\n${formData.get("todo")}`);
+  await Bun.write("./todos.txt", `${currentTodos}\n${formData.get("todo")}`);
 }

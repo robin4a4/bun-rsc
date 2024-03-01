@@ -44,7 +44,7 @@ export const callServer = async (id: string, args: unknown[]) => {
 
   globalCache.set(window.location.href, actionResultPromise);
 
-  dispatchActionReceivedEvent();
   const actionResult = await actionResultPromise;
+  dispatchActionReceivedEvent();
   return actionResult;
 };

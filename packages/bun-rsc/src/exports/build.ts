@@ -40,6 +40,13 @@ await Bun.build({
   outdir: "./dist/router",
 });
 
+await Bun.build({
+  entrypoints: ["./src/exports/client-condition-export.ts"],
+  format: "esm",
+  external: ["react", "react-dom", "react-server-dom-webpack"],
+  outdir: "./dist/serve",
+});
+
 log.i("Building the cli using Bun");
 const results = await Bun.build({
   entrypoints: ["./src/exports/cli.ts"],
