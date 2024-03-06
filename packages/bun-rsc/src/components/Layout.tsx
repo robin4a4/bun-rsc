@@ -1,6 +1,5 @@
 import { type PropsWithChildren } from "react";
-import { Meta } from "../types";
-import { BUN_RSC_SPECIFIC_KEYWORD_STATICS } from "../utils/common";
+import { Meta } from "../types/external";
 import { CssTags } from "./CssTags";
 import { MetaTags } from "./MetaTags";
 

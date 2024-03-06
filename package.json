@@ -1,7 +1,9 @@
 {
   "name": "bun-rsc-monorepo",
   "workspaces": [
-    "packages/*"
+    "packages/bun-rsc",
+    "packages/example/bare",
+    "packages/example/basic-tailwind"
   ],
   "scripts": {
     "release": "cd packages/bun-rsc; bun run build; cd ../..; bunx changeset publish && git push --follow-tags"

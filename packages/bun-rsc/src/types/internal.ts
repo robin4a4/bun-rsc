@@ -8,6 +8,7 @@ export type RscMapEntry = {
 };
 
 export type RscMap = Record<string, RscMapEntry>;
+export type ClientRscMap = { ssr: RscMap; rsc: RscMap };
 
 export type PageModule = {
 	meta: Meta;
