@@ -1,37 +1,32 @@
 import fs from "node:fs";
-import * as esbuild from "esbuild";
-import { dtsPlugin } from "esbuild-plugin-d.ts";
+import dts from 'bun-plugin-dts'
 import { log } from "../utils/server";
 const start = Date.now();
 
 log.title();
 log.i("Building Bun RSC");
 fs.rmSync("./dist", { recursive: true });
+const serveDist = "./dist/serve";
+const routerDist = "./dist/router";
+const buildDist = "./dist/build";
+if (!fs.existsSync(serveDist)) {
+  await fs.promises.mkdir(serveDist, { recursive: true });
+}
+if (!fs.existsSync(routerDist)) {
+  await fs.promises.mkdir(routerDist, { recursive: true });
+}
+if (!fs.existsSync(buildDist)) {
+  await fs.promises.mkdir(buildDist, { recursive: true });
+}
 
-// We need to use esbuild to build the serve-rsc file using the react-server condition since
-// bun does not support conditions yet, see: https://github.com/oven-sh/bun/issues/4370
-log.i("Building server conditions exports using esbuild");
-await esbuild.build({
-  entryPoints: ["./src/exports/server-condition-export.ts"],
-  bundle: true,
-  format: "esm",
-  outdir: "./dist/serve",
-  jsx: "preserve",
-  external: ["gradient-string", "picocolors"],
-  conditions: ["react-server"],
-});
-
-// use esbuild to build the types because the eslint dts plugin is 4x times faster than the bun dts plugin
 log.i("Building the types using esbuild");
-await esbuild.build({
-  entryPoints: ["./src/types/external.ts"],
-  bundle: true,
+await Bun.build({
+  entrypoints: ["./src/types/external.ts"],
   format: "esm",
   outdir: "./dist/serve",
-  plugins: [dtsPlugin()],
+  plugins: [dts()],
 });
 
-// Use bun to build the rest of the files
 log.i("Building the router export using Bun");
 await Bun.build({
   entrypoints: ["./src/client/router.tsx"],
@@ -49,7 +44,7 @@ await Bun.build({
 
 log.i("Building the cli using Bun");
 const results = await Bun.build({
-  entrypoints: ["./src/exports/cli.ts"],
+  entrypoints: ["./src/exports/cli/rsc.ts", "./src/exports/cli/ssr.ts", "./src/exports/cli/dev.ts", "./src/exports/cli/build.ts"],
   outdir: "./dist/build",
   external: [
     "react",
