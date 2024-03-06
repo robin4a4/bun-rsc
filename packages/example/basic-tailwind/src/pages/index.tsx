@@ -2,7 +2,8 @@ import { Suspense } from "react";
 
 import "../global.css";
 import Counter from "../components/Counter.tsx";
-import { Form } from "../components/Form.tsx";
+import {addTodo} from "../actions.ts";
+import {FormContent} from "../components/FormContent.tsx";
 
 export const meta = {
 	title: "Home",
@@ -26,7 +27,9 @@ export async function Page() {
 				<section className="bg-white rounded-lg shadow-lg p-4 flex flex-col gap-4">
 					<h2>Form:</h2>
 					<p>{currentTodos}</p>
-					<Form />
+					<form action={addTodo}>
+						<FormContent />
+					</form>
 				</section>
 				<section className="bg-white rounded-lg shadow-lg p-4 flex flex-col gap-4">
 					<h2>Data:</h2>

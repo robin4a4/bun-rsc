@@ -1,8 +1,7 @@
 "use client";
-import { addTodo } from "../actions";
 import { useFormStatus } from "react-dom";
 
-function FormContent() {
+export function FormContent() {
 	const status = useFormStatus();
 	return (
 		<div className="flex items-center gap-4">
@@ -19,13 +18,5 @@ function FormContent() {
 				Add
 			</button>
 		</div>
-	);
-}
-
-export function Form() {
-	return (
-		<form action={addTodo}>
-			<FormContent />
-		</form>
 	);
 }
