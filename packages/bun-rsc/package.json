@@ -45,7 +45,7 @@
     "@types/web": "^0.0.127",
     "@types/recursive-readdir": "^2.2.4",
     "@types/gradient-string": "^1.1.5",
-    "esbuild-plugin-d.ts": "1.2.3",
+    "bun-plugin-dts": "0.2.1",
     "bun-types": "latest",
     "concurrently": "8.2.2"
   },
@@ -55,7 +55,6 @@
   "dependencies": {
     "arg": "^5.0.2",
     "cac": "^6.7.14",
-    "esbuild": "^0.20.0",
     "postcss": "^8.4.33",
     "react": "18.3.0-canary-03d6f7cf0-20240209",
     "react-dom": "18.3.0-canary-03d6f7cf0-20240209",
