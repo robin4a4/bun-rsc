@@ -5,9 +5,9 @@ import packageJson from "../../../package.json";
 import { serveSSR } from "../../server/ssr";
 import { log, runBootstrap } from "../../utils/server";
 
-const cli = cac("bun-rsc");
+const cli = cac("bun-rsc-ssr");
 
-cli.command("dev:ssr").action(async () => {
+cli.command("dev").action(async () => {
 	log.i("Starting ssr dev server on port 3000");
 	try {
 		const devServerSSR = Bun.serve({ port: 3000, fetch: serveSSR });
@@ -20,7 +20,7 @@ cli.command("dev:ssr").action(async () => {
 	}
 });
 
-cli.command("serve-ssr").action(async () => {
+cli.command("serve").action(async () => {
 	log.title();
 	await runBootstrap();
 	const server = Bun.serve({

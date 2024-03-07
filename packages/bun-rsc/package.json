@@ -14,7 +14,10 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "bun-rsc": "./dist/build/cli.js"
+    "bun-rsc-dev": "./dist/build/dev.js",
+    "bun-rsc-ssr": "./dist/build/ssr.js",
+    "bun-rsc-rsc": "./dist/build/rsc.js",
+    "bun-rsc-build": "./dist/build/build.js"
   },
   "scripts": {
     "lint": "bunx @biomejs/biome check --apply ./src",

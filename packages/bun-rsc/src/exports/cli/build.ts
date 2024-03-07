@@ -5,7 +5,7 @@ import { build } from "../../build";
 
 import { log } from "../../utils/server";
 
-const cli = cac("bun-rsc");
+const cli = cac("bun-rsc-build");
 
 cli.command("build").action(async () => {
 	log.title();

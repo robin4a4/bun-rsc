@@ -7,10 +7,10 @@ import { serveRSC } from "../../server/rsc";
 import { log } from "../../utils/server";
 import { createWebSocketServer } from "../../ws/server";
 
-const cli = cac("bun-rsc");
+const cli = cac("bun-rsc-rsc");
 
 // Dev server
-cli.command("dev:rsc").action(async () => {
+cli.command("dev").action(async () => {
 	log.i("Starting rsc dev server on port 3001");
 	try {
 		const sockets = createWebSocketServer();
@@ -32,7 +32,7 @@ cli.command("dev:rsc").action(async () => {
 	}
 });
 
-cli.command("serve-rsc").action(async () => {
+cli.command("serve").action(async () => {
 	log.title();
 	const server = Bun.serve({
 		port: 3001,

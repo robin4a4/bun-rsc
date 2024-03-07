@@ -6,9 +6,9 @@
     "dev": "bun-rsc dev",
     "dev:ssr": "bun-rsc dev:ssr",
     "dev:rsc": "bun-rsc dev:rsc",
-    "serve:rsc": "bun-rsc serve-rsc",
-    "serve:ssr": "bun-rsc serve-ssr",
-    "build": "bun-rsc build"
+    "serve:rsc": "bun-rsc-rsc serve",
+    "serve:ssr": "bun-rsc-ssr serve",
+    "build": "bun-rsc-build build"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.16",
