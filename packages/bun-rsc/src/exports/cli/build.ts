@@ -3,14 +3,13 @@ import { cac } from "cac";
 import packageJson from "../../../package.json";
 import { build } from "../../build";
 
-
 import { log } from "../../utils/server";
 
 const cli = cac("bun-rsc");
 
 cli.command("build").action(async () => {
-  log.title();
-  await build();
+	log.title();
+	await build();
 });
 
 cli.help();
