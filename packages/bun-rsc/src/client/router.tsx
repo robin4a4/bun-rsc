@@ -11,15 +11,15 @@ import {
 	createFromReadableStream,
 	// @ts-expect-error
 } from "react-server-dom-webpack/client";
+import { rscStream } from "../html-stream/client";
 import { BUN_RSC_SPECIFIC_KEYWORD, combineUrl } from "../utils/common";
 import { BASE_RSC_SERVER_URL } from "../utils/common";
 import { clientLiveReload } from "../ws/client";
-import { callServer } from "./call-server";
-import { rscStream } from "../html-stream/client";
 import { globalCache } from "./cache";
+import { callServer } from "./call-server";
 import { useRouterState } from "./hooks";
 
-let data;
+let data: unknown;
 
 hydrateRoot(document, <Router />);
 
