@@ -7,7 +7,7 @@ import { build } from "../build";
 import { createWebSocketServer } from "../ws/server";
 
 /*
- Huge hack to get around the fact that bun does not support conditions yet
+ Huge hack to get around the fact that bun does not support conditions correctly yet in the runtime
  We want to use react-server condition for the rsc server and classic react for the ssr server
  If conditions were supported we would have react be a dependency of the consumer app and run
  the serve rsc command with the react-server condition
