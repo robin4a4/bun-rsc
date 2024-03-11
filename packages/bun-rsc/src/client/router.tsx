@@ -11,6 +11,7 @@ import {
 	createFromReadableStream,
 	// @ts-expect-error
 } from "react-server-dom-webpack/client";
+import { Layout } from "../components/Layout";
 import { rscStream } from "../html-stream/client";
 import { BUN_RSC_SPECIFIC_KEYWORD, combineUrl } from "../utils/common";
 import { BASE_RSC_SERVER_URL } from "../utils/common";
@@ -79,7 +80,12 @@ function Router() {
 	}, []);
 
 	return (
-		<ServerOutput key={routerState} routerState={routerState} url={rscUrl} />
+		<Layout
+			meta={JSON.parse(window.__META_STRING__)}
+			cssManifest={JSON.parse(window.__MANIFEST_STRING__)}
+		>
+			<ServerOutput key={routerState} routerState={routerState} url={rscUrl} />
+		</Layout>
 	);
 }
 
@@ -88,11 +94,19 @@ function ServerOutput({
 	routerState,
 }: { url: string; routerState: number }): ReactNode {
 	if (!globalCache.has(url)) {
+		const fetchPromise = fetch(url);
 		data =
 			routerState === 0
 				? createFromReadableStream(rscStream, { callServer: callServer })
-				: createFromFetch(fetch(url), { callServer });
+				: createFromFetch(fetchPromise, { callServer });
 		globalCache.set(url, data);
+		const result = use(fetchPromise);
+		if (result.status === 200) {
+			const headers = result.headers;
+			const pageMeta = JSON.parse(headers.get("X-Page-Meta")!);
+			document.title = pageMeta.title;
+			document.querySelector("meta[name=description]")!.setAttribute("content", pageMeta.description);
+		}
 	}
 	const lazyJsx = globalCache.get(url);
 	return use(lazyJsx);
