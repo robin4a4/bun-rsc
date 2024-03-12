@@ -30,10 +30,11 @@ const queryParam = new URLSearchParams(window.location.search);
 
 function Router() {
 	const [rscUrl, setRscUrl] = useState(window.location.href);
-	const routerState = useRouterState();
+	const [routerState, setRouterState] = useRouterState();
 	useEffect(() => {
 		function navigate(url: string) {
 			startTransition(() => {
+				setRouterState((prev) => prev + 1);
 				setRscUrl(
 					`${combineUrl(
 						BASE_RSC_SERVER_URL,
@@ -81,7 +82,7 @@ function Router() {
 
 	return (
 		<Layout
-			meta={JSON.parse(window.__META_STRING__)}
+			meta={JSON.parse(window.__SSR_META_STRING__)}
 			cssManifest={JSON.parse(window.__MANIFEST_STRING__)}
 		>
 			<ServerOutput key={routerState} routerState={routerState} url={rscUrl} />
@@ -100,14 +101,15 @@ function ServerOutput({
 				? createFromReadableStream(rscStream, { callServer: callServer })
 				: createFromFetch(fetchPromise, { callServer });
 		globalCache.set(url, data);
-		const result = use(fetchPromise);
-		if (result.status === 200) {
-			const headers = result.headers;
-			const pageMeta = JSON.parse(headers.get("X-Page-Meta")!);
-			document.title = pageMeta.title;
-			document.querySelector("meta[name=description]")!.setAttribute("content", pageMeta.description);
-		}
 	}
+	useEffect(() => {
+		const rscPageMetaString = document.querySelector("#rsc-page-meta")!.getAttribute("value");
+		if (rscPageMetaString && rscPageMetaString !== window.__SSR_META_STRING__) {
+			const rscPageMeta = JSON.parse(rscPageMetaString);
+			document.title = rscPageMeta.title;
+			document.querySelector("meta[name=description]")!.setAttribute("content", rscPageMeta.description);
+		}
+	}, []);
 	const lazyJsx = globalCache.get(url);
 	return use(lazyJsx);
 }

@@ -9,5 +9,5 @@ export function useRouterState() {
 		});
 	});
 
-	return routerState;
+	return [routerState, setRouterState] as const;
 }

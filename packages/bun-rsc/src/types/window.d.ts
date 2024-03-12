@@ -2,7 +2,8 @@ export {};
 
 declare global {
     interface Window {
-        __META_STRING__: string;
+        __SSR_META_STRING__: string;
+        __RSC_META_STRING__: string;
         __MANIFEST_STRING__: string;
     }
 }
