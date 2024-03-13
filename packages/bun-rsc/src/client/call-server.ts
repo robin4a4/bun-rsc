@@ -43,7 +43,7 @@ export const callServer = async (id: string, args: unknown[]) => {
 	const actionResultPromise = createFromFetch(responsePromise, { callServer });
 
 	globalCache.set(window.location.href, actionResultPromise);
-
+	console.log("actionResultPromise", actionResultPromise);
 	const actionResult = await actionResultPromise;
 	dispatchActionReceivedEvent();
 	return actionResult;
