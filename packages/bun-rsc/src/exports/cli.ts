@@ -29,7 +29,7 @@ cli.command("dev:rsc").action(async () => {
 		const devServerRSC = Bun.serve({ port: 3001, fetch: serveRSC });
 
 		fs.watch("./src", { recursive: true }, async (event, filename) => {
-			if (event === "rename" && filename === "router.tsx") return;
+			if (event === "rename") return;
 			log.i(`Detected ${event} in ${filename}`);
 			await build();
 			devServerRSC.reload({ fetch: serveRSC });

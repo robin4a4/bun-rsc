@@ -11,13 +11,19 @@ import {
 	createFromReadableStream,
 	// @ts-expect-error
 } from "react-server-dom-webpack/client";
+import { Layout } from "../components/Layout";
 import { rscStream } from "../html-stream/client";
-import { BUN_RSC_SPECIFIC_KEYWORD, combineUrl } from "../utils/common";
+import {
+	BUN_RSC_SPECIFIC_KEYWORD,
+	combineUrl,
+	getCacheKey,
+} from "../utils/common";
 import { BASE_RSC_SERVER_URL } from "../utils/common";
 import { clientLiveReload } from "../ws/client";
-import { globalCache } from "./cache";
 import { callServer } from "./call-server";
 import { useRouterState } from "./hooks";
+
+window.__BUN_RSC_CACHE__ = new Map();
 
 let data: unknown;
 
@@ -29,16 +35,20 @@ const queryParam = new URLSearchParams(window.location.search);
 
 function Router() {
 	const [rscUrl, setRscUrl] = useState(window.location.href);
-	const routerState = useRouterState();
+	const [routerState, setRouterState] = useRouterState();
 	useEffect(() => {
 		function navigate(url: string) {
 			startTransition(() => {
-				setRscUrl(
-					`${combineUrl(
-						BASE_RSC_SERVER_URL,
-						combineUrl(BUN_RSC_SPECIFIC_KEYWORD, url),
-					)}?${queryParam.toString()}`,
+				setRouterState((prev) => prev + 1);
+				const baseUrl = combineUrl(
+					BASE_RSC_SERVER_URL,
+					combineUrl(BUN_RSC_SPECIFIC_KEYWORD, url),
 				);
+				const hasQueryParam = queryParam.length > 0;
+				const rscUrl = hasQueryParam
+					? `${baseUrl}?${queryParam.toString()}`
+					: baseUrl;
+				setRscUrl(rscUrl);
 			});
 		}
 
@@ -76,10 +86,15 @@ function Router() {
 			window.removeEventListener("click", clickHandler, true);
 			window.removeEventListener("popstate", popstateHandler);
 		};
-	}, []);
+	}, [setRouterState]);
 
 	return (
-		<ServerOutput key={routerState} routerState={routerState} url={rscUrl} />
+		<Layout
+			meta={JSON.parse(window.__SSR_META_STRING__)}
+			cssManifest={JSON.parse(window.__MANIFEST_STRING__)}
+		>
+			<ServerOutput key={routerState} routerState={routerState} url={rscUrl} />
+		</Layout>
 	);
 }
 
@@ -87,13 +102,29 @@ function ServerOutput({
 	url,
 	routerState,
 }: { url: string; routerState: number }): ReactNode {
-	if (!globalCache.has(url)) {
+	const cacheKey = getCacheKey(url);
+	console.log("cacheKey", cacheKey);
+	if (!window.__BUN_RSC_CACHE__.has(cacheKey)) {
+		const fetchPromise = fetch(url);
 		data =
 			routerState === 0
 				? createFromReadableStream(rscStream, { callServer: callServer })
-				: createFromFetch(fetch(url), { callServer });
-		globalCache.set(url, data);
+				: createFromFetch(fetchPromise, { callServer });
+		window.__BUN_RSC_CACHE__.set(cacheKey, data);
 	}
-	const lazyJsx = globalCache.get(url);
+	useEffect(() => {
+		const rscPageMetaString = document
+			.querySelector("#rsc-page-meta")
+			?.getAttribute("value");
+		if (rscPageMetaString && rscPageMetaString !== window.__SSR_META_STRING__) {
+			const rscPageMeta = JSON.parse(rscPageMetaString);
+			document.title = rscPageMeta.title;
+			document
+				.querySelector("meta[name=description]")
+				?.setAttribute("content", rscPageMeta.description);
+		}
+	}, []);
+	const lazyJsx = window.__BUN_RSC_CACHE__.get(cacheKey);
+	// @ts-ignore
 	return use(lazyJsx);
 }

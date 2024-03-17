@@ -6,21 +6,19 @@ import {
 	getMiddleware,
 	getServerHeaders,
 	readMap,
-	resolveDist,
 	resolveServerFileFromFilePath,
 	resolveSrc,
 	serverActionsMapUrl,
-} from "../utils/server.ts";
+} from "../utils/server";
 
-import { Layout } from "../components/Layout.tsx";
-import type { Meta, PageProps } from "../types/external.ts";
-import type { ActionModule, PageModule } from "../types/internal.ts";
+import type { Meta, PageProps } from "../types/external";
+import type { ActionModule, PageModule } from "../types/internal";
 import {
 	BUN_RSC_SPECIFIC_KEYWORD,
 	RSC_CONTENT_TYPE,
 	combineUrl,
-} from "../utils/common.ts";
-import { log } from "../utils/server.ts";
+} from "../utils/common";
+import { log } from "../utils/server";
 
 const router = new Bun.FileSystemRouter({
 	style: "nextjs",
@@ -34,14 +32,7 @@ export async function serveRSC(request: Request) {
 		.replace(`${BUN_RSC_SPECIFIC_KEYWORD}/`, "")
 		.replace(`${BUN_RSC_SPECIFIC_KEYWORD}`, "");
 	const match = router.match(ssrRequestUrl);
-	let manifestString = "";
-	let manifest: Array<string> = [];
-	try {
-		manifestString = await Bun.file(resolveDist("css-manifest.json")).text();
-		manifest = JSON.parse(manifestString);
-	} catch (e) {
-		log.w("No css manifest found");
-	}
+
 	if (match) {
 		const searchParams = new URLSearchParams(match.query);
 		const params = match.params;
@@ -92,11 +83,7 @@ export async function serveRSC(request: Request) {
 				params,
 			};
 			// Render the Page component and send the query params as props.
-			const Page = (
-				<Layout meta={pageMeta} cssManifest={manifest}>
-					{createElement(PageComponent, props)}
-				</Layout>
-			);
+			const Page = <>{createElement(PageComponent, props)}<input id="rsc-page-meta" type="hidden" value={JSON.stringify(pageMeta)}/></>;
 
 			const map = await readMap(clientComponentMapUrl);
 			const clientComponentMap =
@@ -106,8 +93,10 @@ export async function serveRSC(request: Request) {
 				clientComponentMap,
 			);
 
+			const baseServerHeaders = getServerHeaders(RSC_CONTENT_TYPE);
+			baseServerHeaders.set("X-Page-Meta", JSON.stringify(pageMeta));
 			return new Response(rscStream, {
-				headers: getServerHeaders(RSC_CONTENT_TYPE),
+				headers: baseServerHeaders,
 			});
 		} catch (error: unknown) {
 			console.error(error);

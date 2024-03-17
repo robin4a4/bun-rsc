@@ -3,7 +3,7 @@ import { type ReactNode, use } from "react";
 import ReactDOMServer from "react-dom/server.edge";
 // @ts-ignore
 import * as ReactServerDomClient from "react-server-dom-webpack/client";
-import { injectRSCPayload } from "../html-stream/server.ts";
+import { injectRSCPayload } from "../html-stream/server";
 import {
 	getMiddleware,
 	getServerHeaders,
@@ -11,16 +11,16 @@ import {
 	resolveDist,
 	resolveServerFileFromFilePath,
 	resolveSrc,
-} from "../utils/server.ts";
+} from "../utils/server";
 
-import { Layout } from "../components/Layout.tsx";
-import type { PageModule } from "../types/internal.ts";
+import { Layout } from "../components/Layout";
+import type { PageModule } from "../types/internal";
 import {
 	BASE_RSC_SERVER_URL,
 	BUN_RSC_SPECIFIC_KEYWORD,
 	BUN_RSC_SPECIFIC_KEYWORD_STATICS,
 	combineUrl,
-} from "../utils/common.ts";
+} from "../utils/common";
 
 const router = new Bun.FileSystemRouter({
 	style: "nextjs",
@@ -32,8 +32,10 @@ const middleware = await getMiddleware();
 export async function serveSSR(request: Request) {
 	const match = router.match(request.url);
 	let manifestString = "";
+	let manifest: Array<string> = [];
 	try {
 		manifestString = await Bun.file(resolveDist("css-manifest.json")).text();
+		manifest = JSON.parse(manifestString);
 	} catch (e) {
 		log.w("No css manifest found");
 	}
@@ -108,7 +110,9 @@ export async function serveSSR(request: Request) {
 			}
 
 			const ssrStream = await ReactDOMServer.renderToReadableStream(
-				<ClientRoot />,
+				<Layout meta={pageMeta} cssManifest={manifest}>
+					<ClientRoot />
+				</Layout>,
 				{
 					bootstrapModules: [
 						`/${BUN_RSC_SPECIFIC_KEYWORD_STATICS}/client-components/src/router.rsc.js`,
@@ -116,7 +120,9 @@ export async function serveSSR(request: Request) {
 					bootstrapScriptContent: `global = window;
 					global.__CURRENT_ROUTE__ = "${request.url}";  
 					global.__MANIFEST_STRING__ = ${JSON.stringify(manifestString)};
-					global.__META_STRING__ = ${JSON.stringify(JSON.stringify(pageMeta))};
+					global.__SSR_META_STRING__ = ${JSON.stringify(
+						JSON.stringify(pageMeta),
+					)};
 						
 				  const __bun__module_map__ = new Map();
 	  

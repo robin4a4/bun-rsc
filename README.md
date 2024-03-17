@@ -82,7 +82,7 @@ export default () => {
 ## Current limitations
 
 ### Server actions limitations
-the "use server" directive is only supported at the top level of the module and the module is only importable in a server component:
+the "use server" directive is only supported at the top level of the module:
 
 ```typescript
 // addTodo.ts
@@ -109,8 +109,6 @@ export function TodoList() {
   );
 }
 ```
-
-Actions in client components are not yet supported.
 
 ### Dev mode
 
