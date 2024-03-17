@@ -120,7 +120,9 @@ export async function serveSSR(request: Request) {
 					bootstrapScriptContent: `global = window;
 					global.__CURRENT_ROUTE__ = "${request.url}";  
 					global.__MANIFEST_STRING__ = ${JSON.stringify(manifestString)};
-					global.__SSR_META_STRING__ = ${JSON.stringify(JSON.stringify(pageMeta))};
+					global.__SSR_META_STRING__ = ${JSON.stringify(
+						JSON.stringify(pageMeta),
+					)};
 						
 				  const __bun__module_map__ = new Map();
 	  

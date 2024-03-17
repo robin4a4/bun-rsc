@@ -13,7 +13,11 @@ import {
 } from "react-server-dom-webpack/client";
 import { Layout } from "../components/Layout";
 import { rscStream } from "../html-stream/client";
-import { BUN_RSC_SPECIFIC_KEYWORD, combineUrl } from "../utils/common";
+import {
+	BUN_RSC_SPECIFIC_KEYWORD,
+	combineUrl,
+	getCacheKey,
+} from "../utils/common";
 import { BASE_RSC_SERVER_URL } from "../utils/common";
 import { clientLiveReload } from "../ws/client";
 import { globalCache } from "./cache";
@@ -35,12 +39,15 @@ function Router() {
 		function navigate(url: string) {
 			startTransition(() => {
 				setRouterState((prev) => prev + 1);
-				setRscUrl(
-					`${combineUrl(
-						BASE_RSC_SERVER_URL,
-						combineUrl(BUN_RSC_SPECIFIC_KEYWORD, url),
-					)}?${queryParam.toString()}`,
+				const baseUrl = combineUrl(
+					BASE_RSC_SERVER_URL,
+					combineUrl(BUN_RSC_SPECIFIC_KEYWORD, url),
 				);
+				const hasQueryParam = queryParam.length > 0;
+				const rscUrl = hasQueryParam
+					? `${baseUrl}?${queryParam.toString()}`
+					: baseUrl;
+				setRscUrl(rscUrl);
 			});
 		}
 
@@ -78,7 +85,7 @@ function Router() {
 			window.removeEventListener("click", clickHandler, true);
 			window.removeEventListener("popstate", popstateHandler);
 		};
-	}, []);
+	}, [setRouterState]);
 
 	return (
 		<Layout
@@ -94,22 +101,29 @@ function ServerOutput({
 	url,
 	routerState,
 }: { url: string; routerState: number }): ReactNode {
-	if (!globalCache.has(url)) {
+	console.log("ServerOutput", url, routerState);
+	const cacheKey = getCacheKey(url);
+	console.log("cacheKey", cacheKey);
+	if (!globalCache.has(cacheKey)) {
 		const fetchPromise = fetch(url);
 		data =
 			routerState === 0
 				? createFromReadableStream(rscStream, { callServer: callServer })
 				: createFromFetch(fetchPromise, { callServer });
-		globalCache.set(url, data);
+		globalCache.set(cacheKey, data);
 	}
 	useEffect(() => {
-		const rscPageMetaString = document.querySelector("#rsc-page-meta")!.getAttribute("value");
+		const rscPageMetaString = document
+			.querySelector("#rsc-page-meta")
+			?.getAttribute("value");
 		if (rscPageMetaString && rscPageMetaString !== window.__SSR_META_STRING__) {
 			const rscPageMeta = JSON.parse(rscPageMetaString);
 			document.title = rscPageMeta.title;
-			document.querySelector("meta[name=description]")!.setAttribute("content", rscPageMeta.description);
+			document
+				.querySelector("meta[name=description]")
+				?.setAttribute("content", rscPageMeta.description);
 		}
 	}, []);
-	const lazyJsx = globalCache.get(url);
+	const lazyJsx = globalCache.get(cacheKey);
 	return use(lazyJsx);
 }

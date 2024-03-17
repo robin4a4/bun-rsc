@@ -8,6 +8,7 @@ import {
 	BUN_RSC_SPECIFIC_KEYWORD,
 	RSC_CONTENT_TYPE,
 	combineUrl,
+	getCacheKey,
 } from "../utils/common";
 import { BASE_RSC_SERVER_URL } from "../utils/common";
 import { globalCache } from "./cache";
@@ -42,7 +43,7 @@ export const callServer = async (id: string, args: unknown[]) => {
 
 	const actionResultPromise = createFromFetch(responsePromise, { callServer });
 
-	globalCache.set(window.location.href, actionResultPromise);
+	globalCache.set(getCacheKey(window.location.href), actionResultPromise);
 	console.log("actionResultPromise", actionResultPromise);
 	const actionResult = await actionResultPromise;
 	dispatchActionReceivedEvent();
