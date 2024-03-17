@@ -20,9 +20,10 @@ import {
 } from "../utils/common";
 import { BASE_RSC_SERVER_URL } from "../utils/common";
 import { clientLiveReload } from "../ws/client";
-import { globalCache } from "./cache";
 import { callServer } from "./call-server";
 import { useRouterState } from "./hooks";
+
+window.__BUN_RSC_CACHE__ = new Map();
 
 let data: unknown;
 
@@ -101,16 +102,15 @@ function ServerOutput({
 	url,
 	routerState,
 }: { url: string; routerState: number }): ReactNode {
-	console.log("ServerOutput", url, routerState);
 	const cacheKey = getCacheKey(url);
 	console.log("cacheKey", cacheKey);
-	if (!globalCache.has(cacheKey)) {
+	if (!window.__BUN_RSC_CACHE__.has(cacheKey)) {
 		const fetchPromise = fetch(url);
 		data =
 			routerState === 0
 				? createFromReadableStream(rscStream, { callServer: callServer })
 				: createFromFetch(fetchPromise, { callServer });
-		globalCache.set(cacheKey, data);
+		window.__BUN_RSC_CACHE__.set(cacheKey, data);
 	}
 	useEffect(() => {
 		const rscPageMetaString = document
@@ -124,6 +124,7 @@ function ServerOutput({
 				?.setAttribute("content", rscPageMeta.description);
 		}
 	}, []);
-	const lazyJsx = globalCache.get(cacheKey);
+	const lazyJsx = window.__BUN_RSC_CACHE__.get(cacheKey);
+	// @ts-ignore
 	return use(lazyJsx);
 }
