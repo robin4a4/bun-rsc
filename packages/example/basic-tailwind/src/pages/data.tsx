@@ -1,11 +1,7 @@
 import { Suspense } from "react";
 
 import "../global.css";
-import Counter from "../components/Counter.tsx";
-import {addTodo} from "../actions.ts";
-import {FormContent} from "../components/FormContent.tsx";
-import {Nav} from "../components/Nav.tsx";
-import {PageProps} from "bun-rsc";
+import { Nav } from "../components/Nav.tsx";
 
 export const meta = {
 	title: "Data page",
@@ -15,7 +11,7 @@ export const meta = {
 export async function Page() {
 	return (
 		<main className="pt-8 bg-slate-100 h-screen">
-            <Nav currentRoute="data"/>
+			<Nav currentRoute="data" />
 			<section className="container mx-auto flex flex-col gap-4">
 				<section className="bg-white rounded-lg shadow-lg p-4 flex flex-col gap-4">
 					<h2>Data:</h2>

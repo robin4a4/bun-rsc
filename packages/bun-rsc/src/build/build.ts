@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import * as esbuild from "esbuild";
 import { $, type BuildArtifact, BuildConfig } from "bun";
 import postcss from "postcss";
 import recursive from "recursive-readdir";
@@ -40,7 +41,7 @@ global.__webpack_require__ = __webpack_require__;
 
 const clientComponentsDist = resolveClientComponentsDist();
 const serverComponentsDist = resolveServerComponentsDist();
-const serverActionsDist = resolveServerActionsDist("src");
+const serverActionsDist = resolveServerActionsDist();
 
 function isClientComponentModule(code: string) {
 	return code.startsWith('"use client"') || code.startsWith("'use client'");
@@ -100,7 +101,6 @@ export async function build() {
 						if (isClientComponentModule(code)) {
 							// if it is a client component, return a reference to the client component bundle
 							clientEntryPoints.add(path);
-
 							return {
 								contents: replaceServerCodeWithClientReferences(
 									path,
@@ -157,9 +157,12 @@ export async function build() {
 		process.cwd(),
 		"src/router.tsx",
 	)}`;
-	const clientBuildOptions: BuildConfig = {
-		entrypoints: [...clientEntryPoints, "./src/router.tsx"],
+	console.log(clientEntryPoints);
+	const clientBuildOptions: esbuild.BuildOptions = {
+		entryPoints: [...clientEntryPoints, "./src/router.tsx"],
 		splitting: true,
+		format: "esm",
+		bundle: true,
 		outdir: clientComponentsDist,
 		define: {
 			"process.env.MODE": JSON.stringify(process.env.MODE ?? "development"),
@@ -197,41 +200,41 @@ export async function build() {
 	};
 
 	// Build client components for CSR
-	const csrResults = await Bun.build({
+	const csrResults = await esbuild.build({
 		...clientBuildOptions,
-		naming: "[dir]/[name].rsc.[ext]",
+		entryNames: "[dir]/[name].rsc",
 	});
-	if (!csrResults.success) {
+	if (csrResults.errors.length > 0) {
 		log.e("CSR build failed");
-		console.log(csrResults.logs);
+		console.log(csrResults.errors);
 		throw new Error("CSR build failed");
 	}
-	const ssrResults = await Bun.build({
+	const ssrResults = await esbuild.build({
 		...clientBuildOptions,
 		external: ["react", "react-dom"],
-		naming: "[dir]/[name].ssr.[ext]",
+		entryNames: "[dir]/[name].ssr",
 	});
-	if (!ssrResults.success) {
+	if (ssrResults.errors.length > 0) {
 		log.e("SSR build failed");
-		console.log(ssrResults.logs);
+		console.log(ssrResults.errors);
 		throw new Error("SSR build failed");
 	}
 
 	if (serverActionEntryPoints.size > 0) {
 		log.i("Building server actions 💪");
-		const serverActionResults = await Bun.build({
+		const serverActionResults = await esbuild.build({
 			format: "esm",
-			entrypoints: [...serverActionEntryPoints],
-			sourcemap: "none",
+			entryPoints: [...serverActionEntryPoints],
 			splitting: true,
+			bundle: true,
 			outdir: serverActionsDist,
 			define: {
 				"process.env.MODE": JSON.stringify(process.env.MODE),
 			},
 		});
-		if (!serverActionResults.success) {
+		if (serverActionResults.errors.length > 0) {
 			log.e("Server actions build failed");
-			console.log(serverActionResults.logs);
+			console.log(serverActionResults.errors);
 			throw new Error("Server actions build failed");
 		}
 	}

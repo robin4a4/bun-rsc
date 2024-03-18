@@ -24,10 +24,10 @@ export function replaceServerCodeWithClientReferences(
 		let id = null;
 		if (exp === "default") {
 			id = `${moduleId}#default`;
-			refCode += `export default createClientReference("${id}", "default")`;
+			refCode += `export default createClientReference("${id}", "default")\n`;
 		} else {
 			id = `${moduleId}#${exp}`;
-			refCode += `export const ${exp} = createClientReference("${id}", "${exp}")`;
+			refCode += `export const ${exp} = createClientReference("${id}", "${exp}")\n`;
 		}
 		const rscChunkId = moduleId
 			.replace(".tsx", ".rsc.js")
@@ -61,7 +61,7 @@ export function replaceServerCodeWithServerReferences(
 
     ${code}`;
 	for (const exp of moduleExports) {
-		refCode += `if (typeof ${exp} === 'function') createServerReferenceServer(${exp}, "${moduleId}", "${exp}")`;
+		refCode += `if (typeof ${exp} === 'function') createServerReferenceServer(${exp}, "${moduleId}", "${exp}")\n`;
 		const serverActionChunkId = moduleId.replace(".ts", ".js");
 		serverActionMap[`${moduleId}#${exp}`] = {
 			id: serverActionChunkId,
@@ -87,7 +87,7 @@ export function replaceClientCodeWithServerReferences(
 		refCode += `
                                   export${
 																		exp === "default" ? " default " : " "
-																	}const ${exp} = createServerReferenceClient("${id}")
+																	}const ${exp} = createServerReferenceClient("${id}")\n
                                   `;
 		const chunkId = moduleId.replace(".tsx", ".js").replace(".ts", ".js");
 

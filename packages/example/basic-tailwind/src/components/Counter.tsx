@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-export default function Counter() {
+export function Counter() {
 	const [count, setCount] = useState(0);
 	return (
 		<div className="flex items-center justify-between border border-slate-300 rounded-lg">
