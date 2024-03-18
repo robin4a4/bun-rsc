@@ -1,6 +1,6 @@
 import fs from "node:fs";
+import { $ } from "bun";
 import * as esbuild from "esbuild";
-import { $, type BuildArtifact, BuildConfig } from "bun";
 import postcss from "postcss";
 import recursive from "recursive-readdir";
 import { ClientRscMap, type RscMap } from "../types/internal";
@@ -27,7 +27,9 @@ import {
 const __bun__module_map__ = new Map();
 
 const __webpack_chunk_load__ = async (moduleId: string) => {
-	const mod = await import(combineUrl(process.cwd(), moduleId));
+	const mod = await import(
+		combineUrl(process.cwd(), moduleId) + "?invalidate=" + Date.now()
+	);
 	__bun__module_map__.set(moduleId, mod);
 	return mod;
 };
@@ -83,13 +85,12 @@ export async function build() {
 	 * */
 	const serverComponentsBuildEntrypoints = await recursive(resolveSrc("pages"));
 
-	const serverComponentsBuildResult = await Bun.build({
-		target: "bun",
-		sourcemap: "none",
-		splitting: true,
-		format: "esm",
-		entrypoints: serverComponentsBuildEntrypoints,
+	const serverComponentsBuildResult = await esbuild.build({
+		entryPoints: serverComponentsBuildEntrypoints,
 		outdir: serverComponentsDist,
+		format: "esm",
+		bundle: true,
+		splitting: true,
 		external: ["bun-rsc", "react", "react-dom"],
 		plugins: [
 			{
@@ -134,9 +135,9 @@ export async function build() {
 			},
 		],
 	});
-	if (!serverComponentsBuildResult.success) {
+	if (serverComponentsBuildResult.errors.length > 0) {
 		log.e("Server build failed");
-		console.log(serverComponentsBuildResult.logs);
+		console.log(serverComponentsBuildResult.errors);
 		throw new Error("Server build failed");
 	}
 
@@ -157,13 +158,12 @@ export async function build() {
 		process.cwd(),
 		"src/router.tsx",
 	)}`;
-	console.log(clientEntryPoints);
 	const clientBuildOptions: esbuild.BuildOptions = {
 		entryPoints: [...clientEntryPoints, "./src/router.tsx"],
+		outdir: clientComponentsDist,
 		splitting: true,
 		format: "esm",
 		bundle: true,
-		outdir: clientComponentsDist,
 		define: {
 			"process.env.MODE": JSON.stringify(process.env.MODE ?? "development"),
 		},
@@ -252,8 +252,8 @@ export async function build() {
 	 * Parse built CSS files with PostCSS
 	 * -------------------------------------------------------------------------------------
 	 * */
-	async function parseCSS(files: BuildArtifact[]) {
-		const cssFiles = files.filter((f) => f.path.endsWith(".css"));
+	async function parseCSS(files: Array<string>) {
+		const cssFiles = files.filter((f) => f.endsWith(".css"));
 		const manifest: Array<string> = [];
 		let postcssConfig = null;
 		try {
@@ -272,12 +272,12 @@ export async function build() {
 				},
 			);
 			for (const f of cssFiles) {
-				const rawCSS = await Bun.file(f.path).text();
+				const rawCSS = await Bun.file(f).text();
 				const result = await postcss(postcssConfigPlugins).process(rawCSS, {
-					from: f.path,
+					from: f,
 				});
-				await Bun.write(f.path, result.css);
-				const fileName = f.path.replace(resolveRoot(""), "/");
+				await Bun.write(f, result.css);
+				const fileName = f.replace(resolveRoot(""), "/");
 				manifest.push(fileName);
 			}
 			await Bun.write(
@@ -288,8 +288,25 @@ export async function build() {
 			console.log(e);
 		}
 	}
+	function getAllCssFiles(filesArray: Array<string> = []) {
+		const files = fs.readdirSync(resolveServerComponentsDist());
 
-	await parseCSS(serverComponentsBuildResult.outputs);
+		for (const file of files) {
+			const filePath = combineUrl(resolveServerComponentsDist(), file);
+			const fileStat = fs.statSync(filePath);
+
+			if (fileStat.isDirectory()) {
+				getAllCssFiles(filesArray);
+			} else if (file.endsWith(".css")) {
+				filesArray.push(filePath);
+			}
+		}
+
+		return filesArray;
+	}
+
+	const cssFiles = getAllCssFiles();
+	await parseCSS(cssFiles);
 
 	log.s(
 		`Build success in ${Date.now() - start} ms`,

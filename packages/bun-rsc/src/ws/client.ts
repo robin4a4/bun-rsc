@@ -1,3 +1,4 @@
+import { dispatchActionReceivedEvent } from "../client/events";
 import { refreshPort } from "./const";
 
 /**
@@ -17,7 +18,10 @@ export function clientLiveReload() {
 	};
 
 	const refresh = () => {
-		window.location.reload();
+		setTimeout(() => {
+			window.__BUN_RSC_CACHE__.clear();
+			dispatchActionReceivedEvent();
+		}, 500);
 	};
 
 	/**

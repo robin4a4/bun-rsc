@@ -30,6 +30,7 @@ const router = new Bun.FileSystemRouter({
 const middleware = await getMiddleware();
 
 export async function serveSSR(request: Request) {
+	console.log("MOOOOODE", process.env.MODE);
 	const match = router.match(request.url);
 	let manifestString = "";
 	let manifest: Array<string> = [];
@@ -63,9 +64,7 @@ export async function serveSSR(request: Request) {
 				`${serverFilePath}${
 					// Invalidate cached module on every request in dev mode
 					// WARNING: can cause memory leaks for long-running dev servers!
-					process.env.NODE_ENV === "development"
-						? `?invalidate=${Date.now()}`
-						: ""
+					process.env.MODE === "development" ? `?invalidate=${Date.now()}` : ""
 				}}`
 			)) as PageModule;
 
@@ -127,7 +126,7 @@ export async function serveSSR(request: Request) {
 				  const __bun__module_map__ = new Map();
 	  
 				  global.__webpack_chunk_load__ = async function(moduleId) {
-					  const mod = await import(moduleId);
+					  const mod = await import(moduleId+"?invalidate="+Date.now());
 					  __bun__module_map__.set(moduleId, mod);
 					  return mod;
 				  };

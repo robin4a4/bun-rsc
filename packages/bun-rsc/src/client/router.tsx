@@ -103,13 +103,12 @@ function ServerOutput({
 	routerState,
 }: { url: string; routerState: number }): ReactNode {
 	const cacheKey = getCacheKey(url);
-	console.log("cacheKey", cacheKey);
+	console.log("cacheKey", cacheKey, routerState);
 	if (!window.__BUN_RSC_CACHE__.has(cacheKey)) {
-		const fetchPromise = fetch(url);
 		data =
 			routerState === 0
 				? createFromReadableStream(rscStream, { callServer: callServer })
-				: createFromFetch(fetchPromise, { callServer });
+				: createFromFetch(fetch(url), { callServer });
 		window.__BUN_RSC_CACHE__.set(cacheKey, data);
 	}
 	useEffect(() => {
