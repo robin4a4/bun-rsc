@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { unlink } from "node:fs/promises";
 import { $ } from "bun";
 import * as esbuild from "esbuild";
 import postcss from "postcss";
@@ -27,9 +28,7 @@ import {
 const __bun__module_map__ = new Map();
 
 const __webpack_chunk_load__ = async (moduleId: string) => {
-	const mod = await import(
-		combineUrl(process.cwd(), moduleId) + "?invalidate=" + Date.now()
-	);
+	const mod = await import(combineUrl(process.cwd(), moduleId));
 	__bun__module_map__.set(moduleId, mod);
 	return mod;
 };
@@ -60,7 +59,7 @@ function isServerActionModule(code: string) {
  * */
 export async function build() {
 	log.i(`Mode ${process.env.MODE} 🏞`);
-	const start = Date.now();
+	const buildStartDate = Date.now();
 
 	fs.rmSync(dist, { recursive: true });
 
@@ -107,6 +106,7 @@ export async function build() {
 									path,
 									code,
 									clientComponentMap,
+									buildStartDate
 								),
 								loader: "js",
 							};
@@ -202,7 +202,7 @@ export async function build() {
 	// Build client components for CSR
 	const csrResults = await esbuild.build({
 		...clientBuildOptions,
-		entryNames: "[dir]/[name].rsc",
+		entryNames: `[dir]/[name]-${buildStartDate}.rsc`,
 	});
 	if (csrResults.errors.length > 0) {
 		log.e("CSR build failed");
@@ -212,13 +212,21 @@ export async function build() {
 	const ssrResults = await esbuild.build({
 		...clientBuildOptions,
 		external: ["react", "react-dom"],
-		entryNames: "[dir]/[name].ssr",
+		entryNames: `[dir]/[name]-${buildStartDate}.ssr`,
 	});
 	if (ssrResults.errors.length > 0) {
 		log.e("SSR build failed");
 		console.log(ssrResults.errors);
 		throw new Error("SSR build failed");
 	}
+	// remove useless ssr file (i am sure there is a better way to do this inside esbuild i am just lazy)
+	await unlink(resolveClientComponentsDist(`router-${buildStartDate}.ssr.js`));
+
+	// rename router file to be used by the server
+	await fs.promises.rename(
+		resolveClientComponentsDist(`router-${buildStartDate}.rsc.js`),
+		resolveClientComponentsDist("__bun_rsc_router.js"),
+	);
 
 	if (serverActionEntryPoints.size > 0) {
 		log.i("Building server actions 💪");
@@ -309,7 +317,7 @@ export async function build() {
 	await parseCSS(cssFiles);
 
 	log.s(
-		`Build success in ${Date.now() - start} ms`,
+		`Build success in ${Date.now() - buildStartDate} ms`,
 		process.env.MODE !== "development",
 	);
 	await fs.unlinkSync(combineUrl(process.cwd(), "src/router.tsx"));

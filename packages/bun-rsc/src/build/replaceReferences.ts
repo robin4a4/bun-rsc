@@ -8,6 +8,7 @@ export function replaceServerCodeWithClientReferences(
 	path: string,
 	code: string,
 	clientComponentMap: ClientRscMap,
+	globalId: number,
 ) {
 	const moduleExports = TSXTranspiler.scan(code).exports;
 	const moduleId = createModuleId(path, "client");
@@ -30,16 +31,16 @@ export function replaceServerCodeWithClientReferences(
 			refCode += `export const ${exp} = createClientReference("${id}", "${exp}")\n`;
 		}
 		const rscChunkId = moduleId
-			.replace(".tsx", ".rsc.js")
-			.replace(".ts", ".rsc.js");
+			.replace(".tsx", `-${globalId}.rsc.js`)
+			.replace(".ts", `-${globalId}.rsc.js`);
 		clientComponentMap.rsc[id] = {
 			id: rscChunkId,
 			chunks: [rscChunkId],
 			name: exp,
 		};
 		const ssrChunkId = moduleId
-			.replace(".tsx", ".ssr.js")
-			.replace(".ts", ".ssr.js");
+			.replace(".tsx", `-${globalId}.ssr.js`)
+			.replace(".ts", `-${globalId}.ssr.js`);
 		clientComponentMap.ssr[id] = {
 			id: ssrChunkId,
 			chunks: [ssrChunkId],

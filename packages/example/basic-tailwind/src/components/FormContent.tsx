@@ -6,7 +6,7 @@ export function FormContent() {
 	return (
 		<div className="flex items-center gap-4">
 			<input
-				className="border border-yellow-300 rounded-lg flex-1 p-2"
+				className="border border-purple-300 rounded-lg flex-1 p-2"
 				type="text"
 				name="todo"
 			/>
@@ -15,7 +15,7 @@ export function FormContent() {
 				className="bg-blue-500 disabled:bg-slate-300 rounded-lg px-4 py-2 text-white"
 				type="submit"
 			>
-				Add
+				Add sdfsfdf
 			</button>
 		</div>
 	);

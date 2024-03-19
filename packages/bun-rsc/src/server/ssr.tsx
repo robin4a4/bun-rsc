@@ -29,7 +29,7 @@ const router = new Bun.FileSystemRouter({
 
 const middleware = await getMiddleware();
 
-export async function serveSSR(request: Request) {
+export async function serveSSR(request: Request, globalId: number) {
 	console.log("MOOOOODE", process.env.MODE);
 	const match = router.match(request.url);
 	let manifestString = "";
@@ -114,7 +114,7 @@ export async function serveSSR(request: Request) {
 				</Layout>,
 				{
 					bootstrapModules: [
-						`/${BUN_RSC_SPECIFIC_KEYWORD_STATICS}/client-components/router.rsc.js`,
+						`/${BUN_RSC_SPECIFIC_KEYWORD_STATICS}/client-components/__bun_rsc_router.js`,
 					],
 					bootstrapScriptContent: `global = window;
 					global.__CURRENT_ROUTE__ = "${request.url}";  
@@ -126,7 +126,7 @@ export async function serveSSR(request: Request) {
 				  const __bun__module_map__ = new Map();
 	  
 				  global.__webpack_chunk_load__ = async function(moduleId) {
-					  const mod = await import(moduleId+"?invalidate="+Date.now());
+					  const mod = await import(moduleId);
 					  __bun__module_map__.set(moduleId, mod);
 					  return mod;
 				  };
