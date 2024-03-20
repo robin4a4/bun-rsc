@@ -29,7 +29,7 @@ const router = new Bun.FileSystemRouter({
 
 const middleware = await getMiddleware();
 
-export async function serveSSR(request: Request, globalId: number) {
+export async function serveSSR(request: Request) {
 	console.log("MOOOOODE", process.env.MODE);
 	const match = router.match(request.url);
 	let manifestString = "";
