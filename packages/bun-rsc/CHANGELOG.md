@@ -1,5 +1,11 @@
 # bun-rsc
 
+## 0.0.4
+
+### Patch Changes
+
+- 7b08a52: Add support for functional server actions
+
 ## 0.0.3
 
 ### Patch Changes
