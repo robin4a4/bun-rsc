@@ -64,7 +64,7 @@ export async function readMap(mapUrl: string) {
 
 export function createModuleId(path: string, type: "client" | "server") {
 	const root = process.cwd();
-	const formattedPath = path.replace(root, "");
+	const formattedPath = path.replace(combineUrl(root, "src"), "");
 	const moduleId = combineUrl(
 		`/${BUN_RSC_SPECIFIC_KEYWORD_STATICS}/${
 			type === "client" ? "client-components" : "server-actions"

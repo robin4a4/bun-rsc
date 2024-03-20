@@ -63,9 +63,7 @@ export async function serveSSR(request: Request) {
 				`${serverFilePath}${
 					// Invalidate cached module on every request in dev mode
 					// WARNING: can cause memory leaks for long-running dev servers!
-					process.env.NODE_ENV === "development"
-						? `?invalidate=${Date.now()}`
-						: ""
+					process.env.MODE === "development" ? `?invalidate=${Date.now()}` : ""
 				}}`
 			)) as PageModule;
 
@@ -115,7 +113,7 @@ export async function serveSSR(request: Request) {
 				</Layout>,
 				{
 					bootstrapModules: [
-						`/${BUN_RSC_SPECIFIC_KEYWORD_STATICS}/client-components/src/router.rsc.js`,
+						`/${BUN_RSC_SPECIFIC_KEYWORD_STATICS}/client-components/__bun_rsc_router.js`,
 					],
 					bootstrapScriptContent: `global = window;
 					global.__CURRENT_ROUTE__ = "${request.url}";  

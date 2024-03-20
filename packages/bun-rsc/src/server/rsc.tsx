@@ -83,7 +83,16 @@ export async function serveRSC(request: Request) {
 				params,
 			};
 			// Render the Page component and send the query params as props.
-			const Page = <>{createElement(PageComponent, props)}<input id="rsc-page-meta" type="hidden" value={JSON.stringify(pageMeta)}/></>;
+			const Page = (
+				<>
+					{createElement(PageComponent, props)}
+					<input
+						id="rsc-page-meta"
+						type="hidden"
+						value={JSON.stringify(pageMeta)}
+					/>
+				</>
+			);
 
 			const map = await readMap(clientComponentMapUrl);
 			const clientComponentMap =

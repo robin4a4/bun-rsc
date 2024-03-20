@@ -22,6 +22,7 @@ import { BASE_RSC_SERVER_URL } from "../utils/common";
 import { clientLiveReload } from "../ws/client";
 import { callServer } from "./call-server";
 import { useRouterState } from "./hooks";
+import {getRscUrl} from "./utils";
 
 window.__BUN_RSC_CACHE__ = new Map();
 
@@ -34,21 +35,13 @@ if (process.env.MODE === "development") clientLiveReload();
 const queryParam = new URLSearchParams(window.location.search);
 
 function Router() {
-	const [rscUrl, setRscUrl] = useState(window.location.href);
+	const [rscUrl, setRscUrl] = useState(getRscUrl(window.location.pathname, queryParam));
 	const [routerState, setRouterState] = useRouterState();
 	useEffect(() => {
 		function navigate(url: string) {
 			startTransition(() => {
 				setRouterState((prev) => prev + 1);
-				const baseUrl = combineUrl(
-					BASE_RSC_SERVER_URL,
-					combineUrl(BUN_RSC_SPECIFIC_KEYWORD, url),
-				);
-				const hasQueryParam = queryParam.length > 0;
-				const rscUrl = hasQueryParam
-					? `${baseUrl}?${queryParam.toString()}`
-					: baseUrl;
-				setRscUrl(rscUrl);
+				setRscUrl(getRscUrl(url, queryParam));
 			});
 		}
 
@@ -103,13 +96,11 @@ function ServerOutput({
 	routerState,
 }: { url: string; routerState: number }): ReactNode {
 	const cacheKey = getCacheKey(url);
-	console.log("cacheKey", cacheKey);
 	if (!window.__BUN_RSC_CACHE__.has(cacheKey)) {
-		const fetchPromise = fetch(url);
 		data =
 			routerState === 0
 				? createFromReadableStream(rscStream, { callServer: callServer })
-				: createFromFetch(fetchPromise, { callServer });
+				: createFromFetch(fetch(url), { callServer });
 		window.__BUN_RSC_CACHE__.set(cacheKey, data);
 	}
 	useEffect(() => {

@@ -47,7 +47,8 @@ cli.command("dev:ssr").action(async () => {
 	log.i("Starting ssr dev server on port 3000");
 	try {
 		const devServerSSR = Bun.serve({ port: 3000, fetch: serveSSR });
-		fs.watch("./src", { recursive: true }, async (event, filename) => {
+		fs.watch("./src", { recursive: true }, async (event) => {
+			if (event === "rename") return;
 			devServerSSR.reload({ fetch: serveSSR });
 		});
 	} catch (e: unknown) {
@@ -59,7 +60,7 @@ cli.command("dev:ssr").action(async () => {
 cli.command("dev").action(async () => {
 	log.title();
 	await runBootstrap();
-	await $`concurrently "MODE=development bun-rsc dev:ssr" "MODE=development bun-rsc dev:rsc" --raw --kill-others`;
+	await $`concurrently "MODE=development bun-rsc dev:rsc" "MODE=development bun-rsc dev:ssr" --raw --kill-others`;
 });
 
 // Build command

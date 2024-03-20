@@ -1,5 +1,7 @@
 import fs from "node:fs";
-import { $, type BuildArtifact, BuildConfig } from "bun";
+import { unlink } from "node:fs/promises";
+import { $ } from "bun";
+import * as esbuild from "esbuild";
 import postcss from "postcss";
 import recursive from "recursive-readdir";
 import { ClientRscMap, type RscMap } from "../types/internal";
@@ -40,7 +42,7 @@ global.__webpack_require__ = __webpack_require__;
 
 const clientComponentsDist = resolveClientComponentsDist();
 const serverComponentsDist = resolveServerComponentsDist();
-const serverActionsDist = resolveServerActionsDist("src");
+const serverActionsDist = resolveServerActionsDist();
 
 function isClientComponentModule(code: string) {
 	return code.startsWith('"use client"') || code.startsWith("'use client'");
@@ -57,7 +59,7 @@ function isServerActionModule(code: string) {
  * */
 export async function build() {
 	log.i(`Mode ${process.env.MODE} 🏞`);
-	const start = Date.now();
+	const buildStartDate = Date.now();
 
 	fs.rmSync(dist, { recursive: true });
 
@@ -82,13 +84,12 @@ export async function build() {
 	 * */
 	const serverComponentsBuildEntrypoints = await recursive(resolveSrc("pages"));
 
-	const serverComponentsBuildResult = await Bun.build({
-		target: "bun",
-		sourcemap: "none",
-		splitting: true,
-		format: "esm",
-		entrypoints: serverComponentsBuildEntrypoints,
+	const serverComponentsBuildResult = await esbuild.build({
+		entryPoints: serverComponentsBuildEntrypoints,
 		outdir: serverComponentsDist,
+		format: "esm",
+		bundle: true,
+		splitting: true,
 		external: ["bun-rsc", "react", "react-dom"],
 		plugins: [
 			{
@@ -100,12 +101,12 @@ export async function build() {
 						if (isClientComponentModule(code)) {
 							// if it is a client component, return a reference to the client component bundle
 							clientEntryPoints.add(path);
-
 							return {
 								contents: replaceServerCodeWithClientReferences(
 									path,
 									code,
 									clientComponentMap,
+									buildStartDate
 								),
 								loader: "js",
 							};
@@ -134,9 +135,9 @@ export async function build() {
 			},
 		],
 	});
-	if (!serverComponentsBuildResult.success) {
+	if (serverComponentsBuildResult.errors.length > 0) {
 		log.e("Server build failed");
-		console.log(serverComponentsBuildResult.logs);
+		console.log(serverComponentsBuildResult.errors);
 		throw new Error("Server build failed");
 	}
 
@@ -157,10 +158,12 @@ export async function build() {
 		process.cwd(),
 		"src/router.tsx",
 	)}`;
-	const clientBuildOptions: BuildConfig = {
-		entrypoints: [...clientEntryPoints, "./src/router.tsx"],
-		splitting: true,
+	const clientBuildOptions: esbuild.BuildOptions = {
+		entryPoints: [...clientEntryPoints, "./src/router.tsx"],
 		outdir: clientComponentsDist,
+		splitting: true,
+		format: "esm",
+		bundle: true,
 		define: {
 			"process.env.MODE": JSON.stringify(process.env.MODE ?? "development"),
 		},
@@ -197,41 +200,49 @@ export async function build() {
 	};
 
 	// Build client components for CSR
-	const csrResults = await Bun.build({
+	const csrResults = await esbuild.build({
 		...clientBuildOptions,
-		naming: "[dir]/[name].rsc.[ext]",
+		entryNames: `[dir]/[name]-${buildStartDate}.rsc`,
 	});
-	if (!csrResults.success) {
+	if (csrResults.errors.length > 0) {
 		log.e("CSR build failed");
-		console.log(csrResults.logs);
+		console.log(csrResults.errors);
 		throw new Error("CSR build failed");
 	}
-	const ssrResults = await Bun.build({
+	const ssrResults = await esbuild.build({
 		...clientBuildOptions,
 		external: ["react", "react-dom"],
-		naming: "[dir]/[name].ssr.[ext]",
+		entryNames: `[dir]/[name]-${buildStartDate}.ssr`,
 	});
-	if (!ssrResults.success) {
+	if (ssrResults.errors.length > 0) {
 		log.e("SSR build failed");
-		console.log(ssrResults.logs);
+		console.log(ssrResults.errors);
 		throw new Error("SSR build failed");
 	}
+	// remove useless ssr file (i am sure there is a better way to do this inside esbuild i am just lazy)
+	await unlink(resolveClientComponentsDist(`router-${buildStartDate}.ssr.js`));
+
+	// rename router file to be used by the server
+	await fs.promises.rename(
+		resolveClientComponentsDist(`router-${buildStartDate}.rsc.js`),
+		resolveClientComponentsDist("__bun_rsc_router.js"),
+	);
 
 	if (serverActionEntryPoints.size > 0) {
 		log.i("Building server actions 💪");
-		const serverActionResults = await Bun.build({
+		const serverActionResults = await esbuild.build({
 			format: "esm",
-			entrypoints: [...serverActionEntryPoints],
-			sourcemap: "none",
+			entryPoints: [...serverActionEntryPoints],
 			splitting: true,
+			bundle: true,
 			outdir: serverActionsDist,
 			define: {
 				"process.env.MODE": JSON.stringify(process.env.MODE),
 			},
 		});
-		if (!serverActionResults.success) {
+		if (serverActionResults.errors.length > 0) {
 			log.e("Server actions build failed");
-			console.log(serverActionResults.logs);
+			console.log(serverActionResults.errors);
 			throw new Error("Server actions build failed");
 		}
 	}
@@ -249,8 +260,8 @@ export async function build() {
 	 * Parse built CSS files with PostCSS
 	 * -------------------------------------------------------------------------------------
 	 * */
-	async function parseCSS(files: BuildArtifact[]) {
-		const cssFiles = files.filter((f) => f.path.endsWith(".css"));
+	async function parseCSS(files: Array<string>) {
+		const cssFiles = files.filter((f) => f.endsWith(".css"));
 		const manifest: Array<string> = [];
 		let postcssConfig = null;
 		try {
@@ -269,12 +280,12 @@ export async function build() {
 				},
 			);
 			for (const f of cssFiles) {
-				const rawCSS = await Bun.file(f.path).text();
+				const rawCSS = await Bun.file(f).text();
 				const result = await postcss(postcssConfigPlugins).process(rawCSS, {
-					from: f.path,
+					from: f,
 				});
-				await Bun.write(f.path, result.css);
-				const fileName = f.path.replace(resolveRoot(""), "/");
+				await Bun.write(f, result.css);
+				const fileName = f.replace(resolveRoot(""), "/");
 				manifest.push(fileName);
 			}
 			await Bun.write(
@@ -285,11 +296,28 @@ export async function build() {
 			console.log(e);
 		}
 	}
+	function getAllCssFiles(filesArray: Array<string> = []) {
+		const files = fs.readdirSync(resolveServerComponentsDist());
 
-	await parseCSS(serverComponentsBuildResult.outputs);
+		for (const file of files) {
+			const filePath = combineUrl(resolveServerComponentsDist(), file);
+			const fileStat = fs.statSync(filePath);
+
+			if (fileStat.isDirectory()) {
+				getAllCssFiles(filesArray);
+			} else if (file.endsWith(".css")) {
+				filesArray.push(filePath);
+			}
+		}
+
+		return filesArray;
+	}
+
+	const cssFiles = getAllCssFiles();
+	await parseCSS(cssFiles);
 
 	log.s(
-		`Build success in ${Date.now() - start} ms`,
+		`Build success in ${Date.now() - buildStartDate} ms`,
 		process.env.MODE !== "development",
 	);
 	await fs.unlinkSync(combineUrl(process.cwd(), "src/router.tsx"));

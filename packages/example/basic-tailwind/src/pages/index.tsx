@@ -1,5 +1,5 @@
 import "../global.css";
-import Counter from "../components/Counter.tsx";
+import { Counter } from "../components/Counter.tsx";
 import { Nav } from "../components/Nav.tsx";
 
 export const meta = {

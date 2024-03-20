@@ -11,9 +11,9 @@ export const meta = {
 
 export async function Page() {
 	const currentTodosFile = Bun.file(`${process.cwd()}/todos.txt`);
-	let currentTodos = "No todos yet";
+	let currentTodos = ["No todos yet"];
 	if (await currentTodosFile.exists()) {
-		currentTodos = await currentTodosFile.text();
+		currentTodos = (await currentTodosFile.text()).split("\n");
 	}
 	return (
 		<main className="pt-8 bg-slate-100 h-screen">
@@ -21,13 +21,13 @@ export async function Page() {
 			<section className="container mx-auto flex flex-col gap-4">
 				<section className="bg-white rounded-lg shadow-lg p-4 flex flex-col gap-4">
 					<h2>Form:</h2>
-					<p>{currentTodos}</p>
 					<h3>Server form</h3>
 					<form action={addTodo}>
 						<FormContent />
 					</form>
 					<h3>Client form</h3>
 					<ClientForm />
+					<ul className="pl-4">{currentTodos.map((todo) => <li key={todo} className="list-disc">{todo}</li>)}</ul>
 				</section>
 			</section>
 		</main>

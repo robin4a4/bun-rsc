@@ -1,4 +1,17 @@
+import { dispatchActionReceivedEvent } from "../client/events";
 import { refreshPort } from "./const";
+
+function reloadStylesheet(): void {
+    const links = document.getElementsByTagName('link');
+    for (const link of links) {
+        if (link.rel === 'stylesheet') {
+            const href = link.getAttribute('href');
+            if (href) {
+                link.setAttribute('href', `${href}?timestamp=${Date.now()}`);
+            }
+        }
+    }
+}
 
 /**
  * Taken from https://github.com/bholmesdev/simple-rsc/blob/main/app/utils/dev/live-reload.js
@@ -17,7 +30,12 @@ export function clientLiveReload() {
 	};
 
 	const refresh = () => {
-		window.location.reload();
+		setTimeout(() => {
+			window.__BUN_RSC_CACHE__.clear();
+			dispatchActionReceivedEvent();
+			reloadStylesheet();
+
+		}, 500);
 	};
 
 	/**
