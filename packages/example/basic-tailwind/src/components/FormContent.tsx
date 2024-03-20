@@ -15,7 +15,7 @@ export function FormContent() {
 				className="bg-blue-500 disabled:bg-slate-300 rounded-lg px-4 py-2 text-white"
 				type="submit"
 			>
-				Add sdfsfdf
+				Add
 			</button>
 		</div>
 	);
