@@ -5,6 +5,7 @@ Ultra minimalist React server component implementation using bun. Absolutely exp
 Heavily inspired by:
 - https://github.com/bholmesdev/simple-rsc
 - https://github.com/hex2f/marz
+- https://github.com/lubieowoce/tangle
 
 ## Getting started
 
@@ -81,16 +82,8 @@ export default () => {
 ```
 ## Current limitations
 
-### Typing
-
-To get the correct types for the new react features you must create a global declaration file in which you put:
-
-```
-/// <reference types="react/experimental" />
-```
-
 ### Server actions limitations
-The "use server" directive is only supported at the top level of the module and the module is only importable in a client component:
+the "use server" directive is only supported at the top level of the module:
 
 ```typescript
 // addTodo.ts
@@ -104,7 +97,6 @@ export async function addTodo(formData: FormData) {
 
 ```typescript
 // TodoList.tsx
-"use client";
 import {addTodo} from "./addTodo";
 
 export function TodoList() {
@@ -118,13 +110,6 @@ export function TodoList() {
   );
 }
 ```
-
-Actions in server components are not yet supported.
-
-
-### SSR limitations
-
-The framework support ssr but the hydration is done by refetching the rsc form the client, which is far from optimal. We should use https://github.com/devongovett/rsc-html-stream
 
 ### Dev mode
 

@@ -5,6 +5,7 @@ Ultra minimalist React server component implementation using bun. Absolutely exp
 Heavily inspired by:
 - https://github.com/bholmesdev/simple-rsc
 - https://github.com/hex2f/marz
+- https://github.com/lubieowoce/tangle
 
 ## Getting started
 
