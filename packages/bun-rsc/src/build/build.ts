@@ -106,7 +106,7 @@ export async function build() {
 									path,
 									code,
 									clientComponentMap,
-									buildStartDate
+									buildStartDate,
 								),
 								loader: "js",
 							};

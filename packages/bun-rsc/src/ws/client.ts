@@ -2,15 +2,15 @@ import { dispatchActionReceivedEvent } from "../client/events";
 import { refreshPort } from "./const";
 
 function reloadStylesheet(): void {
-    const links = document.getElementsByTagName('link');
-    for (const link of links) {
-        if (link.rel === 'stylesheet') {
-            const href = link.getAttribute('href');
-            if (href) {
-                link.setAttribute('href', `${href}?timestamp=${Date.now()}`);
-            }
-        }
-    }
+	const links = document.getElementsByTagName("link");
+	for (const link of links) {
+		if (link.rel === "stylesheet") {
+			const href = link.getAttribute("href");
+			if (href) {
+				link.setAttribute("href", `${href}?timestamp=${Date.now()}`);
+			}
+		}
+	}
 }
 
 /**
@@ -34,7 +34,6 @@ export function clientLiveReload() {
 			window.__BUN_RSC_CACHE__.clear();
 			dispatchActionReceivedEvent();
 			reloadStylesheet();
-
 		}, 500);
 	};
 

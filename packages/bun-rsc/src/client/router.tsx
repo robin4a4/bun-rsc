@@ -22,7 +22,7 @@ import { BASE_RSC_SERVER_URL } from "../utils/common";
 import { clientLiveReload } from "../ws/client";
 import { callServer } from "./call-server";
 import { useRouterState } from "./hooks";
-import {getRscUrl} from "./utils";
+import { getRscUrl } from "./utils";
 
 window.__BUN_RSC_CACHE__ = new Map();
 
@@ -35,7 +35,9 @@ if (process.env.MODE === "development") clientLiveReload();
 const queryParam = new URLSearchParams(window.location.search);
 
 function Router() {
-	const [rscUrl, setRscUrl] = useState(getRscUrl(window.location.pathname, queryParam));
+	const [rscUrl, setRscUrl] = useState(
+		getRscUrl(window.location.pathname, queryParam),
+	);
 	const [routerState, setRouterState] = useRouterState();
 	useEffect(() => {
 		function navigate(url: string) {
