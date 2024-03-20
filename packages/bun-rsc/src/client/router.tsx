@@ -96,7 +96,6 @@ function ServerOutput({
 	routerState,
 }: { url: string; routerState: number }): ReactNode {
 	const cacheKey = getCacheKey(url);
-	console.log("cacheKey", cacheKey, routerState, url);
 	if (!window.__BUN_RSC_CACHE__.has(cacheKey)) {
 		data =
 			routerState === 0
