@@ -74,7 +74,7 @@ cli.command("serve-ssr").action(async () => {
 	log.title();
 	await runBootstrap();
 	const server = Bun.serve({
-		port: 3000,
+		port: process.env.PORT ?? 3000,
 		fetch: serveSSR,
 	});
 	log.i(`SSR server listening on ${server.port}`);
@@ -83,7 +83,7 @@ cli.command("serve-ssr").action(async () => {
 cli.command("serve-rsc").action(async () => {
 	log.title();
 	const server = Bun.serve({
-		port: 3001,
+		port: process.env.PORT ? process.env.PORT + 1 : 3001,
 		fetch: serveRSC,
 	});
 	log.i(`RSC server listening on ${server.port}`);
