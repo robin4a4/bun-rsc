@@ -1,5 +1,11 @@
 # bun-rsc
 
+## 0.0.8
+
+### Patch Changes
+
+- 3b2f289: fix import module in production issue
+
 ## 0.0.7
 
 ### Patch Changes
