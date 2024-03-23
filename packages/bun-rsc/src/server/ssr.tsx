@@ -30,6 +30,8 @@ const router = new Bun.FileSystemRouter({
 const middleware = await getMiddleware();
 
 export async function serveSSR(request: Request) {
+	if (process.env.MODE === "production")
+		log.i(`SSR: Request url: ${request.url}`);
 	const match = router.match(request.url);
 	let manifestString = "";
 	let manifest: Array<string> = [];
@@ -74,26 +76,31 @@ export async function serveSSR(request: Request) {
 			)}?ssr=true&${searchParams.toString()}`;
 			log.i(`Fetching rsc at : ${rscUrl}`);
 
-			const rscStream = await fetch(rscUrl).then((response) => {
-				if (!response.body) {
-					throw new Error(`Failed to fetch rsc at ${rscUrl}`);
-				}
-				const reader = response.body.getReader();
-				return new ReadableStream({
-					async start(controller) {
-						while (true) {
-							const { done, value } = await reader.read();
-							if (done) {
-								break;
+			const rscStream = await fetch(rscUrl)
+				.then((response) => {
+					if (!response.body) {
+						throw new Error(`Failed to fetch rsc at ${rscUrl}`);
+					}
+					const reader = response.body.getReader();
+					return new ReadableStream({
+						async start(controller) {
+							while (true) {
+								const { done, value } = await reader.read();
+								if (done) {
+									break;
+								}
+								controller.enqueue(value);
 							}
-							controller.enqueue(value);
-						}
 
-						controller.close();
-						reader.releaseLock();
-					},
+							controller.close();
+							reader.releaseLock();
+						},
+					});
+				})
+				.catch((e) => {
+					log.e(`Fetch error while trying ${rscUrl}`);
+					throw e;
 				});
-			});
 			// Fork the stream
 			const [s1, s2] = rscStream.tee();
 

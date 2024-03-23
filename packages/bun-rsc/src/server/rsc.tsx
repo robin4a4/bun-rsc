@@ -28,6 +28,8 @@ const router = new Bun.FileSystemRouter({
 const middleware = await getMiddleware();
 
 export async function serveRSC(request: Request) {
+	if (process.env.MODE === "production")
+		log.i(`RSC: Request url: ${request.url}`);
 	const ssrRequestUrl = request.url
 		.replace(`${BUN_RSC_SPECIFIC_KEYWORD}/`, "")
 		.replace(`${BUN_RSC_SPECIFIC_KEYWORD}`, "");
