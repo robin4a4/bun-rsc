@@ -1,5 +1,11 @@
 # bun-rsc
 
+## 0.0.6
+
+### Patch Changes
+
+- ec3ffdf: add log for production
+
 ## 0.0.5
 
 ### Patch Changes
