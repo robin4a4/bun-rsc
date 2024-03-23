@@ -46,8 +46,7 @@
     "@types/recursive-readdir": "^2.2.4",
     "@types/gradient-string": "^1.1.5",
     "bun-plugin-dts": "0.2.1",
-    "bun-types": "latest",
-    "concurrently": "8.2.2"
+    "bun-types": "latest"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
@@ -63,6 +62,7 @@
     "react-dom": "18.3.0-canary-03d6f7cf0-20240209",
     "react-server-dom-webpack": "18.3.0-canary-03d6f7cf0-20240209",
     "recursive-readdir": "^2.2.3",
-    "ws": "^8.16.0"
+    "ws": "^8.16.0",
+    "concurrently": "8.2.2"
   }
 }

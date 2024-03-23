@@ -13,12 +13,7 @@ import {
 } from "react-server-dom-webpack/client";
 import { Layout } from "../components/Layout";
 import { rscStream } from "../html-stream/client";
-import {
-	BUN_RSC_SPECIFIC_KEYWORD,
-	combineUrl,
-	getCacheKey,
-} from "../utils/common";
-import { BASE_RSC_SERVER_URL } from "../utils/common";
+import { getCacheKey } from "../utils/common";
 import { clientLiveReload } from "../ws/client";
 import { callServer } from "./call-server";
 import { useRouterState } from "./hooks";

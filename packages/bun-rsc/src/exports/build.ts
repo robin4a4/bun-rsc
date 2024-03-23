@@ -12,7 +12,17 @@ await Bun.build({
 	entrypoints: ["./src/exports/server-condition-export.ts"],
 	format: "esm",
 	outdir: "./dist/serve",
-	external: ["gradient-string", "picocolors"],
+	external: [
+		"arg",
+		"cac",
+		"esbuild",
+		"gradient-string",
+		"picocolors",
+		"postcss",
+		"recursive-readdir",
+		"ws",
+		"concurrently",
+	],
 	conditions: ["react-server"],
 });
 
@@ -29,7 +39,7 @@ log.i("Building the router export");
 await Bun.build({
 	entrypoints: ["./src/client/router.tsx"],
 	format: "esm",
-	external: ["react", "react-dom", "react-server-dom-webpack"],
+	external: ["react", "react-dom", "react-server-dom-webpack", "ws"],
 	outdir: "./dist/router",
 });
 
@@ -50,6 +60,12 @@ const results = await Bun.build({
 		"react-server-dom-webpack",
 		"gradient-string",
 		"picocolors",
+		"concurrently",
+		"cac",
+		"ws",
+		"postcss",
+		"recursive-readdir",
+		"arg",
 	],
 	splitting: true,
 });
