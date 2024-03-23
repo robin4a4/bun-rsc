@@ -1,5 +1,11 @@
 # bun-rsc
 
+## 0.0.7
+
+### Patch Changes
+
+- 6f786e6: add support for port env variable
+
 ## 0.0.6
 
 ### Patch Changes
