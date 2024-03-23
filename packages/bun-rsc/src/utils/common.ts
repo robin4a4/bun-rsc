@@ -17,7 +17,7 @@ export function combineUrl(path1: string, path2: string) {
 export const BASE_RSC_SERVER_URL =
 	process.env.MODE === "development"
 		? "http://localhost:3001"
-		: process.env.RAILWAY_PUBLIC_DOMAIN ?? "";
+		: `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` ?? "";
 
 export function getCacheKey(url: string) {
 	const urlObj = new URL(url.replace(`/${BUN_RSC_SPECIFIC_KEYWORD}`, ""));
