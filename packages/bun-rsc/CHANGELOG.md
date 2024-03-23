@@ -1,5 +1,11 @@
 # bun-rsc
 
+## 0.0.5
+
+### Patch Changes
+
+- 09c5a32: remove dependencies from build
+
 ## 0.0.4
 
 ### Patch Changes
