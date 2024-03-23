@@ -28,8 +28,6 @@ const router = new Bun.FileSystemRouter({
 const middleware = await getMiddleware();
 
 export async function serveRSC(request: Request) {
-	if (process.env.MODE === "production")
-		log.i(`RSC: Request url: ${request.url}`);
 	const ssrRequestUrl = request.url
 		.replace(`${BUN_RSC_SPECIFIC_KEYWORD}/`, "")
 		.replace(`${BUN_RSC_SPECIFIC_KEYWORD}`, "");
@@ -69,15 +67,11 @@ export async function serveRSC(request: Request) {
 		const serverFilePath = resolveServerFileFromFilePath(match.filePath);
 
 		try {
-			const PageModule = (await import(
-				`${serverFilePath}${
-					// Invalidate cached module on every request in dev mode
-					// WARNING: can cause memory leaks for long-running dev servers!
-					process.env.NODE_ENV === "development"
-						? `?invalidate=${Date.now()}`
-						: ""
-				}}`
-			)) as PageModule;
+			const modulePath =
+				process.env.MODE === "development"
+					? `${serverFilePath}?invalidate=${Date.now()}`
+					: serverFilePath;
+			const PageModule = (await import(modulePath)) as PageModule;
 			const PageComponent = PageModule.Page;
 			const pageMeta: Meta = PageModule.meta;
 			const props: PageProps = {

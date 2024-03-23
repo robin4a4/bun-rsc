@@ -30,8 +30,6 @@ const router = new Bun.FileSystemRouter({
 const middleware = await getMiddleware();
 
 export async function serveSSR(request: Request) {
-	if (process.env.MODE === "production")
-		log.i(`SSR: Request url: ${request.url}`);
 	const match = router.match(request.url);
 	let manifestString = "";
 	let manifest: Array<string> = [];
@@ -60,14 +58,11 @@ export async function serveSSR(request: Request) {
 					return middlewareResponse;
 				}
 			}
-
-			const PageModule = (await import(
-				`${serverFilePath}${
-					// Invalidate cached module on every request in dev mode
-					// WARNING: can cause memory leaks for long-running dev servers!
-					process.env.MODE === "development" ? `?invalidate=${Date.now()}` : ""
-				}}`
-			)) as PageModule;
+			const modulePath =
+				process.env.MODE === "development"
+					? `${serverFilePath}?invalidate=${Date.now()}`
+					: serverFilePath;
+			const PageModule = (await import(modulePath)) as PageModule;
 
 			const pageMeta = PageModule.meta;
 			const rscUrl = `${combineUrl(

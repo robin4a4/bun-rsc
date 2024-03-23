@@ -83,7 +83,7 @@ cli.command("serve-ssr").action(async () => {
 cli.command("serve-rsc").action(async () => {
 	log.title();
 	const server = Bun.serve({
-		port: process.env.PORT ? process.env.PORT + 1 : 3001,
+		port: process.env.PORT ?? 3001,
 		fetch: serveRSC,
 	});
 	log.i(`RSC server listening on ${server.port}`);
