@@ -1,5 +1,11 @@
 # bun-rsc
 
+## 0.0.9
+
+### Patch Changes
+
+- 510170e: fix ulr
+
 ## 0.0.8
 
 ### Patch Changes
