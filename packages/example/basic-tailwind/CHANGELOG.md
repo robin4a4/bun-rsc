@@ -4,6 +4,13 @@
 
 ### Patch Changes
 
+- Updated dependencies [ec3ffdf]
+  - bun-rsc@0.0.6
+
+## null
+
+### Patch Changes
+
 - Updated dependencies [09c5a32]
   - bun-rsc@0.0.5
 
