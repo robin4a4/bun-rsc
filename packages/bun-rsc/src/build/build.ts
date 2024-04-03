@@ -90,7 +90,7 @@ export async function build() {
 		format: "esm",
 		bundle: true,
 		splitting: true,
-		external: ["bun-rsc", "react", "react-dom"],
+		external: ["bun-rsc", "react", "react-dom", "bun:sqlite", "node:fs"],
 		plugins: [
 			{
 				name: "build-client-components-and-server-actions",
@@ -236,6 +236,7 @@ export async function build() {
 			splitting: true,
 			bundle: true,
 			outdir: serverActionsDist,
+			external: ["bun:sqlite", "node:fs"],
 			define: {
 				"process.env.MODE": JSON.stringify(process.env.MODE),
 			},

@@ -83,10 +83,11 @@ function Router() {
 		};
 	}, [setRouterState]);
 
+	const manifest = window.__MANIFEST_STRING__ ? JSON.parse(window.__MANIFEST_STRING__) : [];
 	return (
 		<Layout
 			meta={JSON.parse(window.__SSR_META_STRING__)}
-			cssManifest={JSON.parse(window.__MANIFEST_STRING__)}
+			cssManifest={manifest}
 		>
 			<ServerOutput key={routerState} routerState={routerState} url={rscUrl} />
 		</Layout>
