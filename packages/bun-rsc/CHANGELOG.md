@@ -1,5 +1,11 @@
 # bun-rsc
 
+## 0.0.10
+
+### Patch Changes
+
+- 073f6f9: add support for node:fs and bun:sqlite
+
 ## 0.0.9
 
 ### Patch Changes
