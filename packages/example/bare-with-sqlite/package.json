@@ -1,0 +1,23 @@
+{
+  "name": "example-bare",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "bun-rsc dev",
+    "serve:rsc": "bun-rsc serve-rsc",
+    "serve:ssr": "bun-rsc serve-ssr",
+    "build": "bun-rsc build"
+  },
+  "devDependencies": {
+    "bun-types": "latest",
+    "@types/react": "18.2.37",
+    "@types/react-dom": "18.2.15"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "bun-rsc": "workspace:*"
+  },
+  "version": null
+}
