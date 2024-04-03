@@ -236,6 +236,7 @@ export async function build() {
 			splitting: true,
 			bundle: true,
 			outdir: serverActionsDist,
+			outbase: 'src',
 			external: ["bun:sqlite", "node:fs"],
 			define: {
 				"process.env.MODE": JSON.stringify(process.env.MODE),
