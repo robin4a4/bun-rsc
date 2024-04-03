@@ -12,6 +12,7 @@ import {
 } from "../utils/common";
 import { BASE_RSC_SERVER_URL } from "../utils/common";
 import { dispatchActionReceivedEvent } from "./events";
+import {use} from "react";
 
 export const callServer = async (id: string, args: unknown[]) => {
 	const url = `${combineUrl(
@@ -41,9 +42,10 @@ export const callServer = async (id: string, args: unknown[]) => {
 	});
 
 	const actionResultPromise = createFromFetch(responsePromise, { callServer });
+	console.log("IN CALL SERVER", await actionResultPromise)
 	window.__BUN_RSC_CACHE__.set(
 		getCacheKey(window.location.href),
-		actionResultPromise,
+		await actionResultPromise,
 	);
 	const actionResult = await actionResultPromise;
 	dispatchActionReceivedEvent();
