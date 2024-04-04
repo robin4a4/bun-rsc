@@ -1,4 +1,4 @@
-import { ClientRscMap, RscMap } from "../types/internal";
+import type { ClientRscMap, RscMap } from "../types/internal";
 import { createModuleId } from "../utils/server";
 
 const TSXTranspiler = new Bun.Transpiler({ loader: "tsx" });

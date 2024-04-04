@@ -1,4 +1,4 @@
-import { Meta } from "../types";
+import type { Meta } from "../types";
 
 export function MetaTags({ meta }: { meta: Meta }) {
 	return (

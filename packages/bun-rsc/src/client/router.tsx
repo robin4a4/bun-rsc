@@ -116,7 +116,7 @@ function ServerOutput({
 		}
 	}, []);
 	const lazyJsx = window.__BUN_RSC_CACHE__.get(cacheKey);
-	console.log("lazyJsx", lazyJsx.status)
+	console.log("lazyJsx", lazyJsx.status);
 	// @ts-ignore
 	return lazyJsx.status === "fulfilled" ? use(lazyJsx) : lazyJsx;
 }

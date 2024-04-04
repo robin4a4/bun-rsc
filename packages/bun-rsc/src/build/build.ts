@@ -4,7 +4,7 @@ import { $ } from "bun";
 import * as esbuild from "esbuild";
 import postcss from "postcss";
 import recursive from "recursive-readdir";
-import { ClientRscMap, type RscMap } from "../types/internal";
+import type { ClientRscMap, RscMap } from "../types/internal";
 import { combineUrl } from "../utils/common";
 import {
 	clientComponentMapUrl,
@@ -236,7 +236,7 @@ export async function build() {
 			splitting: true,
 			bundle: true,
 			outdir: serverActionsDist,
-			outbase: 'src',
+			outbase: "src",
 			external: ["bun:sqlite", "node:fs"],
 			define: {
 				"process.env.MODE": JSON.stringify(process.env.MODE),
