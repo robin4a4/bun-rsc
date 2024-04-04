@@ -1,5 +1,11 @@
 # bun-rsc
 
+## 0.0.12
+
+### Patch Changes
+
+- fed7955: fix server action rerendering
+
 ## 0.0.11
 
 ### Patch Changes
