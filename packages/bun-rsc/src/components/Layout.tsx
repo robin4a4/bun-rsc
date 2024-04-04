@@ -1,5 +1,5 @@
-import { type PropsWithChildren } from "react";
-import { Meta } from "../types/external";
+import type { PropsWithChildren } from "react";
+import type { Meta } from "../types/external";
 import { CssTags } from "./CssTags";
 import { MetaTags } from "./MetaTags";
 

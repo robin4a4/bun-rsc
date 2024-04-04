@@ -1,23 +1,23 @@
+import { type ReactNode, type Thenable, startTransition } from "react";
 import {
 	createFromFetch,
 	encodeReply,
-	// @ts-ignore
+	// @ts-expect-error
 } from "react-server-dom-webpack/client";
-
 import {
+	BASE_RSC_SERVER_URL,
 	BUN_RSC_SPECIFIC_KEYWORD,
 	RSC_CONTENT_TYPE,
 	combineUrl,
 	getCacheKey,
 } from "../utils/common";
-import { BASE_RSC_SERVER_URL } from "../utils/common";
-import { dispatchActionReceivedEvent } from "./events";
 
 export const callServer = async (id: string, args: unknown[]) => {
-	const url = `${combineUrl(
+	const baseUrl = combineUrl(
 		BASE_RSC_SERVER_URL,
 		combineUrl(BUN_RSC_SPECIFIC_KEYWORD, window.location.pathname),
-	)}?actionId=${encodeURIComponent(id)}`;
+	);
+	const url = `${baseUrl}?actionId=${encodeURIComponent(id)}`;
 
 	let requestOpts: Pick<RequestInit, "headers" | "body">;
 	if (!Array.isArray(args) || args.some((a) => a instanceof FormData)) {
@@ -35,17 +35,19 @@ export const callServer = async (id: string, args: unknown[]) => {
 		};
 	}
 
-	const responsePromise = fetch(url, {
-		method: "POST",
-		...requestOpts,
+	const actionResult = createFromFetch(
+		fetch(url, {
+			method: "POST",
+			...requestOpts,
+		}),
+		{ callServer },
+	) as Thenable<ReactNode>;
+	const cacheKey = getCacheKey(baseUrl);
+	startTransition(() => {
+		if (window.__UPDATE_RSC_PAYLOAD__) {
+			window.__BUN_RSC_CACHE__.set(cacheKey, actionResult);
+			window.__UPDATE_RSC_PAYLOAD__(actionResult);
+		}
 	});
-
-	const actionResultPromise = createFromFetch(responsePromise, { callServer });
-	window.__BUN_RSC_CACHE__.set(
-		getCacheKey(window.location.href),
-		actionResultPromise,
-	);
-	const actionResult = await actionResultPromise;
-	dispatchActionReceivedEvent();
 	return actionResult;
 };

@@ -1,5 +1,6 @@
 import {
 	type ReactNode,
+	type Thenable,
 	startTransition,
 	use,
 	useEffect,
@@ -16,29 +17,43 @@ import { rscStream } from "../html-stream/client";
 import { getCacheKey } from "../utils/common";
 import { clientLiveReload } from "../ws/client";
 import { callServer } from "./call-server";
-import { useRouterState } from "./hooks";
 import { getRscUrl } from "./utils";
 
 window.__BUN_RSC_CACHE__ = new Map();
 
-let data: unknown;
+const initialRscPayload = createFromReadableStream(rscStream, {
+	callServer,
+}) as Thenable<ReactNode>;
 
-hydrateRoot(document, <Router />);
+const initialRscUrl = getRscUrl(
+	window.location.pathname,
+	new URLSearchParams(window.location.search),
+);
+const initialCacheKey = getCacheKey(initialRscUrl);
+window.__BUN_RSC_CACHE__.set(initialCacheKey, initialRscPayload);
 
-if (process.env.MODE === "development") clientLiveReload();
+hydrateRoot(document, <Router initialRscPayload={initialRscPayload} />);
 
-const queryParam = new URLSearchParams(window.location.search);
-
-function Router() {
-	const [rscUrl, setRscUrl] = useState(
-		getRscUrl(window.location.pathname, queryParam),
-	);
-	const [routerState, setRouterState] = useRouterState();
+function Router({
+	initialRscPayload,
+}: { initialRscPayload: Thenable<ReactNode> }) {
+	const [rscPayload, setRscPayload] = useState(initialRscPayload);
+	window.__UPDATE_RSC_PAYLOAD__ = setRscPayload;
 	useEffect(() => {
 		function navigate(url: string) {
+			const [baseUrl, search] = url.split("?");
+			const rscUrl = getRscUrl(baseUrl, new URLSearchParams(search));
+			const cacheKey = getCacheKey(rscUrl);
 			startTransition(() => {
-				setRouterState((prev) => prev + 1);
-				setRscUrl(getRscUrl(url, queryParam));
+				if (!window.__BUN_RSC_CACHE__.has(cacheKey)) {
+					const newRscPayload = createFromFetch(fetch(rscUrl), {
+						callServer,
+					}) as Thenable<ReactNode>;
+					window.__BUN_RSC_CACHE__.set(cacheKey, newRscPayload);
+				}
+				setRscPayload(
+					window.__BUN_RSC_CACHE__.get(cacheKey) as Thenable<ReactNode>,
+				);
 			});
 		}
 
@@ -72,38 +87,6 @@ function Router() {
 		};
 		window.addEventListener("popstate", popstateHandler);
 
-		return () => {
-			window.removeEventListener("click", clickHandler, true);
-			window.removeEventListener("popstate", popstateHandler);
-		};
-	}, [setRouterState]);
-
-	const manifest = window.__MANIFEST_STRING__
-		? JSON.parse(window.__MANIFEST_STRING__)
-		: [];
-	return (
-		<Layout
-			meta={JSON.parse(window.__SSR_META_STRING__)}
-			cssManifest={manifest}
-		>
-			<ServerOutput key={routerState} routerState={routerState} url={rscUrl} />
-		</Layout>
-	);
-}
-
-function ServerOutput({
-	url,
-	routerState,
-}: { url: string; routerState: number }): ReactNode {
-	const cacheKey = getCacheKey(url);
-	if (!window.__BUN_RSC_CACHE__.has(cacheKey)) {
-		data =
-			routerState === 0
-				? createFromReadableStream(rscStream, { callServer: callServer })
-				: createFromFetch(fetch(url), { callServer });
-		window.__BUN_RSC_CACHE__.set(cacheKey, data);
-	}
-	useEffect(() => {
 		const rscPageMetaString = document
 			.querySelector("#rsc-page-meta")
 			?.getAttribute("value");
@@ -114,8 +97,27 @@ function ServerOutput({
 				.querySelector("meta[name=description]")
 				?.setAttribute("content", rscPageMeta.description);
 		}
+		let socket: WebSocket | null = null;
+		if (process.env.MODE === "development") socket = clientLiveReload();
+
+		return () => {
+			if (socket) {
+				socket.removeAllListeners();
+			}
+			window.removeEventListener("click", clickHandler, true);
+			window.removeEventListener("popstate", popstateHandler);
+		};
 	}, []);
-	const lazyJsx = window.__BUN_RSC_CACHE__.get(cacheKey);
-	// @ts-ignore
-	return use(lazyJsx);
+
+	const manifest = window.__MANIFEST_STRING__
+		? JSON.parse(window.__MANIFEST_STRING__)
+		: [];
+	return (
+		<Layout
+			meta={JSON.parse(window.__SSR_META_STRING__)}
+			cssManifest={manifest}
+		>
+			{use(rscPayload)}
+		</Layout>
+	);
 }

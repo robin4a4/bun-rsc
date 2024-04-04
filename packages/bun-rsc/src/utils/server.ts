@@ -2,8 +2,8 @@
 
 import gradient from "gradient-string";
 import pc from "picocolors";
-import { BootstrapType, MiddlewareType } from "../types/external";
-import { ClientRscMap, type RscMap } from "../types/internal";
+import type { BootstrapType, MiddlewareType } from "../types/external";
+import type { ClientRscMap, RscMap } from "../types/internal";
 import { BUN_RSC_SPECIFIC_KEYWORD_STATICS, combineUrl } from "./common";
 
 export const root = process.cwd();

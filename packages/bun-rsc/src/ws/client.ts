@@ -1,5 +1,14 @@
-import { dispatchActionReceivedEvent } from "../client/events";
+import { startTransition } from "react";
+
+import { callServer } from "../client/call-server";
+import { getRscUrl } from "../client/utils";
 import { refreshPort } from "./const";
+
+import {
+	createFromFetch,
+	// @ts-expect-error
+} from "react-server-dom-webpack/client";
+import { getCacheKey } from "../utils/common";
 
 function reloadStylesheet(): void {
 	const links = document.getElementsByTagName("link");
@@ -17,7 +26,7 @@ function reloadStylesheet(): void {
  * Taken from https://github.com/bholmesdev/simple-rsc/blob/main/app/utils/dev/live-reload.js
  */
 export function clientLiveReload() {
-	let socket: WebSocket;
+	let socket: WebSocket | null = null;
 	// @ts-ignore
 	let reconnectionTimerId: Timeout;
 
@@ -29,12 +38,20 @@ export function clientLiveReload() {
 		console.info("[refresh] ", message);
 	};
 
-	const refresh = () => {
-		setTimeout(() => {
-			window.__BUN_RSC_CACHE__.clear();
-			dispatchActionReceivedEvent();
-			reloadStylesheet();
-		}, 500);
+	const refresh = async () => {
+		const rscUrl = getRscUrl(
+			window.location.pathname,
+			new URLSearchParams(window.location.search),
+		);
+		const cacheKey = getCacheKey(rscUrl);
+		const refetchResult = createFromFetch(fetch(rscUrl), { callServer });
+		startTransition(() => {
+			if (window.__UPDATE_RSC_PAYLOAD__) {
+				window.__BUN_RSC_CACHE__.set(cacheKey, refetchResult);
+				window.__UPDATE_RSC_PAYLOAD__(refetchResult);
+			}
+		});
+		reloadStylesheet();
 	};
 
 	/**
@@ -75,4 +92,6 @@ export function clientLiveReload() {
 	connect(() => {
 		console.log("Live reload connected on", requestUrl);
 	});
+
+	return socket;
 }

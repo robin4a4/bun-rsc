@@ -1,5 +1,5 @@
-import { type ReactNode } from "react";
-import { Meta, PageProps } from "./external.ts";
+import type { ReactNode } from "react";
+import type { Meta, PageProps } from "./external.ts";
 
 export type RscMapEntry = {
 	id: string;
