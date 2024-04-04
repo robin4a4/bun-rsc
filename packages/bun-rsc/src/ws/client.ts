@@ -1,5 +1,12 @@
-import { dispatchActionReceivedEvent } from "../client/events";
+import { startTransition, type ReactNode } from "react";
+
 import { refreshPort } from "./const";
+import { getRscUrl } from "../client/utils";
+
+import {
+	createFromFetch,
+	// @ts-expect-error
+} from "react-server-dom-webpack/client";
 
 function reloadStylesheet(): void {
 	const links = document.getElementsByTagName("link");
@@ -16,7 +23,10 @@ function reloadStylesheet(): void {
 /**
  * Taken from https://github.com/bholmesdev/simple-rsc/blob/main/app/utils/dev/live-reload.js
  */
-export function clientLiveReload() {
+export function clientLiveReload(
+	callServer: (id: string, args: unknown[]) => Promise<unknown>,
+	updateRscPayload: ((rscPayload: ReactNode) => void) | null,
+) {
 	let socket: WebSocket;
 	// @ts-ignore
 	let reconnectionTimerId: Timeout;
@@ -29,12 +39,23 @@ export function clientLiveReload() {
 		console.info("[refresh] ", message);
 	};
 
-	const refresh = () => {
-		setTimeout(() => {
-			window.__BUN_RSC_CACHE__.clear();
-			dispatchActionReceivedEvent();
-			reloadStylesheet();
-		}, 500);
+	const refresh = async () => {
+		console.log("IN REFETCH");
+		const refetchResult = await createFromFetch(
+			fetch(
+				getRscUrl(
+					window.location.pathname,
+					new URLSearchParams(window.location.search),
+				),
+			),
+			{ callServer },
+		);
+		console.log("REFETCHED", refetchResult);
+		startTransition(() => {
+			console.log("UPDATING", updateRscPayload);
+			if (updateRscPayload) updateRscPayload(refetchResult);
+		});
+		reloadStylesheet();
 	};
 
 	/**
@@ -54,7 +75,9 @@ export function clientLiveReload() {
 		socket.addEventListener("message", (event) => {
 			if (event.data === "refresh") {
 				log("refreshing...");
-				refresh();
+				setTimeout(() => {
+					refresh();
+				}, 400);
 			}
 		});
 

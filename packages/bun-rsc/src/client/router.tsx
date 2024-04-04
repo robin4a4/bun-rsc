@@ -1,5 +1,6 @@
 import {
 	type ReactNode,
+	type Thenable,
 	startTransition,
 	use,
 	useEffect,
@@ -9,36 +10,87 @@ import { hydrateRoot } from "react-dom/client";
 import {
 	createFromFetch,
 	createFromReadableStream,
+	encodeReply,
 	// @ts-expect-error
 } from "react-server-dom-webpack/client";
 import { Layout } from "../components/Layout";
 import { rscStream } from "../html-stream/client";
-import { getCacheKey } from "../utils/common";
+import {
+	BASE_RSC_SERVER_URL,
+	BUN_RSC_SPECIFIC_KEYWORD,
+	RSC_CONTENT_TYPE,
+	combineUrl,
+	getCacheKey,
+} from "../utils/common";
 import { clientLiveReload } from "../ws/client";
-import { callServer } from "./call-server";
-import { useRouterState } from "./hooks";
 import { getRscUrl } from "./utils";
 
 window.__BUN_RSC_CACHE__ = new Map();
 
-let data: unknown;
+let updateRscPayload: ((rscPayload: ReactNode) => void) | null = null;
 
-hydrateRoot(document, <Router />);
+export const callServer = async (id: string, args: unknown[]) => {
+	const url = `${combineUrl(
+		BASE_RSC_SERVER_URL,
+		combineUrl(BUN_RSC_SPECIFIC_KEYWORD, window.location.pathname),
+	)}?actionId=${encodeURIComponent(id)}`;
 
-if (process.env.MODE === "development") clientLiveReload();
+	let requestOpts: Pick<RequestInit, "headers" | "body">;
+	if (!Array.isArray(args) || args.some((a) => a instanceof FormData)) {
+		requestOpts = {
+			headers: { accept: RSC_CONTENT_TYPE },
+			body: await encodeReply(args),
+		};
+	} else {
+		requestOpts = {
+			headers: {
+				accept: RSC_CONTENT_TYPE,
+				"content-type": "application/json",
+			},
+			body: JSON.stringify(args),
+		};
+	}
 
-const queryParam = new URLSearchParams(window.location.search);
-
-function Router() {
-	const [rscUrl, setRscUrl] = useState(
-		getRscUrl(window.location.pathname, queryParam),
+	const actionResult = await createFromFetch(
+		fetch(url, {
+			method: "POST",
+			...requestOpts,
+		}),
+		{ callServer },
 	);
-	const [routerState, setRouterState] = useRouterState();
+	startTransition(() => {
+		updateRscPayload(actionResult);
+	});
+	return actionResult;
+};
+
+const initialRscPayload = createFromReadableStream(rscStream, {
+	callServer,
+}) as Thenable<ReactNode>;
+
+hydrateRoot(document, <Router initialRscPayload={initialRscPayload} />);
+
+function Router({
+	initialRscPayload,
+}: { initialRscPayload: Thenable<ReactNode> }) {
+	const [rscPayload, setRscPayload] = useState(use(initialRscPayload));
+	console.log("RENDER", rscPayload);
+	updateRscPayload = setRscPayload;
 	useEffect(() => {
 		function navigate(url: string) {
+			const cacheKey = getCacheKey(url);
 			startTransition(() => {
-				setRouterState((prev) => prev + 1);
-				setRscUrl(getRscUrl(url, queryParam));
+				if (!window.__BUN_RSC_CACHE__.has(cacheKey)) {
+					const [baseUrl, search] = url.split("?");
+					const newRscPayload = createFromFetch(
+						fetch(getRscUrl(baseUrl, new URLSearchParams(search))),
+						{
+							callServer,
+						},
+					) as Thenable<ReactNode>;
+					window.__BUN_RSC_CACHE__.set(cacheKey, use(newRscPayload));
+				}
+				setRscPayload(window.__BUN_RSC_CACHE__.get(cacheKey) as ReactNode);
 			});
 		}
 
@@ -72,38 +124,6 @@ function Router() {
 		};
 		window.addEventListener("popstate", popstateHandler);
 
-		return () => {
-			window.removeEventListener("click", clickHandler, true);
-			window.removeEventListener("popstate", popstateHandler);
-		};
-	}, [setRouterState]);
-
-	const manifest = window.__MANIFEST_STRING__
-		? JSON.parse(window.__MANIFEST_STRING__)
-		: [];
-	return (
-		<Layout
-			meta={JSON.parse(window.__SSR_META_STRING__)}
-			cssManifest={manifest}
-		>
-			<ServerOutput key={routerState} routerState={routerState} url={rscUrl} />
-		</Layout>
-	);
-}
-
-function ServerOutput({
-	url,
-	routerState,
-}: { url: string; routerState: number }): ReactNode {
-	const cacheKey = getCacheKey(url);
-	if (!window.__BUN_RSC_CACHE__.has(cacheKey)) {
-		data =
-			routerState === 0
-				? createFromReadableStream(rscStream, { callServer: callServer })
-				: createFromFetch(fetch(url), { callServer });
-		window.__BUN_RSC_CACHE__.set(cacheKey, data);
-	}
-	useEffect(() => {
 		const rscPageMetaString = document
 			.querySelector("#rsc-page-meta")
 			?.getAttribute("value");
@@ -114,9 +134,25 @@ function ServerOutput({
 				.querySelector("meta[name=description]")
 				?.setAttribute("content", rscPageMeta.description);
 		}
+
+		if (process.env.MODE === "development")
+			clientLiveReload(callServer, setRscPayload);
+
+		return () => {
+			window.removeEventListener("click", clickHandler, true);
+			window.removeEventListener("popstate", popstateHandler);
+		};
 	}, []);
-	const lazyJsx = window.__BUN_RSC_CACHE__.get(cacheKey);
-	console.log("lazyJsx", lazyJsx.status);
-	// @ts-ignore
-	return lazyJsx.status === "fulfilled" ? use(lazyJsx) : lazyJsx;
+
+	const manifest = window.__MANIFEST_STRING__
+		? JSON.parse(window.__MANIFEST_STRING__)
+		: [];
+	return (
+		<Layout
+			meta={JSON.parse(window.__SSR_META_STRING__)}
+			cssManifest={manifest}
+		>
+			{rscPayload}
+		</Layout>
+	);
 }

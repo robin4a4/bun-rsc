@@ -2,7 +2,7 @@ import { Suspense } from "react";
 
 import Counter from "../components/Counter";
 import { addTodo } from "../actions.ts";
-import {db} from "../db.ts";
+import { db } from "../db.ts";
 
 export const meta = {
 	title: "Home",
@@ -33,9 +33,13 @@ export async function Page() {
 
 async function Todos() {
 	const query = db.query("SELECT * FROM todos");
-	const todos = query.all() as { id: number, text: string }[];
+	const todos = query.all() as { id: number; text: string }[];
 
-	return <ul>
-			{todos.map(todo => <li key={todo.id}>{todo.text}</li>)}
+	return (
+		<ul>
+			{todos.map((todo) => (
+				<li key={todo.id}>{todo.text}</li>
+			))}
 		</ul>
+	);
 }
