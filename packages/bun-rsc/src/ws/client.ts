@@ -71,9 +71,7 @@ export function clientLiveReload() {
 		socket.addEventListener("message", (event) => {
 			if (event.data === "refresh") {
 				log("refreshing...");
-				setTimeout(() => {
-					refresh();
-				}, 400);
+				refresh();
 			}
 		});
 
