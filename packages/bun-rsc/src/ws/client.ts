@@ -1,12 +1,14 @@
-import { startTransition, type ReactNode } from "react";
+import { startTransition } from "react";
 
-import { refreshPort } from "./const";
+import { callServer } from "../client/call-server";
 import { getRscUrl } from "../client/utils";
+import { refreshPort } from "./const";
 
 import {
 	createFromFetch,
 	// @ts-expect-error
 } from "react-server-dom-webpack/client";
+import { getCacheKey } from "../utils/common";
 
 function reloadStylesheet(): void {
 	const links = document.getElementsByTagName("link");
@@ -23,11 +25,8 @@ function reloadStylesheet(): void {
 /**
  * Taken from https://github.com/bholmesdev/simple-rsc/blob/main/app/utils/dev/live-reload.js
  */
-export function clientLiveReload(
-	callServer: (id: string, args: unknown[]) => Promise<unknown>,
-	updateRscPayload: ((rscPayload: ReactNode) => void) | null,
-) {
-	let socket: WebSocket;
+export function clientLiveReload() {
+	let socket: WebSocket | null = null;
 	// @ts-ignore
 	let reconnectionTimerId: Timeout;
 
@@ -40,20 +39,17 @@ export function clientLiveReload(
 	};
 
 	const refresh = async () => {
-		console.log("IN REFETCH");
-		const refetchResult = await createFromFetch(
-			fetch(
-				getRscUrl(
-					window.location.pathname,
-					new URLSearchParams(window.location.search),
-				),
-			),
-			{ callServer },
+		const rscUrl = getRscUrl(
+			window.location.pathname,
+			new URLSearchParams(window.location.search),
 		);
-		console.log("REFETCHED", refetchResult);
+		const cacheKey = getCacheKey(rscUrl);
+		const refetchResult = createFromFetch(fetch(rscUrl), { callServer });
 		startTransition(() => {
-			console.log("UPDATING", updateRscPayload);
-			if (updateRscPayload) updateRscPayload(refetchResult);
+			if (window.__UPDATE_RSC_PAYLOAD__) {
+				window.__BUN_RSC_CACHE__.set(cacheKey, refetchResult);
+				window.__UPDATE_RSC_PAYLOAD__(refetchResult);
+			}
 		});
 		reloadStylesheet();
 	};
@@ -98,4 +94,6 @@ export function clientLiveReload(
 	connect(() => {
 		console.log("Live reload connected on", requestUrl);
 	});
+
+	return socket;
 }
