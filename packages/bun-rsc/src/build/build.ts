@@ -299,9 +299,7 @@ export async function build() {
     }
   }
   function getAllCssFiles(filesArray: Array<string>, root: string) {
-    console.log("array:", filesArray);
     const files = fs.readdirSync(root);
-    console.log("files:", files);
     for (const file of files) {
       const filePath = combineUrl(root, file);
       const fileStat = fs.statSync(filePath);
