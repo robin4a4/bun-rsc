@@ -1,5 +1,11 @@
 # bun-rsc
 
+## 0.0.15
+
+### Patch Changes
+
+- 0b98f2c: fix BASE_RSC_SERVER_URL
+
 ## 0.0.14
 
 ### Patch Changes
