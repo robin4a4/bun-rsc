@@ -1,5 +1,11 @@
 # bun-rsc
 
+## 0.0.16
+
+### Patch Changes
+
+- e6bbffe: bootstraping in rsc server
+
 ## 0.0.15
 
 ### Patch Changes
