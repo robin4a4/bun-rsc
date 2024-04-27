@@ -1,5 +1,11 @@
 # bun-rsc
 
+## 0.0.14
+
+### Patch Changes
+
+- 8995648: fix logs
+
 ## 0.0.13
 
 ### Patch Changes

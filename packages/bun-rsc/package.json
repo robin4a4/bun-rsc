@@ -1,5 +1,5 @@
 {
-  "version": "0.0.13",
+  "version": "0.0.14",
   "name": "bun-rsc",
   "type": "module",
   "types": "./dist/serve/external.d.ts",
