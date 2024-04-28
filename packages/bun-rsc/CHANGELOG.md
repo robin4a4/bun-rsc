@@ -1,5 +1,11 @@
 # bun-rsc
 
+## 0.0.18
+
+### Patch Changes
+
+- a821d1f: BUN_RSC_SERVER_URL
+
 ## 0.0.17
 
 ### Patch Changes
