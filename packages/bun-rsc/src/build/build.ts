@@ -170,7 +170,7 @@ export async function build() {
         process.env.BUN_RSC_SERVER_URL ?? "http://localhost:3001"
       ),
     },
-    minify: process.env.MODE === "production",
+    minify: false,
     plugins: [
       {
         name: "server-actions",
