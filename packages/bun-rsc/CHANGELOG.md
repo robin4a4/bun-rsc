@@ -1,5 +1,11 @@
 # bun-rsc
 
+## 0.0.17
+
+### Patch Changes
+
+- dac6cbb: fix ReactServerDomClient import
+
 ## 0.0.16
 
 ### Patch Changes
