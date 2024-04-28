@@ -17,7 +17,7 @@ export function combineUrl(path1: string, path2: string) {
 export const BASE_RSC_SERVER_URL =
   process.env.MODE === "development"
     ? "http://localhost:3001"
-    : `http://${process.env.BASE_RSC_SERVER_URL}:3001` ?? "";
+    : process.env.BUN_RSC_SERVER_URL ?? "";
 
 export function getCacheKey(url: string) {
   const urlObj = new URL(url.replace(`/${BUN_RSC_SPECIFIC_KEYWORD}`, ""));

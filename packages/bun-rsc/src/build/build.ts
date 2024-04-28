@@ -166,6 +166,9 @@ export async function build() {
     bundle: true,
     define: {
       "process.env.MODE": JSON.stringify(process.env.MODE ?? "development"),
+      "process.env.BUN_RSC_SERVER_URL": JSON.stringify(
+        process.env.BUN_RSC_SERVER_URL ?? "http://localhost:3001"
+      ),
     },
     minify: process.env.MODE === "production",
     plugins: [
@@ -240,6 +243,9 @@ export async function build() {
       external: ["bun:sqlite", "node:fs"],
       define: {
         "process.env.MODE": JSON.stringify(process.env.MODE),
+        "process.env.BUN_RSC_SERVER_URL": JSON.stringify(
+          process.env.BUN_RSC_SERVER_URL ?? "http://localhost:3001"
+        ),
       },
     });
     if (serverActionResults.errors.length > 0) {
