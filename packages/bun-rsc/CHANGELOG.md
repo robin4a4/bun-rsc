@@ -1,5 +1,11 @@
 # bun-rsc
 
+## 0.0.19
+
+### Patch Changes
+
+- 9f83b8f: no minification
+
 ## 0.0.18
 
 ### Patch Changes
