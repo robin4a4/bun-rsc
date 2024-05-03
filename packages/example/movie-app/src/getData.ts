@@ -26,47 +26,52 @@ async function fetchWithErrors(
   return response;
 }
 
-export const getUpcomingMovies = cache(async () => {
+export const getUpcomingMovies = async () => {
   const nowPlayingMoviesResponse = await fetchWithErrors(
     "https://api.themoviedb.org/3/movie/now_playing?language=en-US&page=1",
     fetchOption
   );
-  return (await nowPlayingMoviesResponse.json()) as TMDBMovieResponse;
-});
+  return nowPlayingMoviesResponse.json() as Promise<TMDBMovieResponse>;
+};
 
-export const getNavBarMovies = cache(async () => {
-  const responses = await Promise.all<Response>([
-    fetchWithErrors(
-      "https://api.themoviedb.org/3/movie/popular?language=en-US&page=1",
-      fetchOption
-    ),
-    fetchWithErrors(
-      "https://api.themoviedb.org/3/movie/top_rated?language=en-US&page=1",
-      fetchOption
-    ),
-    fetchWithErrors(
-      "https://api.themoviedb.org/3/movie/upcoming?language=en-US&page=1",
-      fetchOption
-    ),
-  ]);
-  return Promise.all<TMDBMovieResponse>(
-    responses.map((response) => response.json())
+export const getNavBarMovies = async () => {
+  const res1 = await fetch(
+    "https://api.themoviedb.org/3/movie/popular?language=en-US&page=1",
+    fetchOption
   );
-});
+  // const res2 = (await (
+  //   await fetch(
+  //     "https://api.themoviedb.org/3/movie/top_rated?language=en-US&page=1",
+  //     fetchOption
+  //   )
+  // ).json()) as TMDBMovieResponse;
+  // const res3 = (await (
+  //   await fetch(
+  //     "https://api.themoviedb.org/3/movie/upcoming?language=en-US&page=1",
+  //     fetchOption
+  //   )
+  // ).json()) as TMDBMovieResponse;
+  const res = await res1.json();
+  console.log(res);
+  return [res, res, res];
+};
 
-export const getMovieDetail = cache(async (movieId: number) => {
-  return await Promise.all([
-    fetchWithErrors(
-      `https://api.themoviedb.org/3/movie/${movieId}?language=en-US`,
-      fetchOption
-    ).then((response) => response.json()) as Promise<TMDBMovie>,
-    fetchWithErrors(
-      `https://api.themoviedb.org/3/movie/${movieId}/credits?language=en-US&page=1`,
-      fetchOption
-    ).then((response) => response.json()) as Promise<TMDBMovieCreditsResponse>,
-    fetchWithErrors(
-      `https://api.themoviedb.org/3/movie/${movieId}/similar?language=en-US&page=1`,
-      fetchOption
-    ).then((response) => response.json()) as Promise<TMDBMovieResponse>,
-  ]);
-});
+export const getMovieDetail = async (movieId: number) => {
+  const res1 = await fetch(
+    `https://api.themoviedb.org/3/movie/${movieId}?language=en-US`,
+    fetchOption
+  );
+  const res2 = await fetch(
+    `https://api.themoviedb.org/3/movie/${movieId}/credits?language=en-US&page=1`,
+    fetchOption
+  );
+  // const res3 = (await (
+  //   await fetch(
+  //     `https://api.themoviedb.org/3/movie/${movieId}/similar?language=en-US&page=1`,
+  //     fetchOption
+  //   )
+  // ).json()) as TMDBMovieResponse;
+  const res = await res1.json();
+  console.log(res);
+  return [res, await res2.json(), res];
+};

@@ -4,7 +4,13 @@ import {
   CarouselMoviesList,
 } from "../../components/Carousel";
 import { Header } from "../../components/Header";
+import { RootLayout } from "../../components/layout";
 import { getMovieDetail } from "../../getData";
+
+export const meta = {
+  title: "Movie",
+  description: "Movie detail page",
+};
 
 export async function Page({ params }: { params: { movieId: string } }) {
   const [currentMovie, credits, similarMovies] = await getMovieDetail(
@@ -12,7 +18,7 @@ export async function Page({ params }: { params: { movieId: string } }) {
   );
 
   return (
-    <>
+    <RootLayout>
       <Header movie={currentMovie} type="detail" />
       <section className="p-4 md:p-8">
         <h2 className="text-4xl my-8 text-zinc-200">Credits</h2>
@@ -34,6 +40,6 @@ export async function Page({ params }: { params: { movieId: string } }) {
           </Carousel>
         </div>
       </section>
-    </>
+    </RootLayout>
   );
 }

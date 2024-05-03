@@ -3,7 +3,7 @@ import { Alert } from "../components/Alert";
 import { Carousel, CarouselMoviesList } from "../components/Carousel";
 import { Header } from "../components/Header";
 import { RootLayout } from "../components/layout";
-import { getUpcomingMovies } from "../getData";
+import { getNavBarMovies, getUpcomingMovies } from "../getData";
 import "../global.css";
 
 export const meta: Meta = {

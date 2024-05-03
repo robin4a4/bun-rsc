@@ -1,3 +1,9 @@
+# TODO
+
+[ ] Remove wrong error management
+[ ] Add warning to export a meta function or create a default one
+[ ]
+
 # bun-rsc
 
 Ultra minimalist React server component implementation using bun. Absolutely experimental and messy.
